@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fold Credit Card — All Hands Overview</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  body {
+    background: #1a1a1a;
+    font-family: 'Geist', sans-serif;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+  h1.page-title { color: #fff; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .page-desc { color: #888; font-size: 14px; margin-bottom: 16px; width: 960px; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">The Fold Bitcoin Rewards Credit Card — All Hands Overview</h1>
+<div class="page-desc">12 slides covering the full story. Each slide has variant switchers to explore different template options. Confidential.</div>
+<div class="toolbar">
+  <span id="pinCount" style="font-size:13px; color:#666;"></span>
+  <span style="flex:1"></span>
+  <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
+  <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-divider">Opening</div>
+<!-- ============================================================ -->
+
+<!-- Slide 1: StartSlide -->
+<div class="slide-label">#1 — <code>StartSlide</code></div>
+<div class="slide"><div class="slide-inner bg-brand">
+  <div class="start-title">
+    <div class="h1 c-primary">The Fold Bitcoin Rewards Credit Card</div>
+  </div>
+</div></div>
+
+<!-- Slide 2: Agenda -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #2 — Agenda
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s2-picker">
+    <button class="chip active" data-val="agenda" onclick="switchSlide2(this.dataset.val)">Agenda</button>
+    <button class="chip" data-val="section" onclick="switchSlide2(this.dataset.val)">Section</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s2-slide"></div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">1. The Opportunity</div>
+<!-- ============================================================ -->
+
+<!-- Slide 3: Credit Cards 101 — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #3 — Credit Cards 101
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s3-picker">
+    <button class="chip active" data-val="cards" onclick="switchSlide3(this.dataset.val)">Cards 3col</button>
+    <button class="chip" data-val="features" onclick="switchSlide3(this.dataset.val)">Features</button>
+    <button class="chip" data-val="description" onclick="switchSlide3(this.dataset.val)">Description</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s3-slide"></div></div>
+
+<!-- Slide 4: Market Opportunity — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #4 — Market Opportunity
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s4-picker">
+    <button class="chip active" data-val="stats" onclick="switchSlide4(this.dataset.val)">Stats 2&times;2</button>
+    <button class="chip" data-val="textslide" onclick="switchSlide4(this.dataset.val)">TextSlide</button>
+    <button class="chip" data-val="cards" onclick="switchSlide4(this.dataset.val)">Cards 4col</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s4-slide"></div></div>
+
+<!-- Slide 5: Why Fold — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #5 — Why Fold?
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s5-picker">
+    <button class="chip active" data-val="datatable" onclick="switchSlide5(this.dataset.val)">DataTable</button>
+    <button class="chip" data-val="proof" onclick="switchSlide5(this.dataset.val)">Proof</button>
+    <button class="chip" data-val="cards" onclick="switchSlide5(this.dataset.val)">Cards 4col</button>
+    <button class="chip" data-val="side" onclick="switchSlide5(this.dataset.val)">Side-by-side</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s5-slide"></div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">2. Economics</div>
+<!-- ============================================================ -->
+
+<!-- Slide 6: Tier Model — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #6 — Tier Model
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s6-picker">
+    <button class="chip active" data-val="comparison" onclick="switchSlide6(this.dataset.val)">Comparison</button>
+    <button class="chip" data-val="side" onclick="switchSlide6(this.dataset.val)">Side-by-side</button>
+    <button class="chip" data-val="stats" onclick="switchSlide6(this.dataset.val)">Stats 2&times;1</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s6-slide"></div></div>
+
+<!-- Slide 7: Revenue & Costs — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #7 — Revenue Streams
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s7-picker">
+    <button class="chip active" data-val="cards" onclick="switchSlide7(this.dataset.val)">Cards</button>
+    <button class="chip" data-val="proof" onclick="switchSlide7(this.dataset.val)">Proof</button>
+    <button class="chip" data-val="carousel" onclick="switchSlide7(this.dataset.val)">Carousel</button>
+  </div>
+</div>
+<div id="s7-wrap"></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">3. Audience &amp; Differentiation</div>
+<!-- ============================================================ -->
+
+<!-- Slide 8: Target Audience — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #8 — Target Audience
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s8-picker">
+    <button class="chip active" data-val="thoughts" onclick="switchSlide8(this.dataset.val)">Thoughts</button>
+    <button class="chip" data-val="quote" onclick="switchSlide8(this.dataset.val)">Quote</button>
+    <button class="chip" data-val="description" onclick="switchSlide8(this.dataset.val)">Description</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s8-slide"></div></div>
+
+<!-- Slide 9: Differentiation — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #9 — Differentiation
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s9-picker">
+    <button class="chip active" data-val="textslide" onclick="switchSlide9(this.dataset.val)">TextSlide</button>
+    <button class="chip" data-val="cards2" onclick="switchSlide9(this.dataset.val)">Cards 2col</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s9-slide"></div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">4. Partners &amp; Execution</div>
+<!-- ============================================================ -->
+
+<!-- Slide 10: Key Partners — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #10 — Key Partners
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s10-picker">
+    <button class="chip active" data-val="partners" onclick="switchSlide10(this.dataset.val)">Partners</button>
+    <button class="chip" data-val="lineItem" onclick="switchSlide10(this.dataset.val)">LineItem</button>
+    <button class="chip" data-val="datatable" onclick="switchSlide10(this.dataset.val)">DataTable</button>
+  </div>
+</div>
+<div id="s10-wrap"></div>
+
+<!-- Slide 11: Goals & Launch — switchable -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #11 — Goals &amp; Launch Timeline
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s11-picker">
+    <button class="chip active" data-val="stats" onclick="switchSlide11(this.dataset.val)">Stats 2+3</button>
+    <button class="chip" data-val="timeline" onclick="switchSlide11(this.dataset.val)">Timeline</button>
+    <button class="chip" data-val="stats3x1" onclick="switchSlide11(this.dataset.val)">Stats 3&times;1</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s11-slide"></div></div>
+
+<!-- Slide 12: EndSlide -->
+<div class="slide-label">#12 — <code>EndSlide</code></div>
+<div class="slide"><div class="slide-inner bg-brand">
+  <div class="end-text">
+    <div class="h1 c-primary">Thank you</div>
+  </div>
+</div></div>
+
+<script src="shared.js"></script>
+<script>
+initAnnotations('fold-cc-pins');
+initPresentation('.slide');
+
+const FOOTER = (page) => `<div class="footer"><span class="footer-title">Fold Credit Card</span><span class="footer-copy">&copy; Fold 2025 &middot; Confidential</span><span class="footer-page">${page}</span></div>`;
+
+// ══════════════ SLIDE 2: AGENDA / SECTION ══════════════
+
+const AGENDA_ITEMS = ['The opportunity', 'Economics', 'Audience & differentiation', 'Partners & execution'];
+
+const S2_AGENDA = `
+  <div class="content-1col">
+    <div class="slot-agenda" style="width:1760px;">
+      <div class="bullet"><div class="line line-accent"></div><div class="h1 c-accent">${AGENDA_ITEMS[0]}</div></div>
+      ${AGENDA_ITEMS.slice(1).map(item => `<div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">${item}</div></div>`).join('')}
+    </div>
+  </div>${FOOTER(2)}`;
+
+const S2_SECTION = `
+  <div class="content-1col">
+    <div class="section-slot">
+      <div class="section-item active">${AGENDA_ITEMS[0]}</div>
+      ${AGENDA_ITEMS.slice(1).map(item => `<div class="section-item">${item}</div>`).join('')}
+    </div>
+  </div>${FOOTER(2)}`;
+
+function switchSlide2(pick) {
+  pick = pick || document.querySelector('#s2-picker .chip.active').dataset.val;
+  document.getElementById('s2-slide').innerHTML = pick === 'agenda' ? S2_AGENDA : S2_SECTION;
+}
+switchSlide2();
+
+// ══════════════ SLIDE 3: CREDIT CARDS 101 ══════════════
+
+const S3_CARDS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Opportunity</div>
+          <div class="h3 c-primary">Credit Cards 101</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">A credit card is a short\u2011term loan with a revolving balance. Users borrow up to a set limit and repay at their discretion.</div>
+      </div>
+    </div>
+  </div>
+  <div class="content-3col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Purchase process</div>
+        <div class="list">
+          <div class="h5 c-secondary">Cardholder swipes at a merchant</div>
+          <div class="h5 c-secondary">Issuer (Lead Bank) pays the merchant</div>
+          <div class="h5 c-secondary">Fold earns interchange on every transaction</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Billing cycle</div>
+        <div class="list">
+          <div class="h5 c-secondary">Monthly statement with balance due</div>
+          <div class="h5 c-secondary">Pay in full to avoid interest</div>
+          <div class="h5 c-secondary">Carry a balance \u2192 interest charged</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Rewards</div>
+        <div class="list">
+          <div class="h5 c-secondary">Traditional cards: cash back, points, miles</div>
+          <div class="h5 c-secondary">Fold: Bitcoin rewards on every purchase</div>
+          <div class="h5 c-secondary">BTC auto\u2011deposited to your Fold account</div>
+        </div>
+      </div>
+    </div>
+  </div>${FOOTER(3)}`;
+
+const S3_FEATURES = `
+  <div class="content-2col" style="align-items:stretch;">
+    <div class="slot" style="width:589px; justify-content:center;">
+      <div style="display:flex; flex-direction:column; gap:24px; width:589px;">
+        <div class="h3 c-primary">Credit Cards 101</div>
+        <div class="h5 c-secondary">A credit card is a short\u2011term loan with a revolving balance. Users borrow up to a set limit and repay at their discretion. If a balance is carried, interest is charged on the outstanding amount.</div>
+      </div>
+    </div>
+    <div class="slot slot-fill" style="display:flex; flex-direction:column; justify-content:center; gap:32px; padding:48px 0;">
+      <div style="display:flex; gap:24px; align-items:center;">
+        <div style="width:330px; height:180px; flex-shrink:0; border-radius:8px; background:var(--layer-brand);"></div>
+        <div style="display:flex; flex-direction:column; gap:8px; max-width:580px;">
+          <div class="h5 c-primary">Purchase process</div>
+          <div class="h6 c-secondary">Cardholder swipes at a merchant \u2192 The credit card issuer (Lead Bank) pays the merchant.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:24px; align-items:center;">
+        <div style="width:330px; height:180px; flex-shrink:0; border-radius:8px; background:var(--layer-brand);"></div>
+        <div style="display:flex; flex-direction:column; gap:8px; max-width:580px;">
+          <div class="h5 c-primary">Billing cycle</div>
+          <div class="h6 c-secondary">Cardholder receives a statement \u2192 Pay in full to avoid interest, or pay a portion (interest applies to the balance).</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:24px; align-items:center;">
+        <div style="width:330px; height:180px; flex-shrink:0; border-radius:8px; background:var(--layer-brand);"></div>
+        <div style="display:flex; flex-direction:column; gap:8px; max-width:580px;">
+          <div class="h5 c-primary">Rewards mechanisms</div>
+          <div class="h6 c-secondary">Traditional cards offer cash back, points, or travel miles \u2014 Fold rewards you with Bitcoin instead.</div>
+        </div>
+      </div>
+    </div>
+  </div>${FOOTER(3)}`;
+
+const S3_DESCRIPTION = `
+  <div style="position:absolute; top:64px; left:64px; right:64px; bottom:64px; display:flex; gap:162px; align-items:stretch;">
+    <div style="width:740px; flex-shrink:0; display:flex; flex-direction:column; gap:154px; padding-top:0;">
+      <div class="h2 c-primary">Credit Cards 101</div>
+      <div class="h4 c-secondary">A credit card is essentially a short\u2011term loan with a revolving balance. It allows users to borrow up to a set limit and repay at their discretion. If a balance is carried, interest is charged on the outstanding amount. Fold rewards you with Bitcoin instead of cash back, points, or miles.</div>
+    </div>
+    <div style="flex:1; min-width:0; background:var(--layer-brand); border-radius:12px;"></div>
+  </div>${FOOTER(3)}`;
+
+function switchSlide3(pick) {
+  pick = pick || document.querySelector('#s3-picker .chip.active').dataset.val;
+  const map = { cards: S3_CARDS, features: S3_FEATURES, description: S3_DESCRIPTION };
+  document.getElementById('s3-slide').innerHTML = map[pick];
+}
+switchSlide3();
+
+// ══════════════ SLIDE 4: MARKET OPPORTUNITY ══════════════
+
+const S4_STATS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title" style="width:1792px;">
+          <div class="h3 c-yellow">Market opportunity</div>
+          <div class="h3 c-primary">No dominant player owns the Bitcoin credit card space</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Rising adoption', 'BTC as asset class', 0, 0, 'h2')}
+      ${statCell('Survey demand', 'BTC rewards preferred', 0, 0, 'h2')}
+    </div>
+    <div class="stat-grid-row">
+      ${statCell('Business opportunity', 'Expand Fold ecosystem', 0, 0, 'h2')}
+      ${statCell('Market gaps', 'No all\u2011in\u2011one BTC hub', 0, 0, 'h2')}
+    </div>
+  </div>${FOOTER(4)}`;
+
+const S4_TEXTSLIDE = `
+  <div class="content-frame" style="width:890px;">
+    <div class="h4 c-yellow">Market opportunity</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; width:1191px;">
+    <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">No dominant player owns the Bitcoin credit card. Fold can be the all&#8209;in&#8209;one financial hub for dollars and bitcoin.</div>
+  </div>${FOOTER(4)}`;
+
+const S4_CARDS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Opportunity</div>
+          <div class="h3 c-primary">Market insights</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="content-4col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Trends</div>
+        <div class="list">
+          <div class="h5 c-secondary">Rising adoption of Bitcoin as an asset class</div>
+          <div class="h5 c-secondary">Growing interest in Bitcoin&#8209;linked financial products</div>
+          <div class="h5 c-secondary">Desire to spend fiat and earn/save in bitcoin</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Demand</div>
+        <div class="list">
+          <div class="h5 c-secondary">Strong survey interest in Bitcoin rewards credit cards</div>
+          <div class="h5 c-secondary">Preferred over traditional cashback or points programs</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Business opportunity</div>
+        <div class="list">
+          <div class="h5 c-secondary">Expand Fold\u2019s ecosystem</div>
+          <div class="h5 c-secondary">Drive user acquisition and engagement</div>
+          <div class="h5 c-secondary">Integrate Bitcoin accumulation into daily spending</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Market gaps</div>
+        <div class="list">
+          <div class="h5 c-secondary">No dominant player with a Bitcoin credit card</div>
+          <div class="h5 c-secondary">No all&#8209;in&#8209;one financial hub for dollars and bitcoin</div>
+        </div>
+      </div>
+    </div>
+  </div>${FOOTER(4)}`;
+
+function switchSlide4(pick) {
+  pick = pick || document.querySelector('#s4-picker .chip.active').dataset.val;
+  const map = { stats: S4_STATS, textslide: S4_TEXTSLIDE, cards: S4_CARDS };
+  document.getElementById('s4-slide').innerHTML = map[pick];
+}
+switchSlide4();
+
+// ══════════════ SLIDE 5: WHY FOLD ══════════════
+
+const S5_DATATABLE = `
+  <div style="position:absolute; top:64px; left:64px;">
+    <div class="h6 c-tertiary">Why Fold? \u2014 User Survey Insights</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column;">
+    <table class="data-table" style="width:100%; height:100%; table-layout:fixed;">
+      <colgroup><col style="width:70%"><col style="width:30%"></colgroup>
+      <thead><tr><th>Insight</th><th class="num">Data</th></tr></thead>
+      <tbody>
+        <tr><td>Age range</td><td class="num">35\u201354</td></tr>
+        <tr><td class="highlight">Income >$150k</td><td class="num highlight">47%</td></tr>
+        <tr><td class="highlight">Credit score 700+</td><td class="num highlight">81%</td></tr>
+        <tr><td>Net worth >21% in BTC</td><td class="num">55%</td></tr>
+        <tr><td>Use credit cards</td><td class="num">94%</td></tr>
+        <tr><td>Hold 3+ cards</td><td class="num">48%</td></tr>
+        <tr><td class="highlight">Rewards rate is #1 factor</td><td class="num highlight">71%</td></tr>
+        <tr><td>Spend >$2.5k/mo on credit</td><td class="num">>50%</td></tr>
+      </tbody>
+    </table>
+  </div>${FOOTER(5)}`;
+
+const S5_PROOF = `
+  <div style="position:absolute; top:0; left:0; width:804px; bottom:0; background:#FFEDAB; display:flex; align-items:center; padding:0 64px;">
+    <div style="display:flex; flex-direction:column; gap:32px; width:100%;">
+      <div class="h2 c-primary">Why Fold?</div>
+      <div class="h4 c-secondary">Fold\u2019s user base is well suited for this product. Insights from recent survey.</div>
+    </div>
+  </div>
+  <div style="position:absolute; top:0; left:966px; right:64px; bottom:0; display:grid; grid-template-columns:1fr 1fr; gap:64px 48px; align-content:center;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">81%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Credit score 700+ \u2014 strong credit profiles across the base</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">47%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Earn >$150k \u2014 high\u2011income, mass\u2011affluent users</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">71%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Say rewards rate is the #1 factor when choosing a card</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">>50%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Spend >$2.5k/mo on credit cards</div>
+    </div>
+  </div>${FOOTER(5)}`;
+
+const S5_CARDS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Why Fold?</div>
+          <div class="h3 c-primary">User survey insights</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Fold\u2019s user base is well suited for this product. Insights from recent survey.</div>
+      </div>
+    </div>
+  </div>
+  <div class="content-4col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Demographics &amp; credit</div>
+        <div class="list">
+          <div class="h5 c-secondary">Age 35\u201354, high\u2011income (47% earn >$150k)</div>
+          <div class="h5 c-secondary">Strong credit: 81% score 700+</div>
+          <div class="h5 c-secondary">55% hold >21% net worth in BTC</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Spending habits</div>
+        <div class="list">
+          <div class="h5 c-secondary">>50% spend >$2.5k/mo on credit</div>
+          <div class="h5 c-secondary">~45% pay balances in full</div>
+          <div class="h5 c-secondary">High spenders have 800+ scores</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Rewards preferences</div>
+        <div class="list">
+          <div class="h5 c-secondary">Rewards rate is #1 factor (71%)</div>
+          <div class="h5 c-secondary">2% BTC\u2011back strongly motivates switching</div>
+          <div class="h5 c-secondary">Prefer flat rate + optional category boosts</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Competitive edge</div>
+        <div class="list">
+          <div class="h5 c-secondary">Competing crypto cards lack pure BTC focus</div>
+          <div class="h5 c-secondary">Fold wins with straightforward, high\u2011rate BTC rewards</div>
+        </div>
+      </div>
+    </div>
+  </div>${FOOTER(5)}`;
+
+function s5SideBySide() {
+  const top = [['Age range', '35\u201354'], ['Income', '>$150k']];
+  const mid = [['Credit score', '700+'], ['BTC net worth', '>21%'], ['Monthly spend', '>$2.5k']];
+  const bot = [['Use credit cards', '94%'], ['Hold 3+ cards', '48%'], ['Rewards #1 factor', '71%']];
+  const row = (items, cols) => `<div style="display:grid; grid-template-columns:repeat(${cols},1fr); gap:12px; flex:1;">${items.map(d => varCard(d[0], d[1])).join('')}</div>`;
+  return `
+    <div class="content-2col" style="align-items:flex-start;">
+      <div class="slot slot-text-740" style="justify-content:flex-start; padding-top:0;">
+        <div class="h2 c-primary" style="text-wrap:balance;">Why Fold?</div>
+        <div style="height:128px;"></div>
+        <div class="h4 c-secondary">Fold\u2019s user base is well suited for this product. Fold can win with straightforward, high\u2011rate BTC rewards tied to a seamless experience.</div>
+      </div>
+      <div class="slot slot-fill" style="justify-content:flex-start; align-items:flex-end;">
+        <div class="var-table yellow">
+          <div class="var-table-title">User profile</div>
+          <div style="display:flex; flex-direction:column; gap:12px; flex:1;">
+            ${row(top, 2)}
+            ${row(mid, 3)}
+            ${row(bot, 3)}
+          </div>
+        </div>
+      </div>
+    </div>${FOOTER(5)}`;
+}
+
+function switchSlide5(pick) {
+  pick = pick || document.querySelector('#s5-picker .chip.active').dataset.val;
+  const map = { datatable: S5_DATATABLE, proof: S5_PROOF, cards: S5_CARDS };
+  document.getElementById('s5-slide').innerHTML = pick === 'side' ? s5SideBySide() : map[pick];
+}
+switchSlide5();
+
+// ══════════════ SLIDE 6: TIER MODEL ══════════════
+
+const S6_COMPARISON = `
+  <div class="content-frame" style="display:flex; flex-direction:column; width:1792px;">
+    <div class="h3 c-yellow">Tier model</div>
+    <div class="h3 c-primary">Fold vs Fold+</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px; align-items:stretch;">
+    <div class="compare-block yellow">
+      <div class="compare-block-content">
+        <div class="compare-block-img" style="display:flex; flex-direction:column; gap:16px; padding:24px; background:var(--layer-brand); justify-content:flex-end;">
+          <div class="h1 c-primary" style="position:relative; font-size:128px; line-height:120px;">1.5%</div>
+          <div class="h5 c-secondary" style="position:relative;">Unlimited BTC rewards. Up to $100 signup bonus.</div>
+        </div>
+        <div class="compare-chip label">Fold (Free)</div>
+      </div>
+    </div>
+    <div class="compare-block blue">
+      <div class="compare-block-content">
+        <div class="compare-block-img" style="display:flex; flex-direction:column; gap:16px; padding:24px; background:#e6f7ff; justify-content:flex-end;">
+          <div class="h1 c-primary" style="position:relative; font-size:128px; line-height:120px;">2%</div>
+          <div class="h5 c-secondary" style="position:relative;">Unlimited + metal card, $250 bonus, merchant boosts, ad hoc promos.</div>
+        </div>
+        <div class="compare-chip label">Fold+ ($250/yr)</div>
+      </div>
+    </div>
+  </div>${FOOTER(6)}`;
+
+function s6SideBySide() {
+  const foldData = [['BTC rewards', '1.5%'], ['Signup bonus', '<span style="color:rgba(60,49,43,0.24);">$</span>100']];
+  const foldPlusData = [['BTC rewards', '2%'], ['Signup bonus', '<span style="color:rgba(60,49,43,0.24);">$</span>250'], ['Metal card', 'Yes'], ['Promos &amp; boosts', 'Yes']];
+  return `
+    <div class="content-frame">
+      <div style="display:flex; flex-direction:column; width:890px;">
+        <div class="h5" style="color:var(--face-tertiary);">Tier model</div>
+        <div class="h3 c-primary">Rewards structure</div>
+      </div>
+    </div>
+    <div class="slot-tables-row" style="position:absolute; top:192px; left:64px; right:64px; bottom:64px;">
+      ${varTable('2x1', 'Fold (Free)', foldData, {color:'yellow'})}
+      ${varTable('2x2', 'Fold+ ($250/yr)', foldPlusData, {color:'blue'})}
+    </div>${FOOTER(6)}`;
+}
+
+const S6_STATS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Tier model</div>
+          <div class="h3 c-primary">Two tiers, one mission</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Match user commitment with reward level. Fold+ adds premium perks on top of already-generous base rewards.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Fold (Free)', '1.5%', 0, 0, 'h1')}
+      ${statCell('Fold+ ($250/yr)', '2%', 0, 0, 'h1')}
+    </div>
+  </div>${FOOTER(6)}`;
+
+function switchSlide6(pick) {
+  pick = pick || document.querySelector('#s6-picker .chip.active').dataset.val;
+  if (pick === 'comparison') {
+    document.getElementById('s6-slide').innerHTML = S6_COMPARISON;
+  } else if (pick === 'side') {
+    document.getElementById('s6-slide').innerHTML = s6SideBySide();
+  } else {
+    document.getElementById('s6-slide').innerHTML = S6_STATS;
+  }
+}
+switchSlide6();
+
+// ══════════════ SLIDE 7: REVENUE STREAMS ══════════════
+
+const S7_CARDS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Economics</div>
+          <div class="h3 c-primary">Revenue streams</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Five revenue channels drive the credit card business.</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Interchange</div><div class="list"><div class="h5 c-secondary">Merchant pays a fee on every swipe</div><div class="h5 c-secondary">Fold earns a portion after Visa\u2019s cut (~2.1%)</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Interest revenue</div><div class="list"><div class="h5 c-secondary">Users carrying a balance pay interest</div><div class="h5 c-secondary">Scales with card portfolio growth</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Subscription</div><div class="list"><div class="h5 c-secondary">Fold+ members pay $250/year</div><div class="h5 c-secondary">Premium tier with enhanced rewards</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Fee revenue</div><div class="list"><div class="h5 c-secondary">Late, FX, cash advance fees</div><div class="h5 c-secondary">Standard credit card fee structure</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Ecosystem</div><div class="list"><div class="h5 c-secondary">Gift cards, trading, other Fold products</div><div class="h5 c-secondary">Cross-sell to engaged cardholders</div></div></div></div>
+  </div>${FOOTER(7)}`;
+
+const S7_PROOF = `
+  <div style="position:absolute; top:0; left:0; width:804px; bottom:0; background:#FFEDAB; display:flex; align-items:center; padding:0 64px;">
+    <div style="display:flex; flex-direction:column; gap:32px; width:100%;">
+      <div class="h2 c-primary">Revenue streams</div>
+      <div class="h4 c-secondary">Cardholders engage w/ other Fold products (gift cards, trading, etc.), driving revenue across the ecosystem.</div>
+    </div>
+  </div>
+  <div style="position:absolute; top:0; left:966px; right:64px; bottom:0; display:grid; grid-template-columns:1fr 1fr; gap:48px 48px; align-content:center;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h2 c-primary"><span style="color:rgba(56,51,35,0.24);">$</span>250</div>
+      <div class="h6 c-secondary" style="text-wrap:balance;">Fold+ annual subscription fee</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h2 c-primary">~2.1%</div>
+      <div class="h6 c-secondary" style="text-wrap:balance;">Interchange \u2014 merchant fee on every swipe</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h2 c-primary">APR</div>
+      <div class="h6 c-secondary" style="text-wrap:balance;">Users who carry a balance pay interest</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h2 c-primary">Fees</div>
+      <div class="h6 c-secondary" style="text-wrap:balance;">Late, foreign, cash advance fees</div>
+    </div>
+  </div>${FOOTER(7)}`;
+
+const S7_CAROUSEL = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title" style="width:683px;">
+          <div class="h3 c-yellow">Economics</div>
+          <div class="h3 c-primary">Revenue streams</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Five revenue channels drive the credit card business.</div>
+      </div>
+    </div>
+  </div>
+  <div class="carousel-track" style="position:absolute; top:305px; left:64px; right:0; height:711px; overflow:hidden; cursor:grab;">
+    <div style="display:flex; gap:12px; height:100%; padding-right:64px; transform:translateX(0); transition:none; user-select:none;">
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Interchange</div>
+        <div class="h2 c-primary">~2.1%</div>
+        <div class="h6 c-secondary">Merchant fee per swipe \u2014 Fold earns a portion after Visa\u2019s cut</div>
+      </div>
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Interest revenue</div>
+        <div class="h2 c-primary">APR</div>
+        <div class="h6 c-secondary">Users carrying a balance pay interest, contributing to revenue</div>
+      </div>
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Subscription</div>
+        <div class="h2 c-primary"><span style="color:rgba(60,49,43,0.24);">$</span>250/yr</div>
+        <div class="h6 c-secondary">Fold+ members pay for premium tier with enhanced rewards</div>
+      </div>
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Ecosystem</div>
+        <div class="h2 c-primary">Cross</div>
+        <div class="h6 c-secondary">Gift cards, trading, and other Fold products drive additional revenue</div>
+      </div>
+    </div>
+  </div>${FOOTER(7)}`;
+
+function switchSlide7(pick) {
+  pick = pick || document.querySelector('#s7-picker .chip.active').dataset.val;
+  const map = { cards: S7_CARDS, proof: S7_PROOF, carousel: S7_CAROUSEL };
+  document.getElementById('s7-wrap').innerHTML = '<div class="slide"><div class="slide-inner bg-warning">' + map[pick] + '</div></div>';
+  if (pick === 'carousel') {
+    const track = document.querySelector('#s7-wrap .carousel-track');
+    if (track) initDrag(track);
+  }
+}
+switchSlide7();
+
+// ══════════════ SLIDE 8: TARGET AUDIENCE ══════════════
+
+const S8_THOUGHTS = `
+  <div class="content-2col" style="align-items:stretch;">
+    <div class="slot slot-text-740">
+      <div style="display:flex; flex-direction:column; width:740px;">
+        <div class="h2 c-primary">Bitcoiners with at least 5% of wealth in BTC. Mass affluent or high\u2011net\u2011worth with prime credit.</div>
+        <div class="h2 c-yellow" style="margin-top:48px;">Ages 25\u201345. Early adopters. Long\u2011term wealth builders seeking financial independence.</div>
+      </div>
+    </div>
+    <div class="slot slot-fill"><div class="img-placeholder"></div></div>
+  </div>${FOOTER(8)}`;
+
+const S8_QUOTE = `
+  <div class="content-2col" style="align-items:stretch;">
+    <div class="slot slot-text-740" style="justify-content:space-between;">
+      <div class="h2 c-primary" style="position:relative;"><span style="position:absolute; right:100%; color:var(--yellow-500);">\u201C</span>Designed for Bitcoiners, by Bitcoiners. Every swipe builds wealth that can appreciate over time.<span style="color:var(--yellow-500);">\u201D</span></div>
+      <div class="author">
+        <div class="h4 c-tertiary">Target user</div>
+        <div class="h4 c-yellow">Hodler\u2011Trader, Age 25\u201345</div>
+      </div>
+    </div>
+    <div class="slot slot-fill"><div class="img-placeholder"></div></div>
+  </div>${FOOTER(8)}`;
+
+const S8_DESCRIPTION = `
+  <div style="position:absolute; top:64px; left:64px; right:64px; bottom:64px; display:flex; gap:162px; align-items:stretch;">
+    <div style="width:740px; flex-shrink:0; display:flex; flex-direction:column; gap:154px; padding-top:0;">
+      <div class="h2 c-primary">Target audience</div>
+      <div class="h4 c-secondary">Bitcoiners with at least 5% of wealth in BTC. Mass affluent or high\u2011net\u2011worth with prime or super\u2011prime credit. Ages 25\u201345. Prioritize BTC accumulation over traditional rewards. Early adopters and long\u2011term wealth builders.</div>
+    </div>
+    <div style="flex:1; min-width:0; background:var(--layer-brand); border-radius:12px;"></div>
+  </div>${FOOTER(8)}`;
+
+function switchSlide8(pick) {
+  pick = pick || document.querySelector('#s8-picker .chip.active').dataset.val;
+  const map = { thoughts: S8_THOUGHTS, quote: S8_QUOTE, description: S8_DESCRIPTION };
+  document.getElementById('s8-slide').innerHTML = map[pick];
+}
+switchSlide8();
+
+// ══════════════ SLIDE 9: DIFFERENTIATION ══════════════
+
+const S9_TEXTSLIDE = `
+  <div class="content-frame" style="width:890px;">
+    <div class="h4 c-yellow">Differentiation</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px;">
+    <div style="width:1191px;">
+      <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">No points. No miles. No categories to track. Just Bitcoin, directly to your account.</div>
+      <div class="c-secondary" style="font-size:72px; line-height:64px; font-weight:400; margin-top:48px;">Flat\u2011rate simplicity meets long\u2011term growth.</div>
+    </div>
+  </div>${FOOTER(9)}`;
+
+const S9_CARDS2 = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Differentiation</div>
+          <div class="h3 c-primary">Why this card is different</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Simplicity</div>
+        <div class="list">
+          <div class="h5 c-secondary">Flat\u2011rate BTC\u2011back \u2014 no complex spending categories</div>
+          <div class="h5 c-secondary">No complicated points system \u2014 just BTC</div>
+          <div class="h5 c-secondary">Nearly half prefer a flat rate with optional category boosts</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Growth potential</div>
+        <div class="list">
+          <div class="h5 c-secondary">Unlike cash rewards that depreciate, BTC can increase in value</div>
+          <div class="h5 c-secondary">Fold+ members get higher rewards + sleek metal card</div>
+          <div class="h5 c-secondary">Designed for Bitcoiners, by Bitcoiners</div>
+        </div>
+      </div>
+    </div>
+  </div>${FOOTER(9)}`;
+
+function switchSlide9(pick) {
+  pick = pick || document.querySelector('#s9-picker .chip.active').dataset.val;
+  document.getElementById('s9-slide').innerHTML = pick === 'textslide' ? S9_TEXTSLIDE : S9_CARDS2;
+}
+switchSlide9();
+
+// ══════════════ SLIDE 10: KEY PARTNERS ══════════════
+
+function logoCard10(name, role) {
+  return '<div style="flex:1; background:var(--layer-background); border:0.5px solid var(--yellow-500); border-radius:4px; padding:24px; display:flex; flex-direction:column; justify-content:space-between; min-height:238px;">' +
+    '<div style="flex:1; display:flex; align-items:center; justify-content:center;">' +
+      '<div style="width:114px; height:80px; background:var(--object-secondary-default); border-radius:8px;"></div>' +
+    '</div>' +
+    '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+      '<div class="p2 c-tertiary">' + name + '</div>' +
+      '<div style="background:#e9f2ff; color:#0c66e4; font-size:12px; line-height:16px; padding:2px 6px; border-radius:3px;">' + role + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+const S10_PARTNERS = `
+  <div style="position:absolute; top:64px; left:64px; width:1792px;">
+    <div class="h3 c-primary">Fold\u2019s key partners and their roles</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; gap:12px; flex:1;">
+      ${logoCard10('Fold', 'Product & UX')}
+      ${logoCard10('Lead Bank', 'Issuer')}
+      ${logoCard10('Visa', 'Network')}
+    </div>
+    <div style="display:flex; gap:12px; flex:1;">
+      ${logoCard10('Deserve', 'Processor')}
+      ${logoCard10('Kard', 'Card Offers')}
+      ${logoCard10('Lender (TBD)', 'Credit')}
+    </div>
+  </div>${FOOTER(10)}`;
+
+const S10_DATATABLE = `
+  <div style="position:absolute; top:64px; left:64px;">
+    <div class="h6 c-tertiary">Key Partners &amp; Their Roles</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column;">
+    <table class="data-table" style="width:100%; height:100%; table-layout:fixed;">
+      <colgroup><col style="width:25%"><col style="width:75%"></colgroup>
+      <thead><tr><th>Partner</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td class="highlight">Fold</td><td>Product, UX, rewards, and marketing</td></tr>
+        <tr><td>Lead Bank</td><td>Banking infrastructure &amp; regulatory compliance</td></tr>
+        <tr><td>Visa</td><td>Global acceptance &amp; secure transactions</td></tr>
+        <tr><td>Deserve</td><td>Processor &amp; program manager \u2014 TX processing, CS, billing, disputes</td></tr>
+        <tr><td>Kard</td><td>Card\u2011linked merchant offers across debit and credit</td></tr>
+        <tr><td>Lender (TBD)</td><td>Funds enabling Fold to extend credit to cardholders</td></tr>
+      </tbody>
+    </table>
+  </div>${FOOTER(10)}`;
+
+function lineItem10(name, desc, chip) {
+  return `<div class="logo-line-item"><div class="logo-line-item-card"><div class="img-placeholder"></div></div><div class="logo-line-item-body"><div class="h5 c-secondary">${name}</div><div class="p1 c-secondary">${desc}</div>${chip ? `<span class="logo-chip">${chip}</span>` : ''}</div></div>`;
+}
+
+const S10_LINEITEM = `
+  <div style="position:absolute; top:64px; left:64px; width:1792px;">
+    <div class="h3 c-primary">Fold\u2019s key partners and their roles</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px;">
+    <div class="logo-line-grid" style="height:824px;">
+      <div class="logo-line-row">
+        ${lineItem10('Fold', 'Manages the product, user experience, rewards, and marketing', 'Product & UX')}
+        ${lineItem10('Lead Bank', 'Provides banking infrastructure and regulatory compliance', 'Issuer')}
+      </div>
+      <div class="logo-line-row">
+        ${lineItem10('Visa', 'Ensures global acceptance and secures transactions', 'Network')}
+        ${lineItem10('Deserve', 'Handles transaction processing, customer support, billing, disputes', 'Processor')}
+      </div>
+      <div class="logo-line-row">
+        ${lineItem10('Kard', 'Extending merchant offers across debit and credit', 'Card Offers')}
+        ${lineItem10('Lender (TBD)', 'Lends funds enabling Fold to extend credit to cardholders', 'Credit')}
+      </div>
+    </div>
+  </div>${FOOTER(10)}`;
+
+function switchSlide10(pick) {
+  pick = pick || document.querySelector('#s10-picker .chip.active').dataset.val;
+  const map = { partners: S10_PARTNERS, lineItem: S10_LINEITEM, datatable: S10_DATATABLE };
+  document.getElementById('s10-wrap').innerHTML = '<div class="slide"><div class="slide-inner bg-warning">' + map[pick] + '</div></div>';
+}
+switchSlide10();
+
+// ══════════════ SLIDE 11: GOALS & LAUNCH ══════════════
+
+const S11_STATS = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Year 1</div>
+          <div class="h3 c-primary">Goals</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Cross\u2011sell: 40%+ of cardholders engage with at least 1 other Fold product within six months of signing up.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Waitlist', '50k+', 0, 0, 'h1')}
+      ${statCell('Cardholders Y1', '50k+', 0, 0, 'h1')}
+    </div>
+    <div class="stat-grid-row">
+      ${statCell('Revenue Y1', '$20M+', 0, 0, 'h1')}
+      ${statCell('Profitability', '<12 mo', 0, 0, 'h1')}
+    </div>
+  </div>${FOOTER(11)}`;
+
+const S11_TIMELINE = `
+  <div style="position:absolute; top:64px; left:64px; width:890px;">
+    <div class="h2 c-primary">Launch timeline</div>
+  </div>
+  <div class="timeline-container">
+    <div class="timeline-line"></div>
+    <div class="timeline-nodes">
+      <div class="timeline-node above"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">Jan\u2013Feb 2025</div><div class="p3 c-secondary">Refine features, finalize partner agreements, develop draft launch plan</div></div></div>
+      <div class="timeline-node below"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">Feb 2025</div><div class="p3 c-secondary">Waitlist launch. Develop/design waitlist and product.</div></div></div>
+      <div class="timeline-node above"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">April 2025</div><div class="p3 c-secondary">Soft launch \u2014 internal team + VIP users</div></div></div>
+      <div class="timeline-node below"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">May 2025</div><div class="p3 c-secondary">Initial rollout from waitlist</div></div></div>
+      <div class="timeline-node above"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">June 2025</div><div class="p3 c-secondary">Full rollout to the general public</div></div></div>
+      <div class="timeline-node below"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">Year 1 goals</div><div class="p3 c-secondary">50k+ cardholders, $20M+ revenue, per-swipe profitability</div></div></div>
+    </div>
+  </div>${FOOTER(11)}`;
+
+const S11_STATS3X1 = `
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Launch plan</div>
+          <div class="h3 c-primary">Timeline &amp; next steps</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-3" style="flex:1;">
+      <div class="stat-cell" style="flex:1;">
+        <div class="h5 c-primary">April 2025</div>
+        <div class="h4 c-secondary">Soft launch \u2014 internal + VIPs</div>
+      </div>
+      <div class="stat-cell" style="flex:1;">
+        <div class="h5 c-primary">May 2025</div>
+        <div class="h4 c-secondary">Initial rollout from waitlist</div>
+      </div>
+      <div class="stat-cell" style="flex:1;">
+        <div class="h5 c-primary">June 2025</div>
+        <div class="h4 c-secondary">Full rollout to the general public</div>
+      </div>
+    </div>
+  </div>${FOOTER(11)}`;
+
+function switchSlide11(pick) {
+  pick = pick || document.querySelector('#s11-picker .chip.active').dataset.val;
+  const map = { stats: S11_STATS, timeline: S11_TIMELINE, stats3x1: S11_STATS3X1 };
+  document.getElementById('s11-slide').innerHTML = map[pick];
+}
+switchSlide11();
+
+</script>
+</body>
+</html>

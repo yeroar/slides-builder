@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoSwitch — Cross-Border Crypto Exchange Platform</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+  body {
+    background: #1a1a1a;
+    font-family: 'Geist', sans-serif;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+  h1.page-title { color: #fff; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .page-desc { color: #888; font-size: 14px; margin-bottom: 16px; width: 960px; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">CryptoSwitch — Cross-Border Crypto Exchange for Latin America</h1>
+<div class="page-desc">18 slides. Master in Finance thesis presentation by Eugen Luchianov.</div>
+<div class="toolbar">
+  <span id="pinCount" style="font-size:13px; color:#666;"></span>
+  <span style="flex:1"></span>
+  <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
+  <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-divider">Opening</div>
+<!-- ============================================================ -->
+
+<!-- Slide 1: StartSlide -->
+<div class="slide-label">#1 — <code>StartSlide</code></div>
+<div class="slide"><div class="slide-inner bg-brand">
+  <div class="start-title">
+    <div class="h1 c-primary">CryptoSwitch</div>
+    <div class="h4 c-secondary">Compliant, automated cross-border crypto exchange for Latin America</div>
+  </div>
+</div></div>
+
+<!-- Slide 2: Agenda -->
+<div class="slide-label">#2 — <code>Agenda</code></div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-1col">
+    <div class="slot-agenda" style="width:1760px;">
+      <div class="bullet"><div class="line line-accent"></div><div class="h1 c-accent">The problem</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">The solution</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Market &amp; competition</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Business model</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Roadmap &amp; financials</div></div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">2</span></div>
+</div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">1. The Problem</div>
+<!-- ============================================================ -->
+
+<!-- Slide 3: Why This Project — TextSlide -->
+<div class="slide-label">#3 — <code>TextSlide</code> — Why This Project?</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame" style="width:890px;">
+    <div class="h4 c-yellow">Problem</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; width:1191px;">
+    <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">Latin America faces high inflation, limited banking access, and expensive cross&#8209;border transfers. Residents need better options.</div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">3</span></div>
+</div></div>
+
+<!-- Slide 4: Key Drivers — Stats 3×1 -->
+<div class="slide-label">#4 — <code>Stats</code> 3&times;1 — Key Drivers</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Problem</div>
+          <div class="h3 c-primary">Key market drivers</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Latin America is one of the fastest-growing crypto markets, driven by economic instability and the need for alternative financial tools.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-3" style="flex:1;">
+      <div class="stat-cell" style="flex:1;">
+        <div class="h5 c-primary">Global crypto value share</div>
+        <div class="h1 c-primary">9.1%</div>
+      </div>
+      <div class="stat-cell" style="flex:1;">
+        <div class="h5 c-primary">Trading volume growth</div>
+        <div class="h1 c-primary">900%</div>
+      </div>
+      <div class="stat-cell" style="flex:1;">
+        <div class="h5 c-primary">Market growth rate</div>
+        <div class="h1 c-primary">42.5%</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">4</span></div>
+</div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">2. The Solution</div>
+<!-- ============================================================ -->
+
+<!-- Slide 5: Section Divider -->
+<div class="slide-label">#5 — <code>Section</code> — The Solution</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-1col">
+    <div class="section-slot">
+      <div class="section-item">The problem</div>
+      <div class="section-item active">The solution</div>
+      <div class="section-item">Market &amp; competition</div>
+      <div class="section-item">Business model</div>
+      <div class="section-item">Roadmap &amp; financials</div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">5</span></div>
+</div></div>
+
+<!-- Slide 6: What is CryptoSwitch — ThreeCol Cards -->
+<div class="slide-label">#6 — <code>ThreeCol</code> + <code>Cards</code> — What is CryptoSwitch?</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Solution</div>
+          <div class="h3 c-primary">What is CryptoSwitch?</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">An automated cross-border crypto exchange registered in Canada under MSB license, regulated by FINTRAC, targeting Argentina, Brazil, and Mexico.</div>
+      </div>
+    </div>
+  </div>
+  <div class="content-3col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Local first</div>
+        <div class="list">
+          <div class="h5 c-secondary">Spanish &amp; Portuguese interface</div>
+          <div class="h5 c-secondary">Local bank integration (ARS, BRL, MXN)</div>
+          <div class="h5 c-secondary">Educational content for low digital literacy</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Crypto focus</div>
+        <div class="list">
+          <div class="h5 c-secondary">Stablecoins (USDT, USDC) for inflation hedge</div>
+          <div class="h5 c-secondary">Key assets: BTC, ETH, XRP, SOL</div>
+          <div class="h5 c-secondary">Real&#8209;time exchange in under 3 seconds</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Trust &amp; access</div>
+        <div class="list">
+          <div class="h5 c-secondary">Canadian MSB license, FINTRAC regulated</div>
+          <div class="h5 c-secondary">Fees starting at 0.03% per transaction</div>
+          <div class="h5 c-secondary">Web platform + iOS/Android apps</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">6</span></div>
+</div></div>
+
+<!-- Slide 7: Value Proposition — Comparison (Sellers vs Buyers) -->
+<div class="slide-label">#7 — <code>Comparison</code> — Value Proposition</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame" style="display:flex; flex-direction:column; width:1792px;">
+    <div class="h3 c-yellow">Solution</div>
+    <div class="h3 c-primary">Value proposition</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px; align-items:stretch;">
+    <div class="compare-block yellow">
+      <div class="compare-block-content">
+        <div class="compare-block-img" style="display:flex; flex-direction:column; gap:16px; padding:24px; background:var(--layer-brand); justify-content:flex-end;">
+          <div class="h5 c-primary" style="position:relative;">Quick, secure asset conversion with fast local currency &harr; stablecoin exchange</div>
+          <div class="h6 c-secondary" style="position:relative;">High liquidity, minimal transaction costs, real&#8209;time processing</div>
+        </div>
+        <div class="compare-chip label">For sellers</div>
+      </div>
+    </div>
+    <div class="compare-block blue">
+      <div class="compare-block-content">
+        <div class="compare-block-img" style="display:flex; flex-direction:column; gap:16px; padding:24px; background:#e6f7ff; justify-content:flex-end;">
+          <div class="h5 c-primary" style="position:relative;">Wide range of digital assets with localized payment processing</div>
+          <div class="h6 c-secondary" style="position:relative;">Educational guides in Spanish &amp; Portuguese, tools for transfers &amp; savings</div>
+        </div>
+        <div class="compare-chip label">For buyers</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">7</span></div>
+</div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">3. Market &amp; Competition</div>
+<!-- ============================================================ -->
+
+<!-- Slide 8: Target Markets — DataTable -->
+<div class="slide-label">#8 — <code>DataTable</code> — Target Markets</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div style="position:absolute; top:64px; left:64px;">
+    <div class="h6 c-tertiary">Target Markets Overview &mdash; Argentina, Brazil, Mexico</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column;">
+    <table class="data-table" style="width:100%; height:100%; table-layout:fixed;">
+      <colgroup><col style="width:20%"><col style="width:20%"><col style="width:15%"><col style="width:20%"><col style="width:25%"></colgroup>
+      <thead>
+        <tr><th>Country</th><th class="num">Market Size</th><th class="num">Tax Rate</th><th>Crypto Status</th><th>Top Pair</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="highlight">Argentina</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>90B</td><td class="num">15%</td><td>Legal payment method</td><td>USDT/ARS (49%)</td></tr>
+        <tr><td class="highlight">Brazil</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>89B</td><td class="num">17.5%</td><td>Legal + VASP licensing</td><td>BTC/BRL (19%)</td></tr>
+        <tr><td class="highlight">Mexico</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>65B</td><td class="num">30-35%</td><td>Fintech Law regulated</td><td>BTC/MXN (29%)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">8</span></div>
+</div></div>
+
+<!-- Slide 9: TAM & Users — Stats 2×1 -->
+<div class="slide-label">#9 — <code>Stats</code> 2&times;1 — Market Size</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Market</div>
+          <div class="h3 c-primary">Total addressable market</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Combined across Argentina, Brazil, and Mexico. Stablecoins dominate in Argentina as inflation hedge; BTC dominates in Brazil and Mexico for investment.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      <div class="stat-cell">
+        <div class="h5 c-primary">TAM across 3 countries</div>
+        <div class="h1 c-primary"><span style="color:rgba(56,51,35,0.24);">$</span>244B</div>
+      </div>
+      <div class="stat-cell">
+        <div class="h5 c-primary">Crypto users in target markets</div>
+        <div class="h1 c-primary">19M+</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">9</span></div>
+</div></div>
+
+<!-- Slide 10: User Demographics — TwoCol + Table -->
+<div class="slide-label">#10 — <code>TwoCol</code> + <code>Table</code> — User Demographics</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-2col" style="align-items:flex-start;">
+    <div class="slot slot-text-740" style="justify-content:flex-start; padding-top:0;">
+      <div class="h2 c-primary" style="text-wrap:balance;">Target users</div>
+      <div style="height:128px;"></div>
+      <div class="h4 c-secondary">Core demographic: 25&#8211;34 year olds (38%), tech&#8209;savvy, seeking inflation protection and cross&#8209;border transfer tools.</div>
+    </div>
+    <div class="slot slot-fill" style="justify-content:flex-start; align-items:flex-end;">
+      <div class="var-table yellow">
+        <div class="var-table-title">User demographics by age</div>
+        <div class="var-table-grid g2x3" id="table-demo"></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">10</span></div>
+</div></div>
+
+<!-- Slide 11: Competitive Landscape — Proof -->
+<div class="slide-label">#11 — <code>Proof</code> — Competitive Landscape</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div style="position:absolute; top:0; left:0; width:804px; bottom:0; background:#FFEDAB; display:flex; align-items:center; padding:0 64px;">
+    <div style="display:flex; flex-direction:column; gap:32px; width:100%;">
+      <div class="h2 c-primary">Competitive landscape</div>
+      <div class="h4 c-secondary">CryptoSwitch targets the 22% of the LatAm crypto market not controlled by the two dominant players.</div>
+    </div>
+  </div>
+  <div style="position:absolute; top:0; left:966px; right:64px; bottom:0; display:grid; grid-template-columns:1fr 1fr; gap:64px 48px; align-content:center;">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">52%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Binance market share in Latin America</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">26%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Bitso market share in Latin America</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">22%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">Remaining market split among smaller platforms</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="h1 c-primary">0.03%</div>
+      <div class="p1 c-secondary" style="text-wrap:balance;">CryptoSwitch fee per transaction vs. higher competitor rates</div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">11</span></div>
+</div></div>
+
+<!-- Slide 12: Competitive Advantages — FourCol Cards -->
+<div class="slide-label">#12 — <code>FourCol</code> + <code>Cards</code> — Competitive Advantages</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Competition</div>
+          <div class="h3 c-primary">Our edge vs. Bitso</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Free educational content via chatbot directly addresses low financial literacy in Latin America.</div>
+      </div>
+    </div>
+  </div>
+  <div class="content-4col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Local focus</div>
+        <div class="list">
+          <div class="h5 c-secondary">Designed for AR, BR, MX</div>
+          <div class="h5 c-secondary">Localized payment options</div>
+          <div class="h5 c-secondary">Spanish &amp; Portuguese support</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Ease of use</div>
+        <div class="list">
+          <div class="h5 c-secondary">Simple, intuitive interface</div>
+          <div class="h5 c-secondary">Personalized layouts</div>
+          <div class="h5 c-secondary">Built for low digital literacy</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Fees &amp; speed</div>
+        <div class="list">
+          <div class="h5 c-secondary">0.03% per transaction</div>
+          <div class="h5 c-secondary">Real&#8209;time exchange (&lt;3 sec)</div>
+          <div class="h5 c-secondary">24/7 web + mobile access</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Security</div>
+        <div class="list">
+          <div class="h5 c-secondary">Canadian MSB license</div>
+          <div class="h5 c-secondary">KYC/AML + 2FA</div>
+          <div class="h5 c-secondary">Encryption + cold storage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">12</span></div>
+</div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">4. Business Model</div>
+<!-- ============================================================ -->
+
+<!-- Slide 13: Platform Architecture — DataTable -->
+<div class="slide-label">#13 — <code>DataTable</code> — Platform Architecture</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div style="position:absolute; top:64px; left:64px;">
+    <div class="h6 c-tertiary">Technical Architecture &mdash; Platform Components</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column;">
+    <table class="data-table" style="width:100%; height:100%; table-layout:fixed;">
+      <colgroup><col style="width:25%"><col style="width:75%"></colgroup>
+      <thead>
+        <tr><th>Component</th><th>Specification</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="highlight">UX/UI</td><td>Localized interface in EN, ES, PT with intuitive dashboards</td></tr>
+        <tr><td>Authentication</td><td>FINTRAC compliant KYC/AML procedures</td></tr>
+        <tr><td>Blockchain</td><td>15+ cryptocurrencies (BTC, ETH, USDT, USDC, XRP, SOL)</td></tr>
+        <tr><td class="highlight">Trading</td><td>Real-time order matching and fast execution engine</td></tr>
+        <tr><td>Wallets</td><td>Hot and cold wallets with MultiSig and HSM security</td></tr>
+        <tr><td>Liquidity</td><td>API connections with Binance and Bitso</td></tr>
+        <tr><td class="highlight">Payments</td><td>Fiat on-ramps and off-ramps for ARS, BRL, MXN, USD</td></tr>
+        <tr><td>Security</td><td>2FA, DDoS protection, cold storage, data encryption</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">13</span></div>
+</div></div>
+
+<!-- Slide 14: Key Stakeholders — Side-by-side -->
+<div class="slide-label">#14 — <code>Side-by-side</code> — Stakeholders</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Business</div>
+          <div class="h3 c-primary">Key resources &amp; partners</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="slot-tables-row" id="stakeholder-tables"></div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">14</span></div>
+</div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">5. Roadmap &amp; Financials</div>
+<!-- ============================================================ -->
+
+<!-- Slide 15: Roadmap — Carousel -->
+<div class="slide-label">#15 — <code>Carousel</code> — 2026 Roadmap</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Roadmap</div>
+          <div class="h3 c-primary">2026 implementation</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Four-phase rollout from MVP through full platform launch with regional bank partnerships.</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:0; height:711px; overflow:hidden; cursor:grab;" id="carousel-roadmap">
+    <div style="display:flex; gap:12px; height:100%; padding-right:64px; transition:transform 0.2s;">
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Jan &ndash; Mar 2026</div>
+        <div class="h2 c-primary">MVP</div>
+        <div class="h6 c-secondary">Complete compliance, integrate liquidity APIs, &lt;3 sec transactions, 100 beta users</div>
+      </div>
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Apr &ndash; May 2026</div>
+        <div class="h2 c-primary">Automation</div>
+        <div class="h6 c-secondary">Full exchange automation, failover mechanisms, 99.95% uptime, &lt;0.01% errors</div>
+      </div>
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Jun &ndash; Aug 2026</div>
+        <div class="h2 c-primary">Growth</div>
+        <div class="h6 c-secondary">CRM system, 500+ verified users, 25% active trading, marketing campaigns</div>
+      </div>
+      <div class="stat-cell" style="flex:none; width:589px;">
+        <div class="h5 c-primary">Sep &ndash; Dec 2026</div>
+        <div class="h2 c-primary">Launch</div>
+        <div class="h6 c-secondary">Expanded analytics, external audits, $300k monthly volume, bank partnerships</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">15</span></div>
+</div></div>
+
+<!-- Slide 16: Revenue Breakdown — DataTable -->
+<div class="slide-label">#16 — <code>DataTable</code> — Year 1 Revenue</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div style="position:absolute; top:64px; left:64px;">
+    <div class="h6 c-tertiary">Revenue Breakdown by Country &mdash; Year 1</div>
+  </div>
+  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column;">
+    <table class="data-table" style="width:100%; height:100%; table-layout:fixed;">
+      <colgroup><col style="width:16%"><col style="width:16%"><col style="width:12%"><col style="width:16%"><col style="width:16%"><col style="width:12%"><col style="width:12%"></colgroup>
+      <thead>
+        <tr><th>Country</th><th class="num">Revenue</th><th class="num">Tax</th><th class="num">Net Revenue</th><th class="num">Staff</th><th class="num">Net Profit</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Argentina</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>164k</td><td class="num">15%</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>140k</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>120k</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>20k</td></tr>
+        <tr><td class="highlight">Brazil</td><td class="num highlight"><span style="color:rgba(60,49,43,0.24);">$</span>821k</td><td class="num">17.5%</td><td class="num highlight"><span style="color:rgba(60,49,43,0.24);">$</span>678k</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>550k</td><td class="num highlight"><span style="color:rgba(60,49,43,0.24);">$</span>128k</td></tr>
+        <tr><td>Mexico</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>285k</td><td class="num">35%</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>185k</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>160k</td><td class="num"><span style="color:rgba(60,49,43,0.24);">$</span>25k</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">16</span></div>
+</div></div>
+
+<!-- Slide 17: Financial Projections — Stats 2+3 -->
+<div class="slide-label">#17 — <code>Stats</code> 2+3 — Financial Projections</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Financials</div>
+          <div class="h3 c-primary">Key projections</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Initial investment of $758k with payback in 6&#8211;9 months. Investment fully recovered by May 2028, first $1M profit by April 2029.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      <div class="stat-cell">
+        <div class="h5 c-primary">Initial investment</div>
+        <div class="h1 c-primary"><span style="color:rgba(56,51,35,0.24);">$</span>758k</div>
+      </div>
+      <div class="stat-cell">
+        <div class="h5 c-primary">Year 1 net profit</div>
+        <div class="h1 c-primary"><span style="color:rgba(56,51,35,0.24);">$</span>172k</div>
+      </div>
+    </div>
+    <div class="stat-grid-row">
+      <div class="stat-cell">
+        <div class="h5 c-primary">Payback period</div>
+        <div class="h1 c-primary">6&#8211;9 mo</div>
+      </div>
+      <div class="stat-cell">
+        <div class="h5 c-primary">Cash position 2030</div>
+        <div class="h1 c-primary"><span style="color:rgba(56,51,35,0.24);">$</span>5.4M</div>
+      </div>
+      <div class="stat-cell">
+        <div class="h5 c-primary">Net income 2030</div>
+        <div class="h1 c-primary"><span style="color:rgba(56,51,35,0.24);">$</span>1.8M</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">17</span></div>
+</div></div>
+
+<!-- Slide 18: Conclusion — TextSlide -->
+<div class="slide-label">#18 — <code>TextSlide</code> — Conclusion</div>
+<div class="slide"><div class="slide-inner bg-layer">
+  <div class="content-frame" style="width:890px;">
+    <div class="h4 c-yellow">Conclusion</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; width:1191px;">
+    <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">Strong regulatory foundation, local adaptation, and unique offerings create a solid basis for scaling across Latin America.</div>
+  </div>
+  <div class="footer"><span class="footer-title">CryptoSwitch</span><span class="footer-copy">Eugen Luchianov &middot; European University Business School</span><span class="footer-page">18</span></div>
+</div></div>
+
+<!-- Slide 19: EndSlide -->
+<div class="slide-label">#19 — <code>EndSlide</code></div>
+<div class="slide"><div class="slide-inner bg-brand">
+  <div class="end-text">
+    <div class="h1 c-primary">Thank you</div>
+  </div>
+</div></div>
+
+<script src="../shared.js"></script>
+<script>
+initAnnotations('cryptoswitch-pins');
+
+// Populate demographics table
+document.getElementById('table-demo').innerHTML =
+  varCard('18–24', '23%') +
+  varCard('25–34', '38%') +
+  varCard('35–44', '22%') +
+  varCard('45–54', '11%') +
+  varCard('55–64', '4%') +
+  varCard('65+', '2%');
+
+// Populate stakeholder side-by-side tables
+document.getElementById('stakeholder-tables').innerHTML =
+  varTable('2x2', 'Internal teams', [
+    ['Development', 'Platform'],
+    ['Compliance', 'KYC/AML'],
+    ['Legal', 'Licensing'],
+    ['Executive', 'Strategy'],
+  ], { color: 'yellow' }) +
+  varTable('2x2', 'External partners', [
+    ['FINTRAC', 'Regulator'],
+    ['Local banks', 'Fiat gateway'],
+    ['Binance', 'Liquidity'],
+    ['Fintech', 'Ecosystem'],
+  ], { color: 'blue' });
+
+// Carousel drag
+initDrag(document.getElementById('carousel-roadmap'));
+
+// Presentation mode
+initPresentation('.slide');
+</script>
+</body>
+</html>

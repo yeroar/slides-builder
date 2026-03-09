@@ -1,0 +1,10 @@
+{
+  "name": "slide-presentations",
+  "version": "1.0.0",
+  "description": "Generate slide presentations with Claude Code using a professional design system",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "validate": "node validate.mjs"
+  }
+}

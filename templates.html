@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Builder — Templates</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="storybook-shell.css">
+</head>
+
+<body>
+  <nav class="sidebar" id="sidebarRoot"></nav>
+  <div class="toolbar">
+    <button type="button" id="gridToggle">Grid</button>
+    <button type="button" id="overlapToggle">Overlap</button>
+  </div>
+  <main class="main" id="mainRoot"></main>
+
+  <div class="ann-fab" id="annFab" title="Toggle annotation mode">
+    <span id="annFabIcon">&#x1F4CC;</span>
+    <span class="badge" id="annBadge"></span>
+  </div>
+
+  <div class="ann-panel" id="annPanel">
+    <div class="ann-panel-header">
+      <div class="ann-panel-title" id="annPanelTitle">Notes</div>
+      <div class="ann-panel-actions">
+        <button type="button" id="copyNotesButton" title="Copy notes to clipboard">&#x1F4CB;</button>
+        <button type="button" id="clearNotesButton" title="Clear all">&#x1F5D1;</button>
+      </div>
+    </div>
+    <div class="ann-panel-list" id="annList">
+      <div class="ann-panel-empty">Click elements to annotate</div>
+    </div>
+    <div class="ann-multi" id="annMulti">
+      <span class="ann-multi-count" id="annMultiCount">0</span>
+      <input type="text" id="annMultiInput" placeholder="Note for all selected...">
+      <button type="button" class="ann-multi-add" id="annMultiAdd">Add</button>
+      <button type="button" class="ann-multi-cancel" id="annMultiCancel">&times;</button>
+    </div>
+  </div>
+
+  <template id="grid-tpl">
+    <div class="grid-overlay">
+      <div class="grid-cols">
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+        <div class="grid-col"></div>
+      </div>
+      <div class="grid-rows">
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+        <div class="grid-row"></div>
+      </div>
+    </div>
+  </template>
+
+  <script src="shared.js"></script>
+  <script src="template-registry.js"></script>
+  <script src="storybook-shell.js"></script>
+  <script src="templates-page.js"></script>
+</body>
+
+</html>

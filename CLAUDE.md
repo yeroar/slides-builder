@@ -103,30 +103,40 @@ y=1080 → slide bottom
 |-----------|-------------|
 | Start/End | 1 heading + 1 subtitle |
 | TwoCol | 1 heading + 1 body + 1 visual |
-| TwoCol/ThreeCol/FourCol Cards | 1 header + 2-4 cards (max 4 bullets each) |
+| Cards (no image) | 1 header + 2-4 cards (max 4 bullets each), max 5 cols |
+| Cards+Img | 1 header + 2-4 cards with images, **max 4 cols** (images need height) |
 | Stats | 1 header + max 6 stat cells |
 | DataTable | max 8 rows x 5 columns |
 | TextSlide | 1 title + 1 body block |
 
 Exceeds limits → split into multiple slides. Never cram.
 
-## Composition catalog (13 templates)
+## Composition catalog (22 templates)
 
-| # | Template | When to use |
-|---|----------|-------------|
-| 1 | **Cards** (TwoCol/ThreeCol/FourCol) | 2-4 topics with bullet lists |
-| 2 | **Features** (TwoCol) | Process/walkthrough with image placeholders |
-| 3 | **Stats** (2x1, 3x1, 2x2, 2+3) | Numbers that need impact |
-| 4 | **Carousel** | 4+ sequential steps (needs peek effect) |
-| 5 | **Comparison** | A vs B (yellow + blue blocks) |
-| 6 | **DataTable** | Dense tabular data |
-| 7 | **Side-by-side** | Narrative + VariableCard tables |
-| 8 | **Proof** | Yellow panel left + stat grid right |
-| 9 | **TextSlide** | Big quote or statement (72px body) |
-| 10 | **Partners** | Partner/vendor showcase with logo placeholders |
-| 11 | **Agenda** | Section overview with bullet lines |
-| 12 | **Section divider** | Between major sections |
-| 13 | **Timeline** | 4-6 milestones with alternating nodes |
+| # | Group | Template | When to use |
+|---|-------|----------|-------------|
+| 1 | Structural | **Start** | Opening slide, brand yellow bg |
+| 2 | Structural | **End** | Closing slide, brand yellow bg |
+| 3 | Structural | **Agenda** | Section overview with bullet lines |
+| 4 | Structural | **Section** | Between major sections, active/inactive items |
+| 5 | Thoughts | **Thoughts** | Bold statement + image, short/sweet |
+| 6 | Thoughts | **Quote** | Hanging quote marks + author attribution |
+| 7 | Thoughts | **TextSlide** | Big statement, 72px body text |
+| 8 | Product | **Cards** | ThreeCol feature cards, no image |
+| 9 | Product | **Cards 2col** | TwoCol feature cards, no image |
+| 10 | Product | **Cards+Img** | ThreeCol feature cards with image |
+| 11 | Product | **Cards 2col+Img** | TwoCol feature cards with image |
+| 12 | Product | **Features** | Title left + 3 stacked feature rows with thumbnails |
+| 13 | Product | **Description** | H2 title + H4 body + full-height image (auto follow-up) |
+| 14 | Product | **Partners** | Logo grids with multiple layout modes |
+| 15 | Product | **Comparison** | A vs B (yellow + blue blocks) |
+| 16 | Data | **Proof** | Yellow panel left + 2×2 stat grid right |
+| 17 | Data | **Stats 2×1** | Two stat cells, H1 values |
+| 18 | Data | **Stats 3×1** | Three stat cells, H2 values |
+| 19 | Data | **Stats 2×2** | Four stat cells in 2 rows, H1 values |
+| 20 | Data | **Side-by-side** | Two VariableCard tables |
+| 21 | Data | **DataTable** | Full-width light table |
+| 22 | Roadmap | **Carousel** | 4+ sequential steps (needs peek effect) |
 
 ## Template selection heuristics
 
@@ -137,7 +147,7 @@ Exceeds limits → split into multiple slides. Never cram.
 | 2 topics with bullets | Cards 2col, Comparison | ThreeCol (odd number) |
 | 2 opposing things | Comparison, Proof | ThreeCol (odd number) |
 | Narrative + data | Side-by-side, Proof | Cards (can't do paragraphs) |
-| Process/flow (4+ steps) | Carousel | Timeline (<4 items) |
+| Process/flow (4+ steps) | Carousel | Stats 3x1 (<4 items) |
 | 3 milestones + descriptions | Stats 3x1 | Carousel (no peek) |
 | Dense table data | DataTable | Cards (wrong shape) |
 | Definitions by category | ThreeCol Cards (2 slides) | DataTable (too many rows) |
@@ -150,6 +160,49 @@ Exceeds limits → split into multiple slides. Never cram.
 - **Dense content → multiple slides**: 8+ bullet points → always split
 - **Carousel needs 4+ items** (4th peeks off-screen). 3 items → Stats 3x1
 - `$`, `>`, `<` symbols get de-emphasis color in stat cells and varCards
+- **Partners LineItem**: show description OR chip, never both. 3 rows = description (no chip), 4 rows = chip (no description)
+- **Side-by-side single row**: when both columns are `*x1` grids, position tables at `top: calc(37.5% + 24px)` instead of `top: 192px` — gives more header breathing room and taller cards
+- **Text balance**: `text-wrap: balance` is set globally on `.slide-inner` — all text distributes line breaks evenly, no spiky orphan lines. Do not override with `text-wrap: pretty` or `wrap`
+
+## Variant chip pairing rules
+
+When generating presentations with chip switchers, templates within the same group are offered as switchable variants on the same slide:
+
+| Group | Variant chips | When to use |
+|-------|---------------|-------------|
+| **Thoughts** | Thoughts, Quote, TextSlide | Thoughts = short/sweet, Quote = attribution, TextSlide = detailed |
+| **Product** | Cards, Cards 2col, Cards+Img, Cards 2col+Img, Features | Feature showcases with bullets/images |
+| **Data** | Proof, Stats 2×1, Stats 3×1, Stats 2×2, Side-by-side, DataTable | Proof = descriptive narrative + numbers, Stats = short/punchy |
+
+Never mix groups — a Proof slide should offer Stats variants, not Cards. A Cards slide should offer Features, not Stats.
+
+### Description auto-follow-up rule
+
+**Description** is a follow-up slide (N+1) after a high-level template. It adds detailed narrative for the preceding summary. Auto-generate when source content has both summary points and detailed explanation.
+
+### Storytelling chain hints
+
+Soft suggestions for what template follows naturally. Each template has a `suggestNext` array in the registry. The narrative logic:
+
+| Story beat | Template role | Suggests next |
+|---|---|---|
+| **Open** | Start | → Agenda, Section, Thoughts |
+| **Frame** | Agenda, Section | → Thoughts, TextSlide, Cards |
+| **Claim** | Thoughts, TextSlide, Quote | → Cards, Features, Proof (claim → evidence) |
+| **Explain** | Cards, Features, Description | → Proof, Stats (explain → prove) |
+| **Prove** | Proof, Stats, DataTable | → Cards, Features, Section (data → next topic) |
+| **Showcase** | Partners, Comparison | → Stats, Proof, TextSlide, End |
+| **Flow** | Carousel | → Proof, Stats, Partners |
+
+Key patterns:
+- **Claim → Evidence**: Thoughts/TextSlide naturally flows into Proof/Stats
+- **Explain → Prove**: Cards/Features followed by Proof/Stats backs up the feature story
+- **Prove → Pivot**: After data slides, pivot to a new section or shift to product detail
+- **Quote → Expand**: Quote sets the tone → Cards/Features break down the idea
+- **Compare → Quantify**: Comparison shows A vs B → Stats/DataTable quantifies the gap
+- **Showcase → Close**: Partners/Carousel near the end → TextSlide wrap-up → End
+- **Deep Dive**: Section → Description → Cards → Proof (full topic arc within a section)
+- These are hints, not rules — content always wins over sequencing suggestions
 
 ## Typography scale
 

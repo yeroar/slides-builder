@@ -439,6 +439,30 @@ Both layouts share a 64px gap to optional footnotes (P3 12px, tertiary, 792px).
 
 ---
 
+### VerticalHeader
+
+Stacked vertical header with H4 title and H5 description. Used for Comparison slides.
+
+| Param | Typography |
+|-------|------------|
+| title | H4: Geist Regular 48px / 48px, `face.primary` |
+| body | H5: Geist Regular 32px / 32px, `face.secondary`, width 1190px |
+
+**Layout:** Vertical, gap 60px, width 1792px (height auto)
+
+**CSS class:** `.tl-vertical-header`
+
+```html
+<div class="tl-vertical-header">
+  <div class="h4 c-primary">Title text</div>
+  <div class="tl-vh-body">Description text</div>
+</div>
+```
+
+**Figma node:** `91:1332`
+
+---
+
 ### TextSlide
 
 ```typescript

@@ -45,7 +45,7 @@
         <div class="story-desc">${story.desc}</div>
         <div class="chips" data-story-controls="${story.id}"></div>
         <div class="slide">
-          <div class="slide-inner bg-layer" data-story-slide="${story.id}"></div>
+          <div class="slide-inner bg-warning" data-story-slide="${story.id}"></div>
         </div>
         <div class="story-label" data-story-label="${story.id}"></div>
       </div>`;
@@ -97,7 +97,7 @@
     const label = document.querySelector(`[data-story-label="${storyId}"]`);
     if (!slide || !label) return;
 
-    slide.className = `slide-inner ${result.bg || 'bg-layer'}`;
+    slide.className = `slide-inner ${result.bg || 'bg-warning'}`;
     slide.innerHTML = result.html;
     slide.appendChild(createGridOverlay());
     if (gridEnabled) {

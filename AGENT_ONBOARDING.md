@@ -85,37 +85,57 @@ Exceeds limits → split into multiple slides. Never cram.
 
 ---
 
-## 4. Composition catalog (13 templates)
+## 4. Composition catalog (22 templates)
 
 Open `templates.html` to see all of these rendered.
 
-| # | Template | Structure | When to use |
-|---|----------|-----------|-------------|
-| 1 | **Cards** (ThreeCol/FourCol) | `tl-stats` header + `feature-card-noimg` columns at y=305 | 3-4 topics with bullet lists |
-| 2 | **Features** (TwoCol) | H3+H5 left, max 3 feature rows right (image+H5+H6) | Process/walkthrough with visuals |
-| 3 | **Stats** (2x1, 3x1, 2x2, 2+3) | `tl-stats` header + `stat-grid` + `stat-cell` (H5 title + H1/H2 value) | Numbers that need impact |
-| 4 | **Carousel** | `tl-stats` header + horizontal flex of 589px stat-cells | 4+ sequential steps (needs peek effect) |
-| 5 | **Comparison** | Two `compare-block` (yellow+blue) + `compare-chip` labels | A vs B with visual contrast |
-| 6 | **DataTable** | H6 tertiary title + table at y=192, `table-layout:fixed` | Dense tabular data |
-| 7 | **Side-by-side** | H2 title + H4 body left, VariableCard tables right | Narrative + supporting data |
-| 8 | **Proof** | Yellow panel (H2+H4) left + stat grid (H2+H6) right | Story with proof-point numbers |
-| 9 | **TextSlide** | H4 yellow title + 72px body text, 1792px width | Big quote or statement |
-| 10 | **Partners** | H3 title + partner rows (logo card + H5 name + H6 desc) | Partner/vendor showcase |
-| 11 | **Agenda** | `slot-agenda` with H1 bullet items (accent/disabled) | Section overview |
-| 12 | **Section divider** | `section-slot` with `section-item` list, one `.active` | Between major sections |
-| 13 | **Timeline** | Horizontal line + alternating above/below nodes | 4-6 milestones |
+| # | Group | Template | When to use |
+|---|-------|----------|-------------|
+| 1 | Structural | **Start** | Opening slide, brand yellow bg |
+| 2 | Structural | **End** | Closing slide, brand yellow bg |
+| 3 | Structural | **Agenda** | Section overview with bullet lines |
+| 4 | Structural | **Section** | Between major sections |
+| 5 | Thoughts | **Thoughts** | Bold statement + image, short/sweet |
+| 6 | Thoughts | **Quote** | Hanging quote marks + author attribution |
+| 7 | Thoughts | **TextSlide** | Big statement, 72px body text |
+| 8 | Product | **Cards** | ThreeCol feature cards, no image |
+| 9 | Product | **Cards 2col** | TwoCol feature cards, no image |
+| 10 | Product | **Cards+Img** | ThreeCol feature cards with image |
+| 11 | Product | **Cards 2col+Img** | TwoCol feature cards with image |
+| 12 | Product | **Features** | Title left + 3 stacked feature rows with thumbnails |
+| 13 | Product | **Description** | H2 title + H4 body + full-height image (auto follow-up) |
+| 14 | Product | **Partners** | Logo grids with multiple layout modes |
+| 15 | Product | **Comparison** | A vs B (yellow + blue blocks) |
+| 16 | Data | **Proof** | Yellow panel left + 2×2 stat grid right |
+| 17 | Data | **Stats 2×1** | Two stat cells, H1 values |
+| 18 | Data | **Stats 3×1** | Three stat cells, H2 values |
+| 19 | Data | **Stats 2×2** | Four stat cells in 2 rows, H1 values |
+| 20 | Data | **Side-by-side** | Two VariableCard tables |
+| 21 | Data | **DataTable** | Full-width light table |
+| 22 | Roadmap | **Carousel** | 4+ sequential steps (needs peek effect) |
 
 ### Template selection cheat sheet
 | Content shape | Best template | Avoid |
 |---|---|---|
-| Short labels + big numbers | Stats, Blocks | Cards |
-| Bullets per topic | Cards (3-5 col) | Stats |
-| 2 opposing things | Blocks, Comparison | ThreeCol |
+| Short labels + big numbers | Stats, Proof | Cards |
+| Bullets per topic | Cards (2-4 col) | Stats |
+| 2 topics with bullets | Cards 2col, Comparison | ThreeCol |
+| 2 opposing things | Comparison, Proof | ThreeCol |
 | Narrative + data | Side-by-side, Proof | Cards |
-| 4+ sequential steps | Carousel | Timeline (<4 items) |
+| 4+ sequential steps | Carousel | Stats 3x1 (<4 items) |
 | 3 milestones + descriptions | Stats 3x1 | Carousel (no peek) |
 | Dense table data | DataTable | Cards |
 | Definitions by category | ThreeCol Cards (2 slides) | DataTable |
+| Attribution/credibility | Quote | TextSlide (no author) |
+
+### Storytelling chain hints (soft)
+Each template has `suggestNext` in the registry. Key patterns:
+- **Claim → Evidence**: Thoughts/Quote/TextSlide → Proof/Stats
+- **Explain → Prove**: Cards/Features → Proof/Stats
+- **Compare → Quantify**: Comparison → Stats/DataTable
+- **Quote → Expand**: Quote → Cards/Features (break down the idea)
+- **Deep Dive**: Section → Description → Cards → Proof (full topic arc)
+- **Showcase → Close**: Partners/Carousel → TextSlide → End
 
 ---
 

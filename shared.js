@@ -186,6 +186,7 @@ function switchChip(group, variant) {
 // ══════════════════════════════════════════════════════════════
 let _pinStorageKey = '';
 let _placingSlide = null;
+let _multiSelectEls = []; // multi-select buffer
 
 function initAnnotations(storageKey) {
   _pinStorageKey = storageKey;
@@ -207,7 +208,7 @@ function initAnnotations(storageKey) {
       const btn = document.createElement('button');
       btn.className = 'pin-btn';
       btn.id = 'pinbtn-' + slideNum;
-      btn.title = 'Click to place a pin on this slide';
+      btn.title = 'Click to place a pin · ⇧⌘+Click for multi-select';
       btn.onclick = (e) => { e.stopPropagation(); _togglePlacing(slideNum); };
       label.style.position = 'relative';
       label.style.paddingRight = '36px';
@@ -232,11 +233,48 @@ function initAnnotations(storageKey) {
         e.stopPropagation();
         e.target.classList.remove('hover-highlight');
         if (e.target.classList.contains('pin')) return;
+
         const rect = slideEl.getBoundingClientRect();
         const x = +((e.clientX - rect.left) / rect.width * 100).toFixed(1);
         const y = +((e.clientY - rect.top) / rect.height * 100).toFixed(1);
         const elInfo = _identifyElement(e.target, slideEl);
         if (!elInfo.selector) return;
+
+        // Capture text selection if any
+        const sel = window.getSelection();
+        if (sel && sel.toString().trim().length > 0) {
+          elInfo.selectedText = sel.toString().trim().slice(0, 200);
+          sel.removeAllRanges();
+        }
+
+        // Multi-select: Cmd+Shift+Click toggles elements in buffer
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
+          const existing = _multiSelectEls.findIndex(m => m.selector === elInfo.selector);
+          if (existing >= 0) {
+            e.target.classList.remove('multi-highlight');
+            _multiSelectEls.splice(existing, 1);
+          } else {
+            e.target.classList.add('multi-highlight');
+            _multiSelectEls.push({ x, y, elInfo, el: e.target });
+          }
+          _updateMultiCount(slideNum);
+          return;
+        }
+
+        // If there are buffered multi-select elements, commit them all as pins
+        if (_multiSelectEls.length > 0) {
+          _multiSelectEls.push({ x, y, elInfo, el: e.target });
+          const names = _multiSelectEls.map(m => m.elInfo.name).join(' + ');
+          _multiSelectEls.forEach(m => {
+            if (m.el) m.el.classList.remove('multi-highlight');
+            m.elInfo.multiGroup = names;
+            _addPin(slideNum, m.x, m.y, '', m.elInfo);
+          });
+          _multiSelectEls = [];
+          _updateMultiCount(slideNum);
+          return;
+        }
+
         _addPin(slideNum, x, y, '', elInfo);
       });
 
@@ -245,9 +283,22 @@ function initAnnotations(storageKey) {
 
     _updatePinCount();
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && _placingSlide) _togglePlacing(_placingSlide);
+      if (e.key === 'Escape') {
+        if (_multiSelectEls.length) {
+          _multiSelectEls.forEach(m => { if (m.el) m.el.classList.remove('multi-highlight'); });
+          _multiSelectEls = [];
+          if (_placingSlide) _updateMultiCount(_placingSlide);
+        }
+        if (_placingSlide) _togglePlacing(_placingSlide);
+      }
     });
   });
+}
+
+function _updateMultiCount(slideNum) {
+  const btn = document.getElementById('pinbtn-' + slideNum);
+  if (!btn || !btn.classList.contains('placing')) return;
+  btn.textContent = _multiSelectEls.length > 0 ? _multiSelectEls.length + '⊕' : '\u00d7';
 }
 
 function _pinLoad() {
@@ -294,27 +345,108 @@ function _updateBtnState(num) {
 
 function _identifyElement(target, slideEl) {
   const inner = slideEl.querySelector('.slide-inner');
-  if (!inner || target.classList.contains('pin')) return { selector: '', text: '', classes: '' };
+  if (!inner || target.classList.contains('pin')) return { selector: '', name: '', text: '', classes: '', path: '', styles: '' };
   const rawText = (target.textContent || '').trim();
   const text = rawText.length > 60 ? rawText.slice(0, 57) + '...' : rawText;
+
+  // Build CSS path (for export)
   const parts = [];
   let cur = target;
+  const skipClasses = new Set(['slide-inner', 'bg-brand', 'bg-warning', 'bg-layer', 'bg-warning-subtle']);
   while (cur && cur !== inner && cur !== slideEl) {
     let seg = cur.tagName ? cur.tagName.toLowerCase() : '';
-    const skip = new Set(['slide-inner', 'bg-brand', 'bg-warning', 'bg-layer']);
-    const classes = [...(cur.classList || [])].filter(c => !skip.has(c));
+    const classes = [...(cur.classList || [])].filter(c => !skipClasses.has(c));
     if (classes.length) seg = '.' + classes.join('.');
     else if (cur.tagName === 'DIV' && cur.style.cssText) seg = 'div[style]';
     parts.unshift(seg);
     cur = cur.parentElement;
   }
-  return { selector: parts.join(' > '), text, classes: [...(target.classList || [])].join(' ') };
+  const selector = parts.join(' > ');
+
+  // Human-readable name (inspired by agentation)
+  const name = _elementName(target);
+
+  // Readable path (max 4 ancestors)
+  const pathParts = [];
+  let p = target;
+  let depth = 0;
+  while (p && p !== inner && depth < 4) {
+    const tag = p.tagName.toLowerCase();
+    if (tag === 'html' || tag === 'body') break;
+    const cls = [...(p.classList || [])].filter(c => c.length > 2 && !skipClasses.has(c))[0];
+    pathParts.unshift(cls ? '.' + cls : tag);
+    p = p.parentElement;
+    depth++;
+  }
+  const path = pathParts.join(' > ');
+
+  // Key computed styles snapshot
+  const styles = _styleSnapshot(target);
+
+  return { selector, name, text, classes: [...(target.classList || [])].join(' '), path, styles };
+}
+
+function _elementName(el) {
+  const tag = el.tagName.toLowerCase();
+  const txt = (el.textContent || '').trim();
+  const short = txt.length > 35 ? txt.slice(0, 32) + '...' : txt;
+  const cls = [...(el.classList || [])].filter(c => c.length > 2);
+
+  // Design system classes → readable name
+  const dsMap = { 'h1': 'H1', 'h2': 'H2', 'h3': 'H3', 'h4': 'H4', 'h5': 'H5', 'h6': 'H6',
+    'stat-cell': 'stat cell', 'var-card': 'variable card', 'var-table': 'variable table',
+    'feature-card-noimg': 'feature card', 'feature-card': 'feature card',
+    'proof-panel': 'proof panel', 'proof-grid': 'proof grid', 'proof-stat': 'proof stat',
+    'compare-block': 'compare block', 'footer': 'footer', 'content-frame': 'content frame',
+    'tl-stats': 'header zone', 'tl-stats-title': 'header title', 'carousel-track': 'carousel',
+    'logo-line-item': 'partner row', 'data-table': 'data table' };
+  for (const c of cls) { if (dsMap[c]) return dsMap[c] + (short ? ': "' + short + '"' : ''); }
+
+  // Typography classes
+  if (cls.some(c => /^(h[1-6]|p[1-5])$/.test(c))) {
+    const typo = cls.find(c => /^(h[1-6]|p[1-5])$/.test(c));
+    return typo.toUpperCase() + (short ? ' "' + short + '"' : '');
+  }
+
+  // Headings
+  if (/^h[1-6]$/.test(tag)) return tag + (short ? ' "' + short + '"' : '');
+  // Images
+  if (tag === 'img') { const alt = el.getAttribute('alt'); return alt ? 'image "' + alt.slice(0, 30) + '"' : 'image'; }
+  // Text elements
+  if (tag === 'span' || tag === 'p' || tag === 'label') return short ? '"' + short + '"' : tag;
+  // Containers with meaningful class
+  if (tag === 'div' && cls.length) {
+    const words = cls[0].split(/[-_]/).filter(w => w.length > 2).slice(0, 2);
+    if (words.length) return words.join(' ') + (short && short.length < 25 ? ': "' + short + '"' : '');
+  }
+
+  return tag === 'div' ? 'container' : tag;
+}
+
+function _styleSnapshot(el) {
+  const s = window.getComputedStyle(el);
+  const parts = [];
+  const bg = s.backgroundColor;
+  if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') parts.push('bg:' + bg);
+  const color = s.color;
+  if (color && color !== 'rgb(0, 0, 0)') parts.push('color:' + color);
+  const fs = s.fontSize;
+  if (fs) parts.push('font:' + fs);
+  const fw = s.fontWeight;
+  if (fw && fw !== '400' && fw !== 'normal') parts.push('weight:' + fw);
+  const gap = s.gap;
+  if (gap && gap !== 'normal' && gap !== '0px') parts.push('gap:' + gap);
+  return parts.join(', ');
 }
 
 function _addPin(slideNum, x, y, text, elInfo) {
   const data = _pinLoad();
   if (!data[slideNum]) data[slideNum] = [];
-  data[slideNum].push({ x, y, text, selector: elInfo.selector, elText: elInfo.text, classes: elInfo.classes });
+  const pin = { x, y, text, selector: elInfo.selector, elText: elInfo.text, classes: elInfo.classes,
+    name: elInfo.name || '', path: elInfo.path || '', styles: elInfo.styles || '' };
+  if (elInfo.selectedText) pin.selectedText = elInfo.selectedText;
+  if (elInfo.multiGroup) pin.multiGroup = elInfo.multiGroup;
+  data[slideNum].push(pin);
   _pinSave(data);
   _renderPins(slideNum);
   const pinList = document.getElementById('pinlist-' + slideNum);
@@ -354,11 +486,12 @@ function _renderPins(slideNum) {
   pins.forEach((pin, idx) => {
     const num = idx + 1;
     const marker = document.createElement('div');
-    marker.className = 'pin';
+    marker.className = 'pin' + (pin.multiGroup ? ' multi' : '');
     marker.textContent = num;
     marker.style.left = pin.x + '%';
     marker.style.top = pin.y + '%';
-    marker.title = (pin.classes || pin.selector || '') + (pin.text ? '\n' + pin.text : '');
+    const tip = [pin.name || pin.classes || pin.selector, pin.styles, pin.text].filter(Boolean).join('\n');
+    marker.title = tip;
     marker.onclick = (e) => {
       e.stopPropagation();
       const input = pinList.querySelector(`[data-idx="${idx}"] input`);
@@ -369,10 +502,11 @@ function _renderPins(slideNum) {
     const item = document.createElement('div');
     item.className = 'pin-item';
     item.dataset.idx = idx;
-    const elLabel = pin.classes || pin.selector.split(' > ').pop() || 'slide';
+    const elLabel = pin.name || pin.classes || pin.selector.split(' > ').pop() || 'slide';
     const hasClass = pin.classes && pin.classes.length > 0;
-    const textPreview = pin.elText ? `"${pin.elText.length > 40 ? pin.elText.slice(0, 37) + '...' : pin.elText}"` : '';
-    item.innerHTML = `<div class="pin-item-num">${num}</div><span class="pin-el ${hasClass ? 'has-class' : ''}">${escHtml(elLabel)}</span><input type="text" value="${escHtml(pin.text || '')}" placeholder="What to change..." oninput="updatePinText(${slideNum},${idx},this.value)" onmouseenter="highlightPin(${slideNum},${idx},true)" onmouseleave="highlightPin(${slideNum},${idx},false)">${textPreview ? `<span class="pin-text-preview">${escHtml(textPreview)}</span>` : ''}<button class="pin-delete" onclick="deletePin(${slideNum},${idx})" title="Delete pin">\u00d7</button>`;
+    const selTextHtml = pin.selectedText ? `<span class="pin-sel-text" title="Selected text">\u201c${escHtml(pin.selectedText.slice(0, 50))}\u201d</span>` : '';
+    const stylesHtml = pin.styles ? `<span class="pin-styles" title="Computed styles">${escHtml(pin.styles)}</span>` : '';
+    item.innerHTML = `<div class="pin-item-num">${num}</div><span class="pin-el ${hasClass ? 'has-class' : ''}">${escHtml(elLabel)}</span>${selTextHtml}<input type="text" value="${escHtml(pin.text || '')}" placeholder="What to change..." oninput="updatePinText(${slideNum},${idx},this.value)" onmouseenter="highlightPin(${slideNum},${idx},true)" onmouseleave="highlightPin(${slideNum},${idx},false)">${stylesHtml}<button class="pin-delete" onclick="deletePin(${slideNum},${idx})" title="Delete pin">\u00d7</button>`;
     pinList.appendChild(item);
   });
   _updateBtnState(slideNum);
@@ -391,7 +525,10 @@ function copyNotes() {
     const desc = label ? label.textContent.trim() : '#' + num;
     output += `Slide ${num}  ${desc}\n`;
     pins.forEach((pin, i) => {
-      output += `  ${i + 1}. ${pin.selector || ''} ${pin.elText ? '"' + pin.elText + '"' : ''}\n     \u2192 ${pin.text || '(no description)'}\n`;
+      const label = pin.name || pin.selector || '';
+      const selText = pin.selectedText ? `\n     \u201c${pin.selectedText}\u201d` : '';
+      const styles = pin.styles ? `\n     styles: ${pin.styles}` : '';
+      output += `  ${i + 1}. ${label}${pin.elText ? ' "' + pin.elText + '"' : ''}${selText}${styles}\n     \u2192 ${pin.text || '(no description)'}\n`;
     });
     output += '\n';
   });

@@ -54,10 +54,15 @@
     </div>`;
   }
 
+  // ── Storytelling chain hints ──
+  // suggestNext: soft hints for what template works well after this one.
+  // Used during deck generation to guide narrative flow, never enforced.
+
   const STRUCTURAL = {
     start: {
       bg: 'bg-brand',
       label: 'Start — Brand yellow bg, H1 title + subtitle at bottom-left',
+      suggestNext: ['agenda', 'section', 'normal', 'textslide'],
       render: () => `
         <div class="start-title">
           <div class="h1 c-primary">Presentation Title</div>
@@ -67,6 +72,7 @@
     end: {
       bg: 'bg-brand',
       label: 'End — Brand yellow bg, closing text at bottom-left',
+      suggestNext: [],
       render: () => `
         <div class="end-text">
           <div class="h1 c-primary">Thank you</div>
@@ -75,6 +81,7 @@
     agenda: {
       bg: 'bg-warning',
       label: 'Agenda — Bullet list with accent/default lines, H1 128/120',
+      suggestNext: ['section', 'normal', 'textslide', 'cards'],
       render: () => `
         <div class="content-1col">
           <div class="slot-agenda" style="width:1760px">
@@ -90,6 +97,7 @@
     section: {
       bg: 'bg-warning',
       label: 'Section — Active item face-secondary, inactive face-disabled, H1 128/120',
+      suggestNext: ['normal', 'textslide', 'cards', 'features'],
       render: () => `
         <div class="content-1col">
           <div class="section-slot">
@@ -107,6 +115,7 @@
   const THOUGHTS = {
     normal: {
       label: 'Thoughts — H2 primary + H2 accent, 740px text + fill image, 162px gap',
+      suggestNext: ['cards', 'features', 'proof', 'description'],
       render: (align) => {
         const text = `<div class="slot slot-text-740"><div style="display:flex; flex-direction:column; width:740px;"><div class="h2 c-primary">Fold drives bitcoin rewards at scale across hundreds of merchants.</div><div class="h2 c-yellow" style="margin-top:48px;">Fold drives bitcoin rewards at scale across hundreds of merchants.</div></div></div>`;
         const img = `<div class="slot slot-fill"><div class="img-placeholder"></div></div>`;
@@ -116,6 +125,7 @@
     },
     quote: {
       label: 'Quote — Hanging quote marks, H2 text + H4 author block, 740px',
+      suggestNext: ['cards', 'features', 'proof', 'stats-3x1'],
       render: (align) => {
         const text = `<div class="slot slot-text-740" style="justify-content:space-between;"><div class="h2 c-primary" style="position:relative;"><span style="position:absolute; right:100%; color:var(--yellow-500);">“</span>Innovation distinguishes between a leader and a follower.<span style="color:var(--yellow-500);">”</span></div><div class="author"><div class="h4 c-tertiary">Steve Jobs</div><div class="h4 c-yellow">Co-founder, Apple</div></div></div>`;
         const img = `<div class="slot slot-fill"><div class="img-placeholder"></div></div>`;
@@ -125,6 +135,7 @@
     },
     textslide: {
       label: 'TextSlide — H4 yellow title + 72/64 body text at 1191px',
+      suggestNext: ['cards', 'features', 'proof', 'stats-2x1'],
       render: () => `
         <div class="content-frame" style="width:890px;">
           <div class="h4 c-yellow">Slide title</div>
@@ -137,37 +148,22 @@
   };
 
   const PRODUCT = {
-    proof: {
+    cards: {
       bg: 'bg-warning',
-      label: 'Proof — TwoCol text left + 2×2 stats right, bg-warning',
-      render: () => {
-        const stats = [
-          { value: '20+', desc: 'Climate-forward organizations<br>trust Aetherfield' },
-          { value: '60%', desc: 'Reduction in reporting time for sustainability teams' },
-          { value: '91%', desc: 'Less manual data cleanup compared to competitors' },
-          { value: '3.5×', desc: 'Increase in actionable insights per reporting cycle' },
-        ];
-        const grid = stats.map((stat) => `
-          <div style="display:flex; flex-direction:column; gap:16px;">
-            <div class="h2 c-primary">${stat.value}</div>
-            <div class="h6 c-secondary" style="text-wrap:balance;">${stat.desc}</div>
-          </div>`).join('');
-        return `
-          <div style="position:absolute; top:0; left:0; width:804px; bottom:0; background:#FFEDAB; display:flex; align-items:center; padding:0 64px;">
-            <div style="display:flex; flex-direction:column; gap:32px; width:100%;">
-              <div class="h2 c-primary">Proof and momentum</div>
-              <div class="h4 c-secondary">Aetherfield is trusted by leading organizations driving measurable climate progress.</div>
-            </div>
-          </div>
-          <div style="position:absolute; top:0; left:966px; right:64px; bottom:0; display:grid; grid-template-columns:1fr 1fr; gap:64px 48px; align-content:center;">
-            ${grid}
-          </div>
-          ${footerHTML('Aetherfield', '&copy; 2026', '6')}`;
-      },
+      label: 'Cards — ThreeCol feature cards, no image',
+      suggestNext: ['proof', 'stats-2x2', 'description', 'features'],
+      render: () => `${THREECOL_HEADER}<div class="content-3col" style="top:305px; height:711px;">${SAMPLE_CARDS.map((card) => CARD_NOIMG(card.title, card.items)).join('')}</div>${F_DEFAULT}`,
+    },
+    'cards-2col': {
+      bg: 'bg-warning',
+      label: 'Cards 2col — TwoCol equal-width feature cards, no image',
+      suggestNext: ['proof', 'stats-2x1', 'comparison', 'description'],
+      render: () => `${THREECOL_HEADER}<div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">${SAMPLE_CARDS_2.map((card) => CARD_NOIMG(card.title, card.items)).join('')}</div>${F_DEFAULT}`,
     },
     features: {
       bg: 'bg-warning',
       label: 'Features — TwoCol title left + 3 stacked feature rows with thumbnails',
+      suggestNext: ['proof', 'stats-3x1', 'description', 'carousel'],
       render: () => {
         const rows = [
           { title: 'ESG data aggregation', desc: 'Unify scattered data into one reliable source of truth—clean, structured, and ready for analysis.' },
@@ -199,11 +195,19 @@
     'cards-img': {
       bg: 'bg-warning',
       label: 'Cards+Img — ThreeCol feature cards with image slot',
+      suggestNext: ['proof', 'stats-2x2', 'description', 'features'],
       render: () => `${THREECOL_HEADER}<div class="content-3col" style="top:305px; height:711px;">${SAMPLE_CARDS.map((card) => CARD_IMG(card.title, card.items)).join('')}</div>${F_DEFAULT}`,
+    },
+    'cards-2col-img': {
+      bg: 'bg-warning',
+      label: 'Cards 2col+Img — TwoCol feature cards with image slot',
+      suggestNext: ['proof', 'stats-2x1', 'comparison', 'description'],
+      render: () => `${THREECOL_HEADER}<div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">${SAMPLE_CARDS_2.map((card) => CARD_IMG(card.title, card.items)).join('')}</div>${F_DEFAULT}`,
     },
     description: {
       bg: 'bg-warning',
       label: 'Description — H2 title + H4 body + full-height image, left/right',
+      suggestNext: ['cards', 'features', 'proof', 'stats-3x1'],
       render: (state) => {
         const align = state && state.align || state;
         const text = `<div style="width:740px; flex-shrink:0; display:flex; flex-direction:column; gap:154px; padding-top:0;"><div class="h2 c-primary">Product overview</div><div class="h4 c-secondary">Fold (NASDAQ: FLD) is the first publicly traded Bitcoin financial services company, on a mission to make Bitcoin simple, rewarding, and accessible to all. With over 600,000 users and more than $75 million in Bitcoin rewards earned, Fold is the #1 Bitcoin rewards platform in the world.</div></div>`;
@@ -215,11 +219,12 @@
     partners: {
       bg: 'bg-warning',
       label: 'Partners — Logo grids: card, lineItem, description, full-width, or with header',
+      suggestNext: ['stats-3x1', 'proof', 'textslide', 'end'],
       render: (state) => {
         const rows = Number(state.partnerRows) || 4;
         const cols = Number(state.partnerCols) || 2;
         function logoCard(name, chip) {
-          return `<div class="logo-card"><div class="logo-card-img"><div class="img-placeholder"></div></div><div class="logo-card-footer"><span class="p2 c-tertiary">${name}</span>${chip ? `<span class="logo-chip">${chip}</span>` : ''}</div></div>`;
+          return `<div class="logo-card"><div class="logo-card-img"><div class="img-placeholder"></div></div><div class="logo-card-footer"><span class="p1 c-tertiary">${name}</span>${chip ? `<span class="logo-chip">${chip}</span>` : ''}</div></div>`;
         }
         function logoGrid(data, c, sizeClass) {
           let html = `<div class="logo-grid ${sizeClass}">`;
@@ -236,15 +241,23 @@
           return html;
         }
         function logoLineItem(name, desc, chip) {
-          return `<div class="logo-line-item"><div class="logo-line-item-card"><div class="img-placeholder"></div></div><div class="logo-line-item-body"><div class="h5 c-secondary">${name}</div><div class="p1 c-secondary">${desc}</div>${chip ? `<span class="logo-chip" style="align-self:flex-start;">${chip}</span>` : ''}</div></div>`;
+          const bodyClass = chip && !desc ? 'logo-line-item-body compact' : 'logo-line-item-body';
+          const chipHtml = chip ? `<span class="logo-line-chip">${chip}</span>` : '';
+          const descHtml = desc ? `<div class="p1 c-secondary">${desc}</div>` : '';
+          return `<div class="logo-line-item"><div class="logo-line-item-card"><div class="img-placeholder"></div></div><div class="${bodyClass}"><div class="h5 c-secondary">${name}</div><div class="logo-line-item-body-wrap">${descHtml}${chipHtml}</div></div></div>`;
         }
         function logoLineGrid(data, c, r) {
+          // 4 rows: compact — title + category chip, no description
+          // 2–3 rows: spacious — title + 2-line description, no chip
+          const useChips = r >= 4;
           let html = '<div class="logo-line-grid">';
           for (let i = 0; i < r; i++) {
             html += '<div class="logo-line-row">';
             for (let j = 0; j < c; j++) {
               const item = data[i * c + j];
-              html += logoLineItem(item ? item.name : 'Brand', item ? item.desc : 'Description text', item ? item.chip : '');
+              const desc = useChips ? '' : (item ? item.desc : 'Description text');
+              const chip = useChips ? (item ? item.cat : '') : '';
+              html += logoLineItem(item ? item.name : 'Brand', desc, chip);
             }
             html += '</div>';
           }
@@ -252,22 +265,22 @@
           return html;
         }
         const brands = [
-          { name: 'Burger King', chip: '4% back', desc: 'Fast food rewards partner' },
-          { name: 'Target', chip: '3% back', desc: 'Retail shopping rewards' },
-          { name: 'Whole Foods', chip: '5% back', desc: 'Organic grocery rewards' },
-          { name: 'Nike', chip: '2% back', desc: 'Athletic apparel rewards' },
-          { name: 'Starbucks', chip: '6% back', desc: 'Coffee &amp; beverages rewards' },
-          { name: 'Amazon', chip: '3% back', desc: 'Online marketplace rewards' },
-          { name: 'Costco', chip: '4% back', desc: 'Wholesale club rewards' },
-          { name: 'Uber', chip: '5% back', desc: 'Rideshare &amp; delivery rewards' },
-          { name: 'Home Depot', chip: '3% back', desc: 'Home improvement rewards' },
-          { name: 'Spotify', chip: '4% back', desc: 'Music streaming rewards' },
-          { name: 'Netflix', chip: '2% back', desc: 'Entertainment streaming rewards' },
-          { name: 'Apple', chip: '5% back', desc: 'Consumer electronics rewards' },
-          { name: 'Sephora', chip: '4% back', desc: 'Beauty &amp; cosmetics rewards' },
-          { name: 'DoorDash', chip: '3% back', desc: 'Food delivery rewards' },
-          { name: 'Airbnb', chip: '6% back', desc: 'Travel accommodation rewards' },
-          { name: 'Lyft', chip: '4% back', desc: 'Rideshare transportation rewards' },
+          { name: 'Burger King', chip: '4% back', cat: 'Fast food', desc: 'Fast food rewards partner<br>with locations across all 50 states' },
+          { name: 'Target', chip: '3% back', cat: 'Retail', desc: 'Retail shopping rewards<br>at 1,900+ locations nationwide' },
+          { name: 'Whole Foods', chip: '5% back', cat: 'Grocery', desc: 'Organic grocery rewards<br>with premium health-focused selection' },
+          { name: 'Nike', chip: '2% back', cat: 'Apparel', desc: 'Athletic apparel rewards<br>across retail and online stores' },
+          { name: 'Starbucks', chip: '6% back', cat: 'Food &amp; beverage', desc: 'Coffee &amp; beverages rewards<br>at 16,000+ US locations' },
+          { name: 'Amazon', chip: '3% back', cat: 'Marketplace', desc: 'Online marketplace rewards<br>across all product categories' },
+          { name: 'Costco', chip: '4% back', cat: 'Wholesale club', desc: 'Wholesale club rewards<br>with bulk savings and member perks' },
+          { name: 'Uber', chip: '5% back', cat: 'Rideshare', desc: 'Rideshare &amp; delivery rewards<br>for rides and Uber Eats' },
+          { name: 'Home Depot', chip: '3% back', cat: 'Home improvement', desc: 'Home improvement rewards<br>for DIY and contractor supplies' },
+          { name: 'Spotify', chip: '4% back', cat: 'Streaming', desc: 'Music streaming rewards<br>on premium subscriptions' },
+          { name: 'Netflix', chip: '2% back', cat: 'Entertainment', desc: 'Entertainment streaming rewards<br>on monthly plans' },
+          { name: 'Apple', chip: '5% back', cat: 'Electronics', desc: 'Consumer electronics rewards<br>on devices and services' },
+          { name: 'Sephora', chip: '4% back', cat: 'Beauty', desc: 'Beauty &amp; cosmetics rewards<br>at retail and online' },
+          { name: 'DoorDash', chip: '3% back', cat: 'Delivery', desc: 'Food delivery rewards<br>on all restaurant orders' },
+          { name: 'Airbnb', chip: '6% back', cat: 'Travel', desc: 'Travel accommodation rewards<br>worldwide listings' },
+          { name: 'Lyft', chip: '4% back', cat: 'Rideshare', desc: 'Rideshare transportation rewards<br>in 600+ cities' },
         ];
         const mode = state.partnerLayout || 'desc';
         if (mode === 'desc') {
@@ -283,7 +296,7 @@
             ${footerHTML('Presentation title', '&copy; Fold Holdings, Inc. 2025', '1')}`;
         }
         if (mode === 'lineItem') {
-          const lineRows = Math.min(rows, 3);
+          const lineRows = Math.min(rows, 4);
           const grid = logoLineGrid(brands.slice(0, lineRows * 2), 2, lineRows);
           return `
             ${statsHeader('Kroger.com', 'Subheader', 'We are committed to promoting the Fold Bitcoin Gift Card through paid promotions.')}
@@ -312,6 +325,7 @@
     comparison: {
       bg: 'bg-warning',
       label: 'Comparison — Two compare blocks (yellow + blue) with label chips',
+      suggestNext: ['stats-2x1', 'proof', 'datatable', 'cards'],
       render: () => {
         function compareBlock(variant, label, breakdown, imgUrl) {
           const breakdownChip = breakdown ? `<div class="compare-chip breakdown">${breakdown}</div>` : '';
@@ -319,13 +333,15 @@
           return `<div class="compare-block ${variant}"><div class="compare-block-content"><div class="compare-block-img" style="${imageStyle}"></div><div class="compare-chip label">${label}</div>${breakdownChip}</div></div>`;
         }
         return `
-          <div class="content-frame" style="display:flex; flex-direction:column; width:1792px;">
-            <div class="h3 c-yellow">Geographies</div>
-            <div class="h3 c-primary">Fold and Kroger overlapping markets</div>
+          <div class="content-frame">
+            <div class="tl-vertical-header">
+              <div class="h4 c-primary">Fold and Kroger overlapping geographies</div>
+              <div class="tl-vh-body">Fold users are evenly spread across the country with significant concentrated overlap of a high number of Kroger stores in California and Texas.</div>
+            </div>
           </div>
-          <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px; align-items:stretch;">
-            ${compareBlock('yellow', 'Fold users', 'Kroger is the most preferred grocery option for gift card volume on Fold App', 'map-yellow.png')}
-            ${compareBlock('blue', 'Kroger stores', '', 'map-blue.png')}
+          <div style="position:absolute; top:305px; left:64px; width:1792px; height:708px; display:flex; gap:12px; align-items:stretch;">
+            ${compareBlock('yellow', 'Fold users', 'The most preferred grocery option for gift card', 'map-yellow.png')}
+            ${compareBlock('blue', 'Kroger', '', 'map-blue.png')}
           </div>
           ${footerHTML('Bitcoin gift card', '&copy; Fold Holdings, Inc. 2025', '19')}`;
       },
@@ -349,19 +365,41 @@
   ];
 
   const CHARTS = {
-    'cards-2col': {
+    proof: {
       bg: 'bg-warning',
-      label: 'Cards 2col — TwoCol equal-width feature cards, no image',
-      render: () => `${THREECOL_HEADER}<div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">${SAMPLE_CARDS_2.map((card) => CARD_NOIMG(card.title, card.items)).join('')}</div>${F_DEFAULT}`,
-    },
-    cards: {
-      bg: 'bg-warning',
-      label: 'Cards — ThreeCol feature cards, no image',
-      render: () => `${THREECOL_HEADER}<div class="content-3col" style="top:305px; height:711px;">${SAMPLE_CARDS.map((card) => CARD_NOIMG(card.title, card.items)).join('')}</div>${F_DEFAULT}`,
+      label: 'Proof — yellow panel left + 2×2 stat grid right',
+      suggestNext: ['cards', 'features', 'section', 'textslide'],
+      render: () => {
+        const stats = [
+          { value: '20+', desc: 'Climate-forward orgs trust Aetherfield' },
+          { value: '60%', desc: 'Reduction in reporting time for sustainability teams' },
+          { value: '91%', desc: 'Less manual data cleanup compared to competitors' },
+          { value: '3.5×', desc: 'Increase in actionable insights per reporting cycle' },
+        ];
+        const grid = stats.map((stat) => `
+          <div class="proof-stat">
+            <div class="h1 c-primary">${stat.value}</div>
+            <div class="h5 c-secondary">${stat.desc}</div>
+          </div>`).join('');
+        return `
+          <div class="proof-layout">
+            <div class="proof-panel">
+              <div class="proof-panel-inner">
+                <div class="h3 c-primary">Proof and momentum</div>
+                <div class="h5 c-secondary">Aetherfield is trusted by leading organizations driving measurable climate progress. Our platform turns complex sustainability data into clarity—empowering teams to act faster, report smarter, and make lasting impact.</div>
+              </div>
+            </div>
+            <div class="proof-grid">
+              ${grid}
+            </div>
+          </div>
+          ${footerHTML('Aetherfield', '&copy; 2026', '6')}`;
+      },
     },
     'stats-2x1': {
       bg: 'bg-warning',
       label: 'Stats 2×1 — Two stat cells, H1 values',
+      suggestNext: ['cards', 'features', 'description', 'section'],
       render: () => {
         const disclaimer = '5. Forbes, https://www.forbes.com/digital-assets/crypto-prices<br>6. Clark Moody Bitcoin Dashboard, https://bitcoin.clarkmoody.com/dashboard/';
         const grid = `<div class="stat-grid-row">${statCell('Bitcoin market cap', '$2.08T', 0, 0, 'h1')}${statCell('Bitcoin price touched', '$111,980', 0, 0, 'h1')}</div>`;
@@ -371,6 +409,7 @@
     'stats-3x1': {
       bg: 'bg-warning',
       label: 'Stats 3×1 — Three stat cells, H2 values',
+      suggestNext: ['cards', 'carousel', 'description', 'section'],
       render: () => {
         const grid = `<div class="stat-grid-3" style="flex:1;">${statCell('June', 'Sizzling summer promo', 0, 0, 'h2')}${statCell('August', 'Deal days', 0, 0, 'h2')}${statCell('September', 'Birthday', 0, 0, 'h2')}</div>`;
         return `${statsHeader('Kroger.com', 'promotion participation', 'We are committed to promoting the Fold Bitcoin Gift Card through paid promotions.')}<div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">${grid}</div>${F_STATS}`;
@@ -379,6 +418,7 @@
     'stats-2x2': {
       bg: 'bg-warning',
       label: 'Stats 2×2 — Four stat cells in 2 rows, H1 values',
+      suggestNext: ['cards', 'features', 'description', 'section'],
       render: () => {
         const grid = `<div class="stat-grid-row">${statCell('Bitcoin market cap', '$2.08T', 0, 0, 'h1')}${statCell('Bitcoin buyers in the US', '65M', 0, 0, 'h1')}</div><div class="stat-grid-row">${statCell('US gift card market', '$324.5B', 0, 0, 'h1')}${statCell('Bitcoin gift card opportunity', '$200B+', 0, 0, 'h1')}</div>`;
         return `${statsHeader('Volume forecast', 'Bitcoin’s macro tailwinds and the scale of gift cards create a major opportunity.', null, null, 1792)}<div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">${grid}</div>${F_STATS}`;
@@ -387,22 +427,28 @@
     'side-by-side': {
       bg: 'bg-warning',
       label: 'Side-by-side — Two VariableCard tables',
-      render: (state) => `
-        <div class="content-frame">
-          <div style="display:flex; flex-direction:column; width:890px;">
-            <div class="h5" style="color:var(--face-tertiary);">Performance</div>
-            <div class="h3 c-primary">Revenue breakdown</div>
+      suggestNext: ['cards', 'proof', 'textslide', 'section'],
+      render: (state) => {
+        const bothSingleRow = state.leftGrid.endsWith('x1') && state.rightGrid.endsWith('x1');
+        const top = bothSingleRow ? 'calc(37.5% + 24px)' : '192px';
+        return `
+          <div class="content-frame">
+            <div style="display:flex; flex-direction:column; width:890px;">
+              <div class="h5" style="color:var(--face-tertiary);">Performance</div>
+              <div class="h3 c-primary">Revenue breakdown</div>
+            </div>
           </div>
-        </div>
-        <div class="slot-tables-row" style="position:absolute; top:192px; left:64px; right:64px; bottom:64px;">
-          ${varTable(state.leftGrid, 'Q1 Revenue by segment', TABLE_YELLOW, { color: 'yellow' })}
-          ${varTable(state.rightGrid, 'Customer highlights', TABLE_BLUE, { color: 'blue' })}
-        </div>
-        ${F_TABLES}`,
+          <div class="slot-tables-row" style="position:absolute; top:${top}; left:64px; right:64px; bottom:64px;">
+            ${varTable(state.leftGrid, 'Q1 Revenue by segment', TABLE_YELLOW, { color: 'yellow' })}
+            ${varTable(state.rightGrid, 'Customer highlights', TABLE_BLUE, { color: 'blue' })}
+          </div>
+          ${F_TABLES}`;
+      },
     },
     datatable: {
       bg: 'bg-warning',
       label: 'DataTable — Full-width light table',
+      suggestNext: ['textslide', 'proof', 'cards', 'section'],
       render: () => `
         <div style="position:absolute; top:64px; left:64px;">
           <div class="h6 c-tertiary">Q1 Financial Review</div>
@@ -427,36 +473,10 @@
   };
 
   const ROADMAP = {
-    timeline: {
-      bg: 'bg-warning',
-      label: 'Timeline — 6 milestones, alternating above/below, yellow dots',
-      render: () => {
-        const milestones = [
-          { title: 'Q1 2025', desc: 'Platform launch and initial enterprise pilots across three verticals.' },
-          { title: 'Q2 2025', desc: 'Series B close at $48M. Expanded engineering team to 45.' },
-          { title: 'Q3 2025', desc: 'SOC 2 certification and first $1M ARR customer signed.' },
-          { title: 'Q4 2025', desc: 'International expansion into UK and DACH markets.' },
-          { title: 'Q1 2026', desc: 'Crossed 10K active users. Net retention hit 127%.' },
-          { title: 'Q2 2026', desc: 'API v2 launch and strategic partnership with Kroger.' },
-        ];
-        const nodes = milestones.map((milestone, index) => {
-          const position = index % 2 === 0 ? 'above' : 'below';
-          return `<div class="timeline-node ${position}"><div class="timeline-dot"></div><div class="timeline-stem"></div><div class="timeline-content"><div class="h6 c-primary">${milestone.title}</div><div class="p3 c-secondary">${milestone.desc}</div></div></div>`;
-        }).join('');
-        return `
-          <div style="position:absolute; top:64px; left:64px; width:890px;">
-            <div class="h2 c-primary">Product roadmap</div>
-          </div>
-          <div class="timeline-container">
-            <div class="timeline-line"></div>
-            <div class="timeline-nodes">${nodes}</div>
-          </div>
-          ${footerHTML('Acme Corp', '&copy; 2026', '5')}`;
-      },
-    },
     carousel: {
       bg: 'bg-warning',
       label: 'Carousel — 3×1 stat cards + 4th peeking off-screen',
+      suggestNext: ['proof', 'stats-2x2', 'partners', 'textslide'],
       render: () => {
         const cells = [
           { title: 'June', value: 'Sizzling summer promo' },
@@ -778,16 +798,18 @@
       {
         id: 'product',
         title: 'Product',
-        desc: 'Proof points, feature showcases, and product-focused layouts.',
-        initialState: { variant: 'cards-img', align: 'left', partnerRows: '4', partnerCols: '2', partnerLayout: 'desc' },
+        desc: 'Feature showcases, cards, and product-focused layouts. Description follows high-level slides.',
+        initialState: { variant: 'cards', align: 'left', partnerRows: '4', partnerCols: '2', partnerLayout: 'desc' },
         getControls(state) {
           return [
             {
               key: 'variant',
               options: [
+                { value: 'cards', label: 'Cards' },
+                { value: 'cards-2col', label: 'Cards 2col' },
                 { value: 'cards-img', label: 'Cards+Img' },
+                { value: 'cards-2col-img', label: 'Cards 2col+Img' },
                 { value: 'features', label: 'Features' },
-                { value: 'proof', label: 'Proof' },
                 { value: 'description', label: 'Description' },
                 { value: 'partners', label: 'Partners' },
                 { value: 'comparison', label: 'Comparison' },
@@ -841,14 +863,14 @@
       {
         id: 'charts',
         title: 'Chart and numbers',
-        desc: 'Cards, stats grids, tables — all the data-heavy layouts.',
-        initialState: { variant: 'cards', leftGrid: '2x3', rightGrid: '3x2' },
+        desc: 'Proof (descriptive data), stats (short/punchy), tables — data-heavy layouts.',
+        initialState: { variant: 'proof', leftGrid: '2x3', rightGrid: '3x2' },
         getControls(state) {
           return [
             {
               key: 'variant',
               options: [
-                { value: 'cards', label: 'Cards' },
+                { value: 'proof', label: 'Proof' },
                 { value: 'stats-2x1', label: 'Stats 2×1' },
                 { value: 'stats-3x1', label: 'Stats 3×1' },
                 { value: 'stats-2x2', label: 'Stats 2×2' },
@@ -885,12 +907,11 @@
         id: 'roadmap',
         title: 'Roadmap',
         desc: 'Timelines, milestones, and sequential planning layouts.',
-        initialState: { variant: 'timeline' },
+        initialState: { variant: 'carousel' },
         getControls() {
           return [{
             key: 'variant',
             options: [
-              { value: 'timeline', label: 'Timeline' },
               { value: 'carousel', label: 'Carousel' },
             ],
           }];

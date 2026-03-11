@@ -153,7 +153,23 @@ The yellow label is always shorter than the primary title. They are **not** bala
 - ❌ **Don't**: `"Market approach overview"` (yellow) / `"Stablecoins vs investment"` (primary) — similar lengths, no scan hierarchy
 - ❌ **Don't**: Both lines balanced at ~5 words each — looks like two equal titles, not label + title
 
-### 12. Face.tertiary is attribution/meta
+### 12. Comparison color scale (yellow + blue)
+**Rule**: Comparison blocks and chips use a three-tier color scale per variant:
+
+| Tier | Yellow | Blue | Usage |
+|------|--------|------|-------|
+| **bold** (500) | `#FFDD33` | `#2F91FF` | Label chips (`.compare-chip.label`) |
+| **subtle** (100) | `#FFEC9D` | `#C9ECFF` | Breakdown chips (`.compare-chip.breakdown`) |
+| **block bg** | `var(--layer-background)` | `var(--layer-background)` | Compare block outer background (`#FCFAF2`) |
+| **img bg** | `var(--layer-background-pressed)` | `var(--layer-background-pressed)` | Inner image/content area (`#ece7d83d`) |
+
+- Label chip: bold background, high contrast text (dark on yellow, white on blue)
+- Breakdown chip: subtle background, dark text
+- Content area: 000 (lightest) so content has maximum readability
+
+**Why**: Three tiers create depth within each block — the chip pops, the block frames, and the content area recedes. Using the same saturation everywhere flattens the hierarchy.
+
+### 13. Face.tertiary is attribution/meta
 **Rule**: `face.tertiary` (#7A6E53) is reserved for:
 - Author names (QuoteText)
 - VariableCard titles (label above value)
@@ -170,7 +186,7 @@ The yellow label is always shorter than the primary title. They are **not** bala
 
 ## Typography Pairing
 
-### 13. Minimum one scale step between paired sizes
+### 14. Minimum one scale step between paired sizes
 **Rule**: When pairing header + body in a TextLayout, maintain ≥1 step gap in the type scale:
 - ✅ H2 (96) + H4 (48) — InfoText, QuoteText
 - ✅ H4 (48) + P1 (24) — Vertical default
@@ -187,7 +203,7 @@ The yellow label is always shorter than the primary title. They are **not** bala
 
 ## Slot & Template Patterns
 
-### 14. TwoCol asymmetric split
+### 15. TwoCol asymmetric split
 **Rule**: TwoCol always uses 5-col text (740px) + 6-col fill (890px) with a 1-col gap (162px).
 - Text side gets the narrower slot (better line length)
 - Visual/data side gets the wider slot (more room for tables, cards, images)
@@ -197,7 +213,7 @@ The yellow label is always shorter than the primary title. They are **not** bala
 - ✅ **Do**: Left text 740px + right table 890px — text is readable, table has room
 - ❌ **Don't**: Two equal 890px columns — text lines are too long, table is unnecessarily cramped
 
-### 15. ThreeCol / FourCol share a vertical start line
+### 16. ThreeCol / FourCol share a vertical start line
 **Rule**: Both ThreeCol and FourCol templates start content at **y=305** with **711px** card height.
 - Header zone: y=64 → y=305 (241px)
 - Content zone: y=305 → y=1016 (711px)
@@ -207,7 +223,7 @@ The yellow label is always shorter than the primary title. They are **not** bala
 - ✅ **Do**: ThreeCol cards start at y=305, FourCol cards start at y=305 — aligned in deck
 - ❌ **Don't**: ThreeCol at y=230, FourCol at y=305 — jarring jump when slides are adjacent
 
-### 15a. Cards composition — header + feature cards
+### 16a. Cards composition — header + feature cards
 **Rule**: The Cards composition combines a `tl-stats` header zone (Rule 11a) with TwoCol, ThreeCol, or FourCol `feature-card-noimg` cards below y=305. Structure:
 - **Header** (y=64): Yellow label (H3) + primary title (H3), optional description (H5) and disclaimer (P3)
 - **Cards** (y=305, 711px): 3 or 4 `feature-card-noimg` columns, each with H5 title + bulleted H5 list items
@@ -221,7 +237,7 @@ This is the standard layout for enumerating categories, capabilities, cost break
 - ❌ **Don't**: 5+ cards on one slide — split into two slides
 - ❌ **Don't**: Cards with 6+ bullets — condense or split the concept
 
-### 16. Footer is universal on content slides
+### 17. Footer is universal on content slides
 **Rule**: Every content slide (ContentTemplate, TwoCol, ThreeCol, FourCol) includes a Footer at **y=1041**, spanning 1792px.
 - Start and End slides: **no footer** (brand slides stand alone)
 
@@ -236,7 +252,7 @@ This is the standard layout for enumerating categories, capabilities, cost break
 
 Universal typography principles applied to our slide system.
 
-### 17. One typeface, multiple weights
+### 18. One typeface, multiple weights
 **Rule**: Use only Geist across the entire system. Differentiate hierarchy through weight (Regular 400, Medium 500, SemiBold 600), size, and color — never by switching typefaces.
 
 **Why**: One well-designed typeface with weight variation creates cohesion. Multiple typefaces compete for attention and rarely improve readability. Decorative fonts are never appropriate in data-driven presentations.
@@ -244,7 +260,7 @@ Universal typography principles applied to our slide system.
 - ✅ **Do**: Geist Regular for headings, Geist Medium for labels, Geist SemiBold for emphasis
 - ❌ **Don't**: Geist for headings + Roboto for body + Playfair for quotes — three typefaces fighting
 
-### 18. Contrast through size, not decoration
+### 19. Contrast through size, not decoration
 **Rule**: Create font contrast through size jumps (≥2× between primary and tertiary levels), weight shifts (Regular → SemiBold), or color changes. Never through decoration (underline, shadow, outline, stretched text).
 
 **Why**: Size and weight contrast preserves the typeface's designed proportions. Decorative effects distort letterforms and reduce legibility at slide scale.
@@ -252,7 +268,7 @@ Universal typography principles applied to our slide system.
 - ✅ **Do**: H2 (96px Regular) → P1 (24px Regular) — size alone creates hierarchy
 - ❌ **Don't**: Same size text with underline + shadow + outline to create emphasis
 
-### 19. Left alignment by default
+### 20. Left alignment by default
 **Rule**: All body text, headings, and labels use left alignment.
 - **Center alignment**: only for Start/End slide titles (single-line, central composition)
 - **Justified alignment**: never used — it creates uneven word spacing
@@ -263,7 +279,7 @@ Universal typography principles applied to our slide system.
 - ✅ **Do**: Left-aligned body text with natural ragged right edge
 - ❌ **Don't**: Justified body text with rivers of white space between words
 
-### 20. Characters per line (CPL) targets
+### 21. Characters per line (CPL) targets
 **Rule**: Line lengths must stay within these bounds:
 - **Title/heading**: 30–45 characters (H1–H3)
 - **Body text**: 55–85 characters (P1–P2 in 5-col or 6-col)
@@ -276,7 +292,7 @@ Column widths (Rule 9) are designed to hit these targets at their respective fon
 - ✅ **Do**: P1 body at 740px → ~78 CPL — comfortable reading
 - ❌ **Don't**: P1 body at 1792px → ~190 CPL — eye loses its place on return
 
-### 21. Leading ratio varies by role
+### 22. Leading ratio varies by role
 **Rule**: Line height follows the element's function:
 - **Display headers** (H1–H5): 1:1 ratio (size = leading) or tighter — tight leading for visual impact
 - **Body text** (P1–P2): 1.3–1.5× — generous leading for readability
@@ -289,7 +305,7 @@ Headers at 1.5× leading look disconnected. Body at 1:1 leading is unreadable. M
 - ✅ **Do**: H2 at 96/88 (0.92×) — tight, punchy display. P1 at 24/32 (1.33×) — open, readable body
 - ❌ **Don't**: H2 at 96/144 (1.5×) — floaty disconnected header. P1 at 24/24 (1×) — cramped body
 
-### 22. No widows, orphans, or hanging prepositions
+### 23. No widows, orphans, or hanging prepositions
 **Rule**: Slide text must avoid:
 - **Widows**: a single word alone on the last line of a paragraph
 - **Orphans**: a paragraph's first line stranded at the bottom of a column
@@ -302,7 +318,7 @@ Use `text-wrap: balance` for headings (Rule 1). For body text, rewrite or adjust
 - ✅ **Do**: `"Revenue grew 52% driven by` / `enterprise and mid-market segments"` — balanced
 - ❌ **Don't**: `"Revenue grew 52% driven by enterprise and mid-market` / `segments"` — widow
 
-### 23. White space is structural, not empty
+### 24. White space is structural, not empty
 **Rule**: Unused space in a slide is intentional. Do not fill gaps with decorative elements, unnecessary text, or stretched content.
 - The three-tier gap system (Rule 10) creates deliberate white space
 - Margins (64px) and structural gaps (162–205px) are load-bearing — they separate meaning
@@ -312,7 +328,7 @@ Use `text-wrap: balance` for headings (Rule 1). For body text, rewrite or adjust
 - ✅ **Do**: TwoCol with 162px gap between text and visual — breathing room
 - ❌ **Don't**: Filling the 162px gap with a decorative line or extra label — cluttered
 
-### 24. Never deform letterforms
+### 25. Never deform letterforms
 **Rule**: Never stretch, compress, skew, or artificially bold text. Use only the weights and styles provided by Geist (Regular, Medium, SemiBold).
 - No horizontal/vertical scaling
 - No faux bold (CSS `stroke` or Figma stroke on text)
@@ -323,7 +339,7 @@ Use `text-wrap: balance` for headings (Rule 1). For body text, rewrite or adjust
 - ✅ **Do**: Switch from Regular to SemiBold for emphasis — proper weight
 - ❌ **Don't**: Add 1px stroke to Regular to fake bold — uneven stroke destroys letterforms
 
-### 25. Em dash, en dash, hyphen
+### 26. Em dash, en dash, hyphen
 **Rule**: Use the correct dash for each context:
 - **Hyphen** (-): compound words, hyphenation (e.g., "year-over-year")
 - **En dash** (–): numeric ranges (e.g., "Q1–Q4", "2024–2026")
@@ -334,7 +350,7 @@ Use `text-wrap: balance` for headings (Rule 1). For body text, rewrite or adjust
 - ✅ **Do**: `"Q1–Q4 2026"` with en dash — clearly a range
 - ❌ **Don't**: `"Q1-Q4 2026"` with hyphen — ambiguous, looks like a code or typo
 
-### 26. Avoid all-caps except labels
+### 27. Avoid all-caps except labels
 **Rule**: ALL CAPS text is reserved for:
 - Tiny labels and tags (P5 scale, 10px) — e.g., "REVENUE", "Q1 2026"
 - Table column headers at small sizes
@@ -352,7 +368,7 @@ Use `text-wrap: balance` for headings (Rule 1). For body text, rewrite or adjust
 
 Each level in the scale has a declared purpose. Choosing a size means choosing a role — not just "making it bigger."
 
-### 27. Scale categories have fixed roles
+### 28. Scale categories have fixed roles
 **Rule**: Every type level maps to a specific content role:
 
 | Level | Size/Leading | Weight | Role | Used for |
@@ -373,7 +389,7 @@ Each level in the scale has a declared purpose. Choosing a size means choosing a
 - ✅ **Do**: Use H5 (32px) for a card header label — that's its defined role
 - ❌ **Don't**: Use H3 (64px) for a card header because "it needs to be bigger" — H3 is for stat values/titles
 
-### 28. Hierarchy cues: max 3 per level
+### 29. Hierarchy cues: max 3 per level
 **Rule**: Each text level is differentiated from adjacent levels using a combination of these cues (max 3):
 1. **Size** — primary differentiator (always present)
 2. **Weight** — Regular vs Medium vs SemiBold
@@ -388,7 +404,7 @@ Never use more than 3 cues simultaneously. If size alone creates sufficient cont
 - ✅ **Do**: H2→P1 differentiated by size (96→24) + color (primary→secondary) — 2 cues, clear
 - ❌ **Don't**: H2→P1 with size + weight + color + case + spacing all changing — overwhelming
 
-### 29. Expressive treatment restricted to display scale
+### 30. Expressive treatment restricted to display scale
 **Rule**: Creative typographic treatment (split-color text, hanging punctuation, asymmetric sizing) is only permitted at the **display scale** (H1–H2):
 - ✅ MarCom split H2 — primary + yellow accent
 - ✅ QuoteText hanging `"` marks at H2 scale
@@ -401,7 +417,7 @@ At body scale (P1–P3) and label scale (H5, P4–P5): strictly Regular weight, 
 - ✅ **Do**: Yellow `"` marks on H2 quote text — expressive at display scale
 - ❌ **Don't**: Yellow `"` marks on P3 disclaimer text — decoration at caption scale, distracting
 
-### 30. Letter spacing tightens with size
+### 31. Letter spacing tightens with size
 **Rule**: Tracking follows an inverse relationship with size:
 - **H1** (128px): -2.56px (-0.02em)
 - **H2** (96px): -1.92px (-0.02em)
@@ -422,7 +438,7 @@ Large text needs tighter spacing because letterforms at display size have optica
 
 ## Content & Weight
 
-### 31. Content density limits per slide
+### 32. Content density limits per slide
 **Rule**: Each slide type has a maximum content budget:
 
 | Slide type | Max content |
@@ -443,7 +459,7 @@ Exceeds limits → split into multiple slides. Never cram, never scroll.
 - ✅ **Do**: 7 stats → split into two slides (4 + 3) with clear titles
 - ❌ **Don't**: 7 stats crammed into one slide with tiny text — audience can't parse it
 
-### 32. Weight assignment by scale
+### 33. Weight assignment by scale
 **Rule**: Font weight follows a fixed mapping:
 - **H1–H5**: Regular 400 always — display/heading type relies on size for hierarchy, not weight
 - **H6**: Medium 500 — micro label role, needs slight weight boost for legibility at 24px

@@ -1,5 +1,6 @@
 (function () {
-  const ANN_KEY = 'templates-annotations';
+  const pageConfig = window.TEMPLATE_PAGE || window.COMPONENTS_PAGE;
+  const ANN_KEY = window.TEMPLATE_PAGE ? 'templates-annotations' : 'components-annotations';
   let shell = null;
   let annotating = false;
   let multiAnn = [];
@@ -397,7 +398,13 @@
       if (justFinishedDrag) { justFinishedDrag = false; return; }
       if (event.target.closest('.sidebar') || event.target.closest('.ann-fab') || event.target.closest('.ann-panel') || event.target.closest('.toolbar')) return;
 
-      const storyEl = event.target.closest('.story');
+      const slideEl = event.target.closest('.slide');
+      if (!slideEl) {
+        toggleAnnotating();
+        return;
+      }
+
+      const storyEl = slideEl.closest('.story');
       if (!storyEl) return;
       event.preventDefault();
       event.stopPropagation();
@@ -426,8 +433,8 @@
 
     document.addEventListener('mouseover', (event) => {
       if (!annotating) return;
-      const storyEl = event.target.closest('.story');
-      if (!storyEl || event.target === storyEl || event.target.classList.contains('ann-pin')) return;
+      if (!event.target.closest('.slide')) return;
+      if (event.target.classList.contains('ann-pin')) return;
       if (event.target.closest('.sidebar') || event.target.closest('.ann-panel')) return;
       event.target.classList.add('ann-hover');
     });
@@ -447,6 +454,7 @@
     document.addEventListener('mousedown', (e) => {
       if (!annotating || e.button !== 0) return;
       if (e.target.closest('.sidebar') || e.target.closest('.ann-fab') || e.target.closest('.ann-panel') || e.target.closest('.toolbar')) return;
+      if (!e.target.closest('.slide')) return;
       const storyEl = e.target.closest('.story');
       if (!storyEl) return;
       dragStart = { x: e.clientX, y: e.clientY, storyEl };
@@ -547,7 +555,7 @@
   }
 
   function init() {
-    shell = initStorybookShell(window.TEMPLATE_PAGE, {
+    shell = initStorybookShell(pageConfig, {
       sidebarRootSelector: '#sidebarRoot',
       mainRootSelector: '#mainRoot',
       gridButtonSelector: '#gridToggle',

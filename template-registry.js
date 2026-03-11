@@ -764,7 +764,9 @@
     navGroups: [
       { label: 'Base', storyIds: ['structural'] },
       { label: 'Layout', storyIds: ['thoughts', 'product', 'charts', 'roadmap', 'typo-layouts'] },
-      { label: 'Pages', links: [{ label: 'Storybook', href: '/storybook.html', external: true }] },
+      { label: 'Pages', links: [
+        { label: 'Components', href: '/components.html', external: true },
+      ] },
     ],
     stories: [
       {

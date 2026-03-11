@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 annotations.json
+template-overrides.json
+deck-settings.json

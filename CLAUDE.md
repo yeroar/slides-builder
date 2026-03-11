@@ -29,12 +29,13 @@ npm run validate     # Check HTML files for design rule violations
 ## Generated file structure
 
 Every generated presentation HTML file MUST include:
-1. **Annotation pins** — FAB + floating panel for feedback (provided by `initAnnotations`)
-2. **Presentation mode** — F5 fullscreen slide viewer (provided by `initPresentation`)
-3. **Slide navigator** — left panel with thumbnails, section headers, grid toggle (provided by `initSlideNav`)
-4. **Inline editing** — edit text in browser, saves to disk (provided by `initInlineEdit`)
+1. **Deck settings** — accordion with footer title/copyright/page fields (provided by `initDeckSettings`)
+2. **Annotation pins** — FAB + floating panel for feedback (provided by `initAnnotations`)
+3. **Presentation mode** — F5 fullscreen slide viewer (provided by `initPresentation`)
+4. **Slide navigator** — left panel with thumbnails, section headers, grid toggle (provided by `initSlideNav`)
+5. **Inline editing** — edit text in browser, saves to disk (provided by `initInlineEdit`)
 
-All four are **required** in every generated file. Template:
+All five are **required** in every generated file. Template:
 
 ```html
 <!DOCTYPE html>
@@ -66,6 +67,7 @@ All four are **required** in every generated file. Template:
 
 <script src="shared.js"></script>
 <script>
+initDeckSettings();
 initAnnotations('presentation-name-pins');
 initPresentation('.slide');
 initSlideNav();

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onboarding V2 — Future Vision</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  body {
+    background: #1a1a1a;
+    font-family: 'Geist', sans-serif;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+  h1.page-title { color: #fff; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .page-desc { color: #888; font-size: 14px; margin-bottom: 16px; width: 960px; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Onboarding V2 — Future Vision</h1>
+<div class="page-desc">20 slides. Fold onboarding improvements, wins, and roadmap.</div>
+<!-- Toolbar -->
+<div class="toolbar">
+  <span id="pinCount" style="font-size:13px; color:#666;"></span>
+  <span style="flex:1"></span>
+  <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
+  <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
+</div>
+
+<!-- ============================================================ -->
+<div class="section-divider">Opening</div>
+<!-- ============================================================ -->
+
+<!-- Slide 1: Start -->
+<div class="slide-label">#1 — <code>StartSlide</code></div>
+<div class="slide"><div class="slide-inner bg-brand">
+  <div class="start-title">
+    <div class="h1 c-primary">Onboarding V2</div>
+  </div>
+</div></div>
+
+<!-- Slide 2: Why Onboarding Matters — switchable Product group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #2 — Why Onboarding Matters
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s2-picker">
+    <button class="chip active" data-val="cards" onclick="switchSlide2(this.dataset.val)">Cards</button>
+    <button class="chip" data-val="cards-img" onclick="switchSlide2(this.dataset.val)">Cards+Img</button>
+    <button class="chip" data-val="features" onclick="switchSlide2(this.dataset.val)">Features</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s2-slide"></div></div>
+
+<!-- Slide 3: Four Pillars — Agenda -->
+<div class="slide-label">#3 — <code>Agenda</code> — Four Pillars of Onboarding</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div class="content-1col">
+    <div class="slot-agenda" style="width:1760px;">
+      <div class="bullet"><div class="line line-accent"></div><div class="h1 c-accent">Compliant</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Secure</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Intuitive</div></div>
+      <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Scalable</div></div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">3</span></div>
+</div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">Recent Wins</div>
+<!-- ============================================================ -->
+
+<!-- Slide 4: Recent Wins — switchable Product group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #4 — Recent Wins
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s4-picker">
+    <button class="chip active" data-val="cards" onclick="switchSlide4(this.dataset.val)">Cards</button>
+    <button class="chip" data-val="carousel" onclick="switchSlide4(this.dataset.val)">Carousel</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s4-slide"></div></div>
+
+<!-- Slide 5: Address Detection — Description 2col left -->
+<div class="slide-label">#5 — <code>Description</code> — Address Detection</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div style="position:absolute; top:64px; left:64px; right:64px; bottom:64px; display:flex; gap:162px; align-items:stretch;">
+    <div style="width:740px; flex-shrink:0; display:flex; flex-direction:column; gap:154px; padding-top:0;">
+      <div class="h2 c-primary">Improved address detection</div>
+      <div class="h4 c-secondary">UPS Stores and commercial properties are prohibited as billing addresses for KYC. Users add these to ensure card delivery. Detecting these during KYC &mdash; not after &mdash; prevents account restrictions and reduces compliance paperwork. 1% of users have an impermissible address. 10k signups = 100 restrictions eliminated.</div>
+    </div>
+    <div style="flex:1; min-width:0; background:var(--layer-brand); border-radius:12px;"></div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">5</span></div>
+</div></div>
+
+<!-- Slide 6: Risk Levels — switchable Data group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #6 — Catching Bad Accounts
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s6-picker">
+    <button class="chip active" data-val="stats" onclick="switchSlide6(this.dataset.val)">Stats 2&times;2</button>
+    <button class="chip" data-val="proof" onclick="switchSlide6(this.dataset.val)">Proof</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s6-slide"></div></div>
+
+<!-- Slide 7: Restrictive Rules — Cards 2col -->
+<div class="slide-label">#7 — <code>Cards 2col</code> — Refactoring Restrictive Rules</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Compliance</div>
+          <div class="h3 c-primary">Refactoring restrictive rules</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Bitcoiners like privacy tools. Relaxing rules built for traditional finance reduces false positives.</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Known VPNs</div>
+        <div class="list">
+          <div class="h5">Eased restrictions on Nord, Proton, Express</div>
+          <div class="h5">43.68% reduction in cases</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Disposable emails</div>
+        <div class="list">
+          <div class="h5">Popular due to Hubspot, Klayvio, Ledger leaks</div>
+          <div class="h5">Users still provide PII for verification</div>
+          <div class="h5">57.41% reduction in cases</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">7</span></div>
+</div></div>
+
+<!-- Slide 8: Stranded Users — Description 2col left -->
+<div class="slide-label">#8 — <code>Description</code> — Finding Stranded Users</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div style="position:absolute; top:64px; left:64px; right:64px; bottom:64px; display:flex; gap:162px; align-items:stretch;">
+    <div style="width:740px; flex-shrink:0; display:flex; flex-direction:column; gap:154px; padding-top:0;">
+      <div class="h2 c-primary">Finding our stranded users</div>
+      <div class="h4 c-secondary">Users were failing document submission for various reasons &mdash; blurry photos, expired IDs, bad lighting. Previously, they were put in a failed state and forced to contact CS. New rules now detect and action these bad submissions proactively, allowing users to immediately resubmit.</div>
+    </div>
+    <div style="flex:1; min-width:0; background:var(--layer-brand); border-radius:12px;"></div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">8</span></div>
+</div></div>
+
+<!-- Slide 9: Result — switchable Data group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #9 — Stranded Users Result
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s9-picker">
+    <button class="chip active" data-val="proof" onclick="switchSlide9(this.dataset.val)">Proof</button>
+    <button class="chip" data-val="stats" onclick="switchSlide9(this.dataset.val)">Stats 2&times;1</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s9-slide"></div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">Current State</div>
+<!-- ============================================================ -->
+
+<!-- Slide 10: Onboarding Currently — switchable Thoughts group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #10 — Onboarding Currently
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s10-picker">
+    <button class="chip active" data-val="textslide" onclick="switchSlide10(this.dataset.val)">TextSlide</button>
+    <button class="chip" data-val="thoughts" onclick="switchSlide10(this.dataset.val)">Thoughts</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s10-slide"></div></div>
+
+<!-- Slide 11: First Attempt — Stats 2x1 -->
+<div class="slide-label">#11 — <code>Stats 2&times;1</code> — First Onboarding Attempt</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div class="content-frame">
+    <div class="tl-stats">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title" style="width:1792px;">
+          <div class="h3 c-yellow">First attempt</div>
+          <div class="h3 c-primary">Onboarding success rate</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">Users who have passed signup. Nearly 85% pass and onboard successfully without issue.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      <div class="stat-cell" style="flex:1;"><div class="h5 c-primary">Proceed to doc submission</div><div class="h1 c-primary">84.4%</div></div>
+      <div class="stat-cell" style="flex:1;"><div class="h5 c-primary">Stopped</div><div class="h1 c-primary">15.6%</div></div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">11</span></div>
+</div></div>
+
+<!-- Slide 12: Second Attempt — Stats 3x1 -->
+<div class="slide-label">#12 — <code>Stats 3&times;1</code> — Second Onboarding Attempt</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div class="content-frame">
+    <div class="tl-stats">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title" style="width:1792px;">
+          <div class="h3 c-yellow">Of the 15.6% that failed</div>
+          <div class="h3 c-primary">Second attempt breakdown</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">80% chance of failing a second time. After the third failure, users enter KYC Failed and must contact CS.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-3" style="flex:1;">
+      <div class="stat-cell" style="flex:1;"><div class="h5 c-primary">Proceed to doc submission</div><div class="h2 c-primary">79.0%</div></div>
+      <div class="stat-cell" style="flex:1;"><div class="h5 c-primary">Stopped again</div><div class="h2 c-primary">14.7%</div></div>
+      <div class="stat-cell" style="flex:1;"><div class="h5 c-primary">Dropped off</div><div class="h2 c-primary">6.3%</div></div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">12</span></div>
+</div></div>
+
+<!-- Slide 13: Why We Stop Users — ThreeCol Cards -->
+<div class="slide-label">#13 — <code>ThreeCol Cards</code> — Why We Stop Users</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div class="content-frame">
+    <div class="tl-stats" style="width:auto;">
+      <div class="tl-stats-top">
+        <div class="tl-stats-title">
+          <div class="h3 c-yellow">Risk factors</div>
+          <div class="h3 c-primary">Why we have to stop some users</div>
+        </div>
+        <div class="h5 c-secondary" style="width:589px;">High risk does not always mean the user is bad.</div>
+      </div>
+    </div>
+  </div>
+  <div class="content-3col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Compliance rules</div>
+        <div class="list">
+          <div class="h5">Countries banned by federal regulations are stopped immediately</div>
+          <div class="h5">Traveling users are slowed down for verification</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">Overzealous rules</div>
+        <div class="list">
+          <div class="h5">Out-of-the-box fraud engine rules are built for traditional finance, not bitcoiners</div>
+          <div class="h5">Actively relaxing false positives</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;">
+      <div class="tl-featurecol">
+        <div class="h5">User error</div>
+        <div class="list">
+          <div class="h5">Typos and non-permitted address types</div>
+          <div class="h5">Requires intervention to fix so users aren't stuck later</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">13</span></div>
+</div></div>
+
+<!-- Slide 14: Core Question — switchable Thoughts group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #14 — The Core Question
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s14-picker">
+    <button class="chip active" data-val="textslide" onclick="switchSlide14(this.dataset.val)">TextSlide</button>
+    <button class="chip" data-val="thoughts" onclick="switchSlide14(this.dataset.val)">Thoughts</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s14-slide"></div></div>
+
+<!-- ============================================================ -->
+<div class="section-divider">The Future</div>
+<!-- ============================================================ -->
+
+<!-- Slide 15: KYC Pending State — Description 2col left -->
+<div class="slide-label">#15 — <code>Description</code> — Introducing KYC Pending State</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div style="position:absolute; top:64px; left:64px; right:64px; bottom:64px; display:flex; gap:162px; align-items:stretch;">
+    <div style="width:740px; flex-shrink:0; display:flex; flex-direction:column; gap:154px; padding-top:0;">
+      <div class="h2 c-primary">Introducing the KYC Pending state</div>
+      <div class="h4 c-secondary">Previously prohibited users can now submit their selfie and ID. Their account stays in a pending state during review. Users are informed and notified automatically &mdash; no prompts to contact CS. If determined to be a false positive, the user is promoted to KYC Success.</div>
+    </div>
+    <div style="flex:1; min-width:0; background:var(--layer-brand); border-radius:12px;"></div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">15</span></div>
+</div></div>
+
+<!-- Slide 16: Benefits — switchable Data group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #16 — Benefits of KYC Pending
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s16-picker">
+    <button class="chip active" data-val="proof" onclick="switchSlide16(this.dataset.val)">Proof</button>
+    <button class="chip" data-val="stats" onclick="switchSlide16(this.dataset.val)">Stats 2&times;2</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s16-slide"></div></div>
+
+<!-- Slide 17: Projections — Comparison -->
+<div class="slide-label">#17 — <code>Comparison</code> — KYC Pending Projections</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div class="content-frame">
+    <div class="tl-vertical-header">
+      <div class="h4 c-primary">KYC Pending &mdash; Projections</div>
+      <div class="tl-vh-body">With KYC Pending, the 15.6% of stopped users get a second chance. Projected: 84.4% onboarded directly, 12.5% onboarded after manual review, minimal true stops.</div>
+    </div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; width:1792px; height:708px; display:flex; gap:12px; align-items:stretch;">
+    <div class="compare-block yellow">
+      <div class="compare-block-content">
+        <div class="compare-block-img"></div>
+        <div class="compare-chip label">Current</div>
+      </div>
+    </div>
+    <div class="compare-block blue">
+      <div class="compare-block-content">
+        <div class="compare-block-img"></div>
+        <div class="compare-chip label">Projected</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">17</span></div>
+</div></div>
+
+<!-- Slide 18: Additional Improvements — switchable Product group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #18 — Additional Improvements
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s18-picker">
+    <button class="chip active" data-val="cards" onclick="switchSlide18(this.dataset.val)">Cards</button>
+    <button class="chip" data-val="carousel" onclick="switchSlide18(this.dataset.val)">Carousel</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s18-slide"></div></div>
+
+<!-- Slide 19: Documents Up Front — switchable Data group -->
+<div class="slide-label" style="display:flex; align-items:center; gap:12px;">
+  #19 — Get Documents Up Front
+  <span style="flex:1"></span>
+  <div class="chip-group" id="s19-picker">
+    <button class="chip active" data-val="proof" onclick="switchSlide19(this.dataset.val)">Proof</button>
+    <button class="chip" data-val="stats" onclick="switchSlide19(this.dataset.val)">Stats 2&times;1</button>
+  </div>
+</div>
+<div class="slide"><div class="slide-inner bg-warning" id="s19-slide"></div></div>
+
+<!-- Slide 20: Build Once — TextSlide -->
+<div class="slide-label">#20 — <code>TextSlide</code> — Build Once, Iterate Forever</div>
+<div class="slide"><div class="slide-inner bg-warning">
+  <div style="position:absolute; top:305px; left:64px; width:1191px;">
+    <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">Build once, iterate forever. Engineering builds the foundation. Then Compliance iterates with low-code improvements &mdash; reducing false positives, getting higher signal on risky accounts. This is next on the product roadmap.</div>
+  </div>
+  <div class="footer"><span class="footer-title">Onboarding V2</span><span class="footer-copy">&copy; Fold 2025</span><span class="footer-page">20</span></div>
+</div></div>
+
+<script src="shared.js"></script>
+<script>
+const F = (n) => footerHTML('Onboarding V2', '&copy; Fold 2025', n);
+
+// ── Generic switcher helper ──
+function switchSlide(pickerId, slideId, map, pick) {
+  pick = pick || document.querySelector(`#${pickerId} .chip.active`).dataset.val;
+  document.querySelectorAll(`#${pickerId} .chip`).forEach(c => c.classList.toggle('active', c.dataset.val === pick));
+  document.getElementById(slideId).innerHTML = map[pick];
+}
+
+// ════════════════════════════════════════════════════════════════
+// Slide 2: Why Onboarding Matters — Product group
+// ════════════════════════════════════════════════════════════════
+const S2_HEADER = `<div class="content-frame"><div class="tl-stats" style="width:auto;"><div class="tl-stats-top"><div class="tl-stats-title"><div class="h3 c-yellow">Onboarding</div><div class="h3 c-primary">Why it matters</div></div><div class="h5 c-secondary" style="width:589px;">Onboarding is the gateway to every product we build. Get it right and everything else follows.</div></div></div></div>`;
+
+const S2_CARDS = `${S2_HEADER}
+  <div class="content-3col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Critical for growth</div><div class="list"><div class="h5">If you can't onboard users, you can't grow your product or brand</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">First impressions matter</div><div class="list"><div class="h5">Users won't blame onboarding &mdash; they'll blame Fold. Onboarding <em>is</em> Fold.</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Force multiplier</div><div class="list"><div class="h5">Stuck accounts create Zendesk tickets across departments</div><div class="h5">Solving onboarding frees up multiple teams</div><div class="h5">Success gives users access to our full product suite</div></div></div></div>
+  </div>${F(2)}`;
+
+const S2_CARDS_IMG = `${S2_HEADER}
+  <div class="content-3col" style="top:305px; height:711px;">
+    <div class="feature-card" style="flex:1; width:auto; height:100%;"><div class="feature-card-img" style="flex:1; height:auto;"></div><div class="tl-featurecol"><div class="h6">Critical for growth</div><div class="list"><div class="h6 c-secondary">If you can't onboard users, you can't grow your product or brand</div></div></div></div>
+    <div class="feature-card" style="flex:1; width:auto; height:100%;"><div class="feature-card-img" style="flex:1; height:auto;"></div><div class="tl-featurecol"><div class="h6">First impressions matter</div><div class="list"><div class="h6 c-secondary">Users won't blame onboarding &mdash; they'll blame Fold</div></div></div></div>
+    <div class="feature-card" style="flex:1; width:auto; height:100%;"><div class="feature-card-img" style="flex:1; height:auto;"></div><div class="tl-featurecol"><div class="h6">Force multiplier</div><div class="list"><div class="h6 c-secondary">Solving onboarding frees up multiple departments at once</div></div></div></div>
+  </div>${F(2)}`;
+
+const S2_FEATURES = `
+  <div class="content-2col" style="align-items:stretch;">
+    <div class="slot" style="width:589px; justify-content:center;"><div style="display:flex; flex-direction:column; gap:24px; width:589px;"><div class="h3 c-primary">Why onboarding matters</div><div class="h5 c-secondary">Onboarding is the gateway to every product we build.</div></div></div>
+    <div class="slot slot-fill" style="display:flex; flex-direction:column; justify-content:center; gap:32px; padding:48px 0;">
+      <div style="display:flex; gap:24px; align-items:center;"><div style="width:330px; height:180px; flex-shrink:0; border-radius:8px; background:var(--layer-brand);"></div><div style="display:flex; flex-direction:column; gap:8px; max-width:580px;"><div class="h5 c-primary" style="white-space:nowrap;">Critical for growth</div><div class="h6 c-secondary">If you can't onboard users, you can't grow your product or brand.</div></div></div>
+      <div style="display:flex; gap:24px; align-items:center;"><div style="width:330px; height:180px; flex-shrink:0; border-radius:8px; background:var(--layer-brand);"></div><div style="display:flex; flex-direction:column; gap:8px; max-width:580px;"><div class="h5 c-primary" style="white-space:nowrap;">First impressions</div><div class="h6 c-secondary">Users won't assume just onboarding is bad &mdash; they'll assume Fold is bad.</div></div></div>
+      <div style="display:flex; gap:24px; align-items:center;"><div style="width:330px; height:180px; flex-shrink:0; border-radius:8px; background:var(--layer-brand);"></div><div style="display:flex; flex-direction:column; gap:8px; max-width:580px;"><div class="h5 c-primary" style="white-space:nowrap;">Force multiplier</div><div class="h6 c-secondary">Solving onboarding issues frees up multiple departments at once.</div></div></div>
+    </div>
+  </div>${F(2)}`;
+
+const S2_MAP = { cards: S2_CARDS, 'cards-img': S2_CARDS_IMG, features: S2_FEATURES };
+function switchSlide2(p) { switchSlide('s2-picker', 's2-slide', S2_MAP, p); }
+switchSlide2();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 4: Recent Wins — Product group (Cards vs Carousel)
+// ════════════════════════════════════════════════════════════════
+const S4_HEADER = `<div class="content-frame"><div class="tl-stats" style="width:auto;"><div class="tl-stats-top"><div class="tl-stats-title"><div class="h3 c-yellow">Recent</div><div class="h3 c-primary">Wins</div></div><div class="h5 c-secondary" style="width:589px;">Key improvements shipped to make onboarding faster, safer, and more accurate.</div></div></div></div>`;
+
+const S4_CARDS = `${S4_HEADER}
+  <div class="content-4col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Address detection</div><div class="list"><div class="h5">Improved impermissible address detection during KYC</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Stranded users</div><div class="list"><div class="h5">Visibility on users who failed document submission</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Relaxed rules</div><div class="list"><div class="h5">Removed overzealous rules that caused false positives</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Risk detection</div><div class="list"><div class="h5">Improved detection of very high risk users at signup</div></div></div></div>
+  </div>${F(4)}`;
+
+const S4_CAROUSEL = `${S4_HEADER}
+  <div class="carousel-track" style="position:absolute; top:305px; left:64px; right:0; height:711px; overflow:hidden; cursor:grab;">
+    <div style="display:flex; gap:12px; height:100%; padding-right:64px; transform:translateX(0); transition:none; user-select:none;">
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Addresses</div><div class="h2 c-primary">Improved impermissible address detection</div></div>
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Visibility</div><div class="h2 c-primary">Finding users who failed doc submission</div></div>
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Rules</div><div class="h2 c-primary">Relaxed overzealous false positive rules</div></div>
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Detection</div><div class="h2 c-primary">Better very high risk user detection</div></div>
+    </div>
+  </div>${F(4)}`;
+
+const S4_MAP = { cards: S4_CARDS, carousel: S4_CAROUSEL };
+function switchSlide4(p) {
+  switchSlide('s4-picker', 's4-slide', S4_MAP, p);
+  if (p === 'carousel') {
+    const track = document.querySelector('#s4-slide .carousel-track');
+    if (track) initDrag(track);
+  }
+}
+switchSlide4();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 6: Catching Bad Accounts — Data group
+// ════════════════════════════════════════════════════════════════
+const S6_STATS = `
+  <div class="content-frame"><div class="tl-stats"><div class="tl-stats-top"><div class="tl-stats-title" style="width:1792px;"><div class="h3 c-yellow">Security</div><div class="h3 c-primary">Catching bad accounts faster</div></div><div class="h5 c-secondary" style="width:589px;">Stopping bad actors at signup prevents wasted time in manual reviews. Better fraud detection lets us be more permissive with good users.</div></div></div></div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Low risk', '58.2%', 0, 0, 'h1')}
+      ${statCell('Medium risk', '18.0%', 0, 0, 'h1')}
+    </div>
+    <div class="stat-grid-row">
+      ${statCell('High risk', '13.9%', 0, 0, 'h1')}
+      ${statCell('Very high risk', '9.9%', 0, 0, 'h1')}
+    </div>
+  </div>${F(6)}`;
+
+const S6_PROOF = `
+  <div class="proof-layout">
+    <div class="proof-panel"><div class="proof-panel-inner">
+      <div class="h3 c-primary">Catching bad accounts faster</div>
+      <div class="h5 c-secondary">Stopping bad actors at signup prevents them from wasting our time in manual reviews or worse, letting them in and committing fraud. Getting better at high signal fraud vectors allows us to be more permissive of other users. 3% of signups are coming from Africa.</div>
+    </div></div>
+    <div class="proof-grid">
+      <div class="proof-stat"><div class="h1 c-primary">58.2%</div><div class="h5 c-secondary">Low risk signups</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">18.0%</div><div class="h5 c-secondary">Medium risk signups</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">13.9%</div><div class="h5 c-secondary">High risk signups</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">9.9%</div><div class="h5 c-secondary">Very high risk signups</div></div>
+    </div>
+  </div>${F(6)}`;
+
+const S6_MAP = { stats: S6_STATS, proof: S6_PROOF };
+function switchSlide6(p) { switchSlide('s6-picker', 's6-slide', S6_MAP, p); }
+switchSlide6();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 9: Stranded Users Result — Data group
+// ════════════════════════════════════════════════════════════════
+const S9_PROOF = `
+  <div class="proof-layout">
+    <div class="proof-panel"><div class="proof-panel-inner">
+      <div class="h3 c-primary">Failed document detection</div>
+      <div class="h5 c-secondary">Proactively finding and actioning stranded users who previously had no path forward without contacting CS. Source: Sardine Data.</div>
+    </div></div>
+    <div class="proof-grid">
+      <div class="proof-stat"><div class="h1 c-primary">9.3x</div><div class="h5 c-secondary">Improvement in proactively finding stranded users</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">826%</div><div class="h5 c-secondary">Better detection rate vs previous period</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">0%</div><div class="h5 c-secondary">Detection rate Jan 1 &ndash; March 31</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">~6%</div><div class="h5 c-secondary">Detection rate April 28 &ndash; Present</div></div>
+    </div>
+  </div>${F(9)}`;
+
+const S9_STATS = `
+  <div class="content-frame"><div class="tl-stats"><div class="tl-stats-top"><div class="tl-stats-title" style="width:1792px;"><div class="h3 c-yellow">Result</div><div class="h3 c-primary">Stranded user detection</div></div><div class="h5 c-secondary" style="width:589px;">Proactively finding and actioning stranded users. Source: Sardine Data.</div></div></div></div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Improvement', '9.3x', 0, 0, 'h1')}
+      ${statCell('Better detection rate', '826%', 0, 0, 'h1')}
+    </div>
+  </div>${F(9)}`;
+
+const S9_MAP = { proof: S9_PROOF, stats: S9_STATS };
+function switchSlide9(p) { switchSlide('s9-picker', 's9-slide', S9_MAP, p); }
+switchSlide9();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 10: Onboarding Currently — Thoughts group
+// ════════════════════════════════════════════════════════════════
+const S10_TEXTSLIDE = `
+  <div class="content-frame" style="width:890px;"><div class="h4 c-yellow">Current state</div></div>
+  <div style="position:absolute; top:305px; left:64px; width:1191px;">
+    <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">High risk users are stopped from submitting ID and Selfie, sent to manual review, prompted to contact CS, and must return after review. No guarantee they won't get flagged again.</div>
+  </div>${F(10)}`;
+
+const S10_THOUGHTS = `
+  <div class="content-2col" style="align-items:stretch;">
+    <div class="slot slot-text-740"><div style="display:flex; flex-direction:column; width:740px;">
+      <div class="h2 c-primary">High risk users are stopped, sent to manual review, and prompted to contact CS.</div>
+      <div class="h2 c-yellow" style="margin-top:48px;">No guarantee they won't get flagged again after review.</div>
+    </div></div>
+    <div class="slot slot-fill"><div class="img-placeholder"></div></div>
+  </div>${F(10)}`;
+
+const S10_MAP = { textslide: S10_TEXTSLIDE, thoughts: S10_THOUGHTS };
+function switchSlide10(p) { switchSlide('s10-picker', 's10-slide', S10_MAP, p); }
+switchSlide10();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 14: Core Question — Thoughts group
+// ════════════════════════════════════════════════════════════════
+const S14_TEXTSLIDE = `
+  <div style="position:absolute; top:305px; left:64px; width:1191px;">
+    <div class="c-primary" style="font-size:72px; line-height:64px; font-weight:400;">How can we make sure we can onboard as many good users as possible while taking the necessary time and care to ensure we are protecting Fold and in compliance?</div>
+  </div>${F(14)}`;
+
+const S14_THOUGHTS = `
+  <div class="content-2col" style="align-items:stretch;">
+    <div class="slot slot-text-740"><div style="display:flex; flex-direction:column; width:740px;">
+      <div class="h2 c-primary">How can we onboard as many good users as possible</div>
+      <div class="h2 c-yellow" style="margin-top:48px;">while ensuring we are protecting Fold and in compliance?</div>
+    </div></div>
+    <div class="slot slot-fill"><div class="img-placeholder"></div></div>
+  </div>${F(14)}`;
+
+const S14_MAP = { textslide: S14_TEXTSLIDE, thoughts: S14_THOUGHTS };
+function switchSlide14(p) { switchSlide('s14-picker', 's14-slide', S14_MAP, p); }
+switchSlide14();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 16: Benefits — Data group
+// ════════════════════════════════════════════════════════════════
+const S16_PROOF = `
+  <div class="proof-layout">
+    <div class="proof-panel"><div class="proof-panel-inner">
+      <div class="h3 c-primary">Benefits of a KYC Pending state</div>
+      <div class="h5 c-secondary">All stopped accounts are already being manually reviewed. If they're false positives, they are now upgraded to KYC Success because we already have their documentation. No additional manual labor, but brings down the time to fully onboard.</div>
+    </div></div>
+    <div class="proof-grid">
+      <div class="proof-stat"><div class="h1 c-primary">0</div><div class="h5 c-secondary">Additional manual labor required</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">Less</div><div class="h5 c-secondary">Drop-offs &mdash; no reliance on user contacting CS</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">More</div><div class="h5 c-secondary">Accounts onboarded successfully</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">Fewer</div><div class="h5 c-secondary">Restrictions after an account onboards</div></div>
+    </div>
+  </div>${F(16)}`;
+
+const S16_STATS = `
+  <div class="content-frame"><div class="tl-stats"><div class="tl-stats-top"><div class="tl-stats-title" style="width:1792px;"><div class="h3 c-yellow">KYC Pending</div><div class="h3 c-primary">Benefits</div></div><div class="h5 c-secondary" style="width:589px;">All stopped accounts are already manually reviewed. False positives now get upgraded to KYC Success automatically.</div></div></div></div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Additional manual labor', '0', 0, 0, 'h1')}
+      ${statCell('User drop-offs', 'Less', 0, 0, 'h1')}
+    </div>
+    <div class="stat-grid-row">
+      ${statCell('Accounts onboarded', 'More', 0, 0, 'h1')}
+      ${statCell('Post-onboard restrictions', 'Fewer', 0, 0, 'h1')}
+    </div>
+  </div>${F(16)}`;
+
+const S16_MAP = { proof: S16_PROOF, stats: S16_STATS };
+function switchSlide16(p) { switchSlide('s16-picker', 's16-slide', S16_MAP, p); }
+switchSlide16();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 18: Additional Improvements — Product group
+// ════════════════════════════════════════════════════════════════
+const S18_HEADER = `<div class="content-frame"><div class="tl-stats" style="width:auto;"><div class="tl-stats-top"><div class="tl-stats-title"><div class="h3 c-yellow">Roadmap</div><div class="h3 c-primary">Additional improvements needed</div></div></div></div></div>`;
+
+const S18_CARDS = `${S18_HEADER}
+  <div class="content-4col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Sardine action tags</div><div class="list"><div class="h5">Identify typos for real-time alerts</div><div class="h5">Tag riskier accounts for Risk</div><div class="h5">Executed in our codebase</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Account editability</div><div class="list"><div class="h5">Agents fix obvious typos before sending to partners</div><div class="h5">e.g. "123 Mainst" to "123 Main St"</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">In-app doc collection</div><div class="list"><div class="h5">Proof of Address when billing differs from ID</div><div class="h5">Increased security for Risk</div><div class="h5">Reduces CS intervention</div></div></div></div>
+    <div class="feature-card-noimg" style="flex:1; width:auto;"><div class="tl-featurecol"><div class="h5">Reporting dashboard</div><div class="list"><div class="h5">New metrics dashboard for onboarding</div><div class="h5">Working with Peter &amp; Kunal on data</div></div></div></div>
+  </div>${F(18)}`;
+
+const S18_CAROUSEL = `${S18_HEADER}
+  <div class="carousel-track" style="position:absolute; top:305px; left:64px; right:0; height:711px; overflow:hidden; cursor:grab;">
+    <div style="display:flex; gap:12px; height:100%; padding-right:64px; transform:translateX(0); transition:none; user-select:none;">
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Sardine tags</div><div class="h2 c-primary">Increased specificity in action tags for real-time alerts</div></div>
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Account editing</div><div class="h2 c-primary">Agents fix obvious typos before sending to partners</div></div>
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Doc collection</div><div class="h2 c-primary">New in-app document and selfie verification modules</div></div>
+      <div class="stat-cell" style="flex:none; width:589px; scroll-snap-align:start;"><div class="h5 c-primary">Reporting</div><div class="h2 c-primary">New metrics dashboard for onboarding instrumentation</div></div>
+    </div>
+  </div>${F(18)}`;
+
+const S18_MAP = { cards: S18_CARDS, carousel: S18_CAROUSEL };
+function switchSlide18(p) {
+  switchSlide('s18-picker', 's18-slide', S18_MAP, p);
+  if (p === 'carousel') {
+    const track = document.querySelector('#s18-slide .carousel-track');
+    if (track) initDrag(track);
+  }
+}
+switchSlide18();
+
+// ════════════════════════════════════════════════════════════════
+// Slide 19: Documents Up Front — Data group
+// ════════════════════════════════════════════════════════════════
+const S19_PROOF = `
+  <div class="proof-layout">
+    <div class="proof-panel"><div class="proof-panel-inner">
+      <div class="h3 c-primary">Get all necessary documents up front</div>
+      <div class="h5 c-secondary">Users can pass KYC but still be restricted to provide Proof of Address. Results in passing KYC but not being able to transact. Can take up to 2 weeks to resolve, involves multiple departments via Zendesk and email.</div>
+    </div></div>
+    <div class="proof-grid">
+      <div class="proof-stat"><div class="h1 c-primary">~10%</div><div class="h5 c-secondary">Of users who pass KYC are restricted to provide POA</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">2 wks</div><div class="h5 c-secondary">Average time to resolve a POA restriction</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">1,035</div><div class="h5 c-secondary">Hours of productivity saved per year by automating</div></div>
+      <div class="proof-stat"><div class="h1 c-primary">Multi</div><div class="h5 c-secondary">Departments involved externally via Zendesk/email</div></div>
+    </div>
+  </div>${F(19)}`;
+
+const S19_STATS = `
+  <div class="content-frame"><div class="tl-stats"><div class="tl-stats-top"><div class="tl-stats-title" style="width:1792px;"><div class="h3 c-yellow">Proof of Address</div><div class="h3 c-primary">Get documents up front</div></div><div class="h5 c-secondary" style="width:589px;">Automating POA collection will save Fold approximately 1,035 hours of productivity per year at current onboarding levels.</div></div></div></div>
+  <div class="stat-grid" style="position:absolute; top:305px; left:64px; right:64px; bottom:64px;">
+    <div class="stat-grid-row">
+      ${statCell('Users restricted for POA', '~10%', 0, 0, 'h1')}
+      ${statCell('Hours saved per year', '1,035', 0, 0, 'h1')}
+    </div>
+  </div>${F(19)}`;
+
+const S19_MAP = { proof: S19_PROOF, stats: S19_STATS };
+function switchSlide19(p) { switchSlide('s19-picker', 's19-slide', S19_MAP, p); }
+switchSlide19();
+
+// ── Init ──
+initDeckSettings();
+initAnnotations('fold-onboarding-v2-pins');
+initPresentation('.slide');
+</script>
+</body>
+</html>

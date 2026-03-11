@@ -194,6 +194,115 @@ function switchChip(group, variant) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// Deck Settings — accordion with footer fields
+// Call initDeckSettings() from presentation files
+// ══════════════════════════════════════════════════════════════
+
+function initDeckSettings() {
+  // Derive file key from page URL path
+  const _deckFile = location.pathname.replace(/^\//, '') || 'index.html';
+
+  const setup = async () => {
+    // Find insertion point — after .page-desc or .page-title, before first slide
+    const anchor = document.querySelector('.page-desc') || document.querySelector('.page-title');
+    if (!anchor) return;
+
+    // Read current footer values from first footer in deck
+    const firstFooter = document.querySelector('.footer');
+    const curTitle = firstFooter?.querySelector('.footer-title')?.textContent || '';
+    const curCopy = firstFooter?.querySelector('.footer-copy')?.textContent || '';
+
+    // Load saved settings from server
+    let saved = {};
+    try {
+      const resp = await fetch('/deck-settings?file=' + encodeURIComponent(_deckFile));
+      if (resp.ok) { const t = await resp.text(); if (t && t[0] === '{') saved = JSON.parse(t); }
+    } catch {}
+
+    const el = document.createElement('div');
+    el.className = 'deck-settings';
+    el.innerHTML = `
+      <button type="button" class="deck-settings-toggle">
+        <span class="deck-settings-arrow">&#x25B6;</span> Deck Settings
+      </button>
+      <div class="deck-settings-body">
+        <div class="deck-settings-form">
+          <div class="deck-settings-field grow">
+            <label>Footer title</label>
+            <input type="text" id="deckFooterTitle" placeholder="Company Name" value="${escHtml(saved.title ?? curTitle)}">
+          </div>
+          <div class="deck-settings-field grow">
+            <label>Copyright</label>
+            <input type="text" id="deckFooterCopy" placeholder="&copy; 2026 &middot; Confidential" value="${escHtml(saved.copy ?? curCopy)}">
+          </div>
+          <div class="deck-settings-field">
+            <label>Start page</label>
+            <input type="number" id="deckFooterStart" placeholder="1" value="${saved.start ?? 1}" style="width:60px;">
+          </div>
+        </div>
+      </div>`;
+    anchor.after(el);
+
+    // Toggle accordion
+    el.querySelector('.deck-settings-toggle').addEventListener('click', () => {
+      el.classList.toggle('open');
+    });
+
+    // Live update footers on input
+    const titleInput = document.getElementById('deckFooterTitle');
+    const copyInput = document.getElementById('deckFooterCopy');
+    const startInput = document.getElementById('deckFooterStart');
+
+    function updateFooters() {
+      const title = titleInput.value;
+      const copy = copyInput.value;
+      const start = parseInt(startInput.value) || 1;
+      document.querySelectorAll('.slide-inner').forEach((inner, i) => {
+        const footer = inner.querySelector('.footer');
+        if (!footer) return;
+        const ft = footer.querySelector('.footer-title');
+        const fc = footer.querySelector('.footer-copy');
+        const fp = footer.querySelector('.footer-page');
+        if (ft) ft.textContent = title;
+        if (fc) fc.innerHTML = copy;
+        if (fp) fp.textContent = start + i;
+      });
+    }
+
+    // Apply saved settings on load
+    if (saved.title || saved.copy || saved.start) updateFooters();
+
+    // Debounced save to server
+    let _saveTimer = null;
+    function saveSettings() {
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => {
+        fetch('/deck-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file: _deckFile,
+            title: titleInput.value,
+            copy: copyInput.value,
+            start: parseInt(startInput.value) || 1,
+          }),
+        }).catch(() => {});
+      }, 500);
+    }
+
+    titleInput.addEventListener('input', () => { updateFooters(); saveSettings(); });
+    copyInput.addEventListener('input', () => { updateFooters(); saveSettings(); });
+    startInput.addEventListener('input', () => { updateFooters(); saveSettings(); });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 // Unified Annotation System (FAB + panel)
 // Works for both presentation pages and storybook pages
 // Call initAnnotations('storage-key', opts) from each page

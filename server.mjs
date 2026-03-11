@@ -55,6 +55,43 @@ createServer(async (req, res) => {
     return;
   }
 
+  // POST /deck-settings — save deck settings per file
+  if (req.method === 'POST' && req.url === '/deck-settings') {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const { file, title, copy, start } = JSON.parse(Buffer.concat(chunks).toString());
+    try {
+      const filePath = join(DIR, 'deck-settings.json');
+      let settings = {};
+      try { settings = JSON.parse(await readFile(filePath, 'utf-8')); } catch {}
+      settings[file] = { title, copy, start };
+      await writeFile(filePath, JSON.stringify(settings, null, 2), 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
+      console.log(`  ⚙️  Deck settings saved for ${file}`);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // GET /deck-settings?file=... — load deck settings
+  if (req.method === 'GET' && req.url.startsWith('/deck-settings')) {
+    try {
+      const data = JSON.parse(await readFile(join(DIR, 'deck-settings.json'), 'utf-8'));
+      const params = new URL(req.url, 'http://localhost').searchParams;
+      const file = params.get('file');
+      const result = file && data[file] ? data[file] : {};
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+      res.end(JSON.stringify(result));
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{}');
+    }
+    return;
+  }
+
   // GET /edit-storybook — load overrides
   if (req.method === 'GET' && req.url === '/edit-storybook') {
     try {

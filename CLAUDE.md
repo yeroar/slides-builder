@@ -31,8 +31,9 @@ npm run validate     # Check HTML files for design rule violations
 Every generated presentation HTML file MUST include:
 1. **Annotation toolbar** — pin/comment buttons + clipboard export (provided by `initAnnotations`)
 2. **Presentation mode** — F5 fullscreen slide viewer (provided by `initPresentation`)
+3. **Slide navigator** — collapsible left panel with thumbnails (provided by `initSlideNav`)
 
-Both are **required** in every generated file. Template:
+All three are **required** in every generated file. Template:
 
 ```html
 <!DOCTYPE html>
@@ -70,6 +71,8 @@ Both are **required** in every generated file. Template:
 initAnnotations('presentation-name-pins');
 // REQUIRED: enables F5 fullscreen presentation mode
 initPresentation('.slide');
+// REQUIRED: enables left panel with slide thumbnails + grid toggle
+initSlideNav();
 </script>
 </body>
 </html>
@@ -77,7 +80,15 @@ initPresentation('.slide');
 
 For files in `examples/`, use `href="../shared.css"` and `src="../shared.js"`.
 
-**Never omit** `initAnnotations` or `initPresentation` — every presentation needs both.
+**Never omit** `initAnnotations`, `initPresentation`, or `initSlideNav` — every presentation needs all three.
+
+## Quick link pages
+
+Only two storybook/reference pages exist:
+- `templates.html` — template composition catalog (managed by `template-registry.js`)
+- `components.html` — component storybook (managed by `components-page.js`)
+
+These are the only "quick link" pages. Do NOT create additional storybook or index pages. Presentation files are standalone HTML files (e.g., `examples/credit-card.html`).
 
 ## Hard constraints
 

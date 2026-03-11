@@ -28,6 +28,7 @@
   <span style="flex:1"></span>
   <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
   <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
 </div>
 
 <!-- ============================================================ -->
@@ -588,6 +589,8 @@
 <script src="../shared.js"></script>
 <script>
 initAnnotations('credit-card-pins');
+initPresentation('.slide');
+initSlideNav();
 
 const F3 = '<div class="footer"><span class="footer-title">Fold Credit Card</span><span class="footer-copy">&copy; Fold 2025 &middot; Confidential</span><span class="footer-page">3</span></div>';
 

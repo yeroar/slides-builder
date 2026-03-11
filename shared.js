@@ -359,6 +359,7 @@ function _pinLoad() {
 function _pinSave(data) {
   localStorage.setItem(_pinStorageKey, JSON.stringify(data));
   _updatePinCount();
+  if (typeof _navUpdatePins === 'function') _navUpdatePins();
 }
 function _updatePinCount() {
   const data = _pinLoad();
@@ -654,4 +655,176 @@ function clearAllNotes() {
     if (num) _renderPins(num);
   });
   _updatePinCount();
+  if (typeof _navUpdatePins === 'function') _navUpdatePins();
 }
+
+// ══════════════════════════════════════════════════════════════
+// Slide Navigator — left panel with thumbnails
+// Call initSlideNav() from presentation files
+// ══════════════════════════════════════════════════════════════
+let _navEl = null;
+let _navItems = [];
+
+function initSlideNav() {
+  document.addEventListener('DOMContentLoaded', () => {
+    _buildSlideNav();
+    _navTrackScroll();
+    _navUpdatePins();
+  });
+}
+
+function _buildSlideNav() {
+  // Create nav panel
+  const nav = document.createElement('div');
+  nav.className = 'slide-nav';
+  nav.innerHTML = `
+    <div class="slide-nav-header">
+      <span class="slide-nav-title">Slides</span>
+      <button class="slide-nav-btn" id="navGridBtn" title="Toggle grid overlay">&#x25A6;</button>
+      <button class="slide-nav-btn" id="navCloseBtn" title="Collapse navigator">&lsaquo;</button>
+    </div>
+    <div class="slide-nav-list" id="navList"></div>
+  `;
+  document.body.prepend(nav);
+  _navEl = nav;
+
+  // Toggle button (shown when collapsed)
+  const toggle = document.createElement('button');
+  toggle.className = 'slide-nav-toggle';
+  toggle.innerHTML = '&#x25A6;';
+  toggle.title = 'Open slide navigator';
+  toggle.onclick = () => { nav.classList.remove('collapsed'); document.body.classList.add('has-slide-nav'); };
+  document.body.appendChild(toggle);
+
+  // Close button
+  document.getElementById('navCloseBtn').onclick = () => {
+    nav.classList.add('collapsed');
+    document.body.classList.remove('has-slide-nav');
+  };
+
+  // Grid button
+  document.getElementById('navGridBtn').onclick = function () {
+    const on = this.classList.toggle('active');
+    document.querySelectorAll('.grid-overlay').forEach(el => el.classList.toggle('visible', on));
+  };
+
+  // Build thumbnail list
+  const list = document.getElementById('navList');
+  const slides = document.querySelectorAll('.slide');
+  const labels = document.querySelectorAll('.slide-label');
+  const dividers = document.querySelectorAll('.section-divider');
+
+  // Map divider positions (which slide index they precede)
+  const dividerMap = new Map();
+  dividers.forEach(d => {
+    // Find the next slide after this divider (may be wrapped in .slide-wrapper)
+    let el = d.nextElementSibling;
+    while (el) {
+      if (el.classList.contains('slide')) { break; }
+      if (el.classList.contains('slide-wrapper')) { break; }
+      if (el.classList.contains('slide-label')) { break; }
+      const inner = el.querySelector('.slide');
+      if (inner) { el = inner; break; }
+      el = el.nextElementSibling;
+    }
+    if (!el) return;
+    // Resolve to the actual .slide element
+    const slideEl = el.classList.contains('slide') ? el
+      : el.querySelector('.slide') || el;
+    const idx = [...slides].indexOf(slideEl);
+    if (idx >= 0) dividerMap.set(idx, d.textContent.trim());
+  });
+
+  _navItems = [];
+  slides.forEach((slide, i) => {
+    // Insert section divider label if applicable
+    if (dividerMap.has(i)) {
+      const sec = document.createElement('div');
+      sec.className = 'slide-nav-section';
+      sec.textContent = dividerMap.get(i);
+      list.appendChild(sec);
+    }
+
+    const item = document.createElement('div');
+    item.className = 'slide-nav-item';
+    item.dataset.index = i;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'slide-nav-thumb';
+
+    // Clone the slide-inner for thumbnail
+    const inner = slide.querySelector('.slide-inner');
+    if (inner) {
+      const clone = inner.cloneNode(true);
+      // Remove pins and drag rects from clone
+      clone.querySelectorAll('.pin, .drag-select-rect, .grid-overlay').forEach(el => el.remove());
+      thumb.appendChild(clone);
+    }
+
+    const num = document.createElement('div');
+    num.className = 'slide-nav-num';
+    num.textContent = i + 1;
+
+    const pin = document.createElement('div');
+    pin.className = 'slide-nav-pin';
+    pin.id = 'navpin-' + (i + 1);
+
+    item.appendChild(thumb);
+    item.appendChild(num);
+    item.appendChild(pin);
+
+    item.onclick = () => {
+      // Find the actual slide wrapper or slide element to scroll to
+      const wrapper = slide.closest('.slide-wrapper') || slide;
+      wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    list.appendChild(item);
+    _navItems.push({ el: item, slide });
+  });
+
+  document.body.classList.add('has-slide-nav');
+}
+
+function _navTrackScroll() {
+  if (!_navItems.length) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const item = _navItems.find(n => n.slide === entry.target);
+      if (item) item.el.classList.toggle('active', entry.isIntersecting);
+    });
+    // Scroll the active nav item into view in the list
+    const active = _navItems.find(n => n.el.classList.contains('active'));
+    if (active) {
+      const list = document.getElementById('navList');
+      const itemTop = active.el.offsetTop - list.offsetTop;
+      const itemBottom = itemTop + active.el.offsetHeight;
+      const scrollTop = list.scrollTop;
+      const listHeight = list.clientHeight;
+      if (itemTop < scrollTop) list.scrollTop = itemTop - 8;
+      else if (itemBottom > scrollTop + listHeight) list.scrollTop = itemBottom - listHeight + 8;
+    }
+  }, { threshold: 0.3 });
+
+  _navItems.forEach(n => observer.observe(n.slide));
+}
+
+function _navUpdatePins() {
+  if (!_navItems.length || !_pinStorageKey) return;
+  const data = _pinLoad();
+  _navItems.forEach((n, i) => {
+    const slideNum = i + 1;
+    const pins = data[slideNum] || [];
+    const pinBadge = document.getElementById('navpin-' + slideNum);
+    if (pinBadge) {
+      if (pins.length > 0) {
+        pinBadge.textContent = pins.length;
+        n.el.classList.add('has-pins');
+      } else {
+        pinBadge.textContent = '';
+        n.el.classList.remove('has-pins');
+      }
+    }
+  });
+}
+

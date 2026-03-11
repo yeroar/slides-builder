@@ -821,6 +821,9 @@
 .pin-item .pin-styles { font-size: 10px; color: #888; font-family: 'Geist', monospace; flex-shrink: 0; margin-top: 3px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pin.multi { background: #2F91FF; }
 .slide.placing-mode .slide-inner .multi-highlight { outline: 2px dashed #2F91FF; outline-offset: -2px; border-radius: 2px; background: rgba(47,145,255,0.08); }
+.slide.placing-mode .slide-inner .drag-highlight { outline: 2px dashed #2F91FF; outline-offset: -2px; border-radius: 2px; background: rgba(47,145,255,0.12); }
+.drag-select-rect { display: none; position: absolute; border: 2px dashed #2F91FF; background: rgba(47,145,255,0.06); border-radius: 3px; z-index: 40; pointer-events: none; }
+.pin-nearby { font-size: 10px; color: #7ab; font-style: italic; flex-shrink: 0; margin-top: 3px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Chip row (pill variant for presentation files) ── */
 .chip-row { display: flex; gap: 6px; margin-bottom: 8px; width: 960px; }

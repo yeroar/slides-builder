@@ -470,3 +470,63 @@ Exceeds limits → split into multiple slides. Never cram, never scroll.
 
 - ✅ **Do**: H3 (64px) in Regular 400 — size alone commands attention
 - ❌ **Don't**: H3 (64px) in SemiBold 600 — heavy weight at display size feels aggressive
+
+---
+
+## Text Formatting Consistency
+
+Rules for normalizing user input into clean, consistent slide text.
+
+### 34. Punctuation normalization
+**Rule**: When processing user content into slides, normalize all punctuation to a consistent style:
+- **Dashes**: Use en dash (–) for ranges, em dash (—) for breaks, hyphen (-) for compounds. Never mix styles within a deck.
+- **Quotes**: Use straight quotes (`"` `'`) in generated HTML. Never curly/smart quotes (`"` `"` `'` `'`) — they render inconsistently across systems.
+- **Ellipsis**: Use the HTML entity `…` or three dots `...`, not mixed variations.
+- **Spaces around dashes**: Em dash with no spaces (`word—word`) or thin spaces. Be consistent — pick one style per deck.
+
+**Why**: Mixed punctuation signals carelessness. User input often has inconsistent dashes (copy-paste from Word, Google Docs, markdown). Normalizing on output ensures every slide looks intentional.
+
+- ✅ **Do**: `"Revenue grew 52%—driven by enterprise"` — consistent em dash, no spaces
+- ❌ **Don't**: Slide 3 uses `—`, slide 7 uses ` -- `, slide 12 uses ` – ` — three dash styles in one deck
+
+### 35. No random inline styling
+**Rule**: Slide text uses only the design system's typography classes for styling. Never add:
+- Inline `<b>`, `<i>`, `<em>`, `<strong>` tags in generated slide content
+- Random `font-weight` or `font-style` overrides on individual words
+- `<u>`, `<mark>`, or other inline decoration
+
+Emphasis is achieved through the type scale (H5 label vs P1 body) and color roles (c-primary vs c-tertiary), not inline formatting.
+
+**Exception**: `<span class="c-deemph">` for de-emphasizing symbols ($, >, <) per Rule 2.
+
+**Why**: Inline bold/italic in slide text breaks the weight system (Rule 33). A random bold word in a Regular 400 heading creates visual noise. The type scale already provides hierarchy — inline formatting adds a competing system.
+
+- ✅ **Do**: Important text as H5 label (weight comes from scale role)
+- ❌ **Don't**: `<span style="font-weight:600">important</span>` inside an H5 — double emphasis
+
+### 36. Sentence case everywhere
+**Rule**: All slide text uses sentence case (capitalize first word + proper nouns only):
+- Headings: `"Revenue grew 52% in Q1"` not `"Revenue Grew 52% In Q1"`
+- Card titles: `"AI-assisted accounting"` not `"AI-Assisted Accounting"`
+- Stat labels: `"Annual revenue"` not `"Annual Revenue"`
+
+**Exceptions**: Proper nouns, acronyms (API, AI, SaaS), brand names, ALL-CAPS labels at P5 scale (Rule 27).
+
+**Why**: Title Case looks formal but creates inconsistency (which prepositions to capitalize?). Sentence case is unambiguous — always capitalize the first word and proper nouns. Google, Apple, and most modern design systems use sentence case for UI text.
+
+- ✅ **Do**: `"Carbon accounting platform"` — clean sentence case
+- ❌ **Don't**: `"Carbon Accounting Platform"` — title case, inconsistent with other slides that use sentence case
+
+### 37. Strip source formatting artifacts
+**Rule**: When processing user input (pasted text, PDFs, meeting notes), strip:
+- Double spaces → single space
+- Tab characters → removed
+- Leading/trailing whitespace → trimmed
+- Markdown formatting (`**bold**`, `_italic_`, `# heading`) → plain text, use DS classes instead
+- HTML entities from paste (`&amp;`, `&nbsp;`) → resolved to characters
+- Bullet markers (`•`, `▪`, `►`, `-`) → removed, use DS bullet components
+
+**Why**: Users paste from diverse sources. Raw formatting artifacts on slides look unpolished. The design system provides all the visual hierarchy needed — source formatting is noise.
+
+- ✅ **Do**: User pastes `**Revenue** grew _significantly_` → slide shows `Revenue grew significantly` styled with DS classes
+- ❌ **Don't**: Preserve markdown bold/italic as inline `<strong>`/`<em>` in slide HTML

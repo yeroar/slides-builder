@@ -513,6 +513,25 @@
   };
 
   const TEXT_LAYOUTS = {
+    rhythm: {
+      name: 'Typography Rhythm',
+      desc: 'Full type scale · H1→P5 · all sizes, weights, line-heights',
+      width: 1792,
+      gap: 24,
+      fixedText: true,
+      layers: [
+        { cls: 'h1', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '128/120 · Regular 400' },
+        { cls: 'h2', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '88/80 · Regular 400' },
+        { cls: 'h3', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '64/64 · Regular 400' },
+        { cls: 'h4', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '48/48 · Regular 400' },
+        { cls: 'h5', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '32/32 · Regular 400' },
+        { cls: 'h6', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '24/24 · Medium 500' },
+        { cls: 'p1', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '21/24 · Regular 400' },
+        { cls: 'p2', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '16/20 · Regular 400' },
+        { cls: 'p3', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '12/16 · Regular 400' },
+        { cls: 'p5', color: 'c-primary', text: 'Pack my box with five dozen liquor jugs', meta: '10/12 · Medium 500' },
+      ],
+    },
     infoText: {
       name: 'InfoText',
       desc: 'H2 + H4 · 740px · gap 128px',
@@ -706,7 +725,7 @@
       }
       return {
         ...layer,
-        text: pick(TYPO_TEXTS[layer.role] || TYPO_TEXTS.title),
+        text: layer.text || pick(TYPO_TEXTS[layer.role] || TYPO_TEXTS.title),
       };
     });
 
@@ -731,6 +750,10 @@
     const customStyle = layer.customStyle || '';
     if (layer.hangingQuote) {
       return `<div class="${layer.cls} ${layer.color}" style="position:relative;${weight}${customStyle}"><span style="position:absolute; right:100%; color:var(--yellow-500);">“</span>${layer.text}<span style="color:var(--yellow-500);">”</span></div>`;
+    }
+
+    if (layer.meta) {
+      return `<div style="display:flex; align-items:baseline; gap:24px;${weight}${customStyle}"><div class="p3 c-tertiary" style="white-space:nowrap; flex-shrink:0; width:200px;">${layer.cls.toUpperCase()} · ${layer.meta}</div><div class="${layer.cls} ${layer.color}" style="white-space:nowrap; text-wrap:nowrap;">${layer.text}</div></div>`;
     }
 
     return `<div class="${layer.cls} ${layer.color}" style="${weight}${customStyle}">${layer.text}</div>`;
@@ -931,13 +954,14 @@
         title: 'Typography Layouts',
         tag: 'library',
         desc: 'Mapped text layout components at their native widths and typography specs.',
-        initialState: { layout: 'infoText', variantIndex: '0' },
+        initialState: { layout: 'rhythm', variantIndex: '0' },
         getControls(state) {
           const definition = TEXT_LAYOUTS[state.layout];
           return [
             {
               key: 'layout',
               options: [
+                { value: 'rhythm', label: 'Rhythm' },
                 { value: 'infoText', label: 'InfoText' },
                 { value: 'marCom', label: 'MarCom' },
                 { value: 'quoteText', label: 'QuoteText' },

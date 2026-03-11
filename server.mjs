@@ -38,7 +38,7 @@ createServer(async (req, res) => {
   try {
     const file = await readFile(join(DIR, path));
     const ext = extname(path);
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain' });
+    res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain', 'Cache-Control': 'no-cache' });
     res.end(file);
   } catch {
     res.writeHead(404);

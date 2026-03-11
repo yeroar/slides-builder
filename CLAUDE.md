@@ -163,6 +163,7 @@ Exceeds limits → split into multiple slides. Never cram.
 - **Partners LineItem**: show description OR chip, never both. 3 rows = description (no chip), 4 rows = chip (no description)
 - **Side-by-side single row**: when both columns are `*x1` grids, position tables at `top: calc(37.5% + 24px)` instead of `top: 192px` — gives more header breathing room and taller cards
 - **Text balance**: `text-wrap: balance` is set globally on `.slide-inner` — all text distributes line breaks evenly, no spiky orphan lines. Do not override with `text-wrap: pretty` or `wrap`
+- **Consistent formatting**: Normalize all text to sentence case, straight quotes, consistent dash style (see DESIGN_RULES.md §34–37). No inline `<b>`/`<i>`/`<strong>`/`<em>` — use DS typography classes. Strip markdown and paste artifacts from user input.
 
 ## Variant chip pairing rules
 

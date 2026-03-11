@@ -28,7 +28,22 @@ body {
   padding: 0 20px 16px;
   border-bottom: 1px solid #2a2a2a;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
+.sidebar-grid-btn {
+  background: #222;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'Geist', sans-serif;
+}
+.sidebar-grid-btn:hover { background: #333; color: #fff; }
+.sidebar-grid-btn.active { background: rgba(255,0,0,0.15); border-color: rgba(255,0,0,0.4); color: #ff6666; }
 
 .sidebar-group {
   padding: 12px 20px 4px;
@@ -68,7 +83,7 @@ body {
 .main {
   margin-left: 260px;
   flex: 1;
-  padding: 56px 48px 40px;
+  padding: 24px 48px 40px;
   display: flex;
   flex-direction: column;
   gap: 64px;
@@ -126,46 +141,32 @@ body {
   font-family: monospace;
 }
 
-.toolbar {
-  position: fixed;
-  top: 0;
-  left: 260px;
-  right: 0;
-  z-index: 101;
-  display: flex;
-  gap: 8px;
-  padding: 10px 48px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #2a2a2a;
-}
-
-.toolbar button {
-  background: #222;
-  border: 1px solid #444;
-  color: #aaa;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: 'Geist', sans-serif;
-}
-
-.toolbar button:hover {
-  background: #333;
-  color: #fff;
-}
-
-.toolbar button.active {
-  background: rgba(255, 0, 0, 0.15);
-  border-color: rgba(255, 0, 0, 0.4);
-  color: #ff6666;
-}
 
 .p4 {
   font-size: 10px;
   line-height: 12px;
   font-weight: 500;
 }
+
+.ann-copy-fab {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  z-index: 200;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #222;
+  border: 1px solid #444;
+  color: #aaa;
+  font-size: 11px;
+  font-family: 'Geist', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ann-copy-fab:hover { background: #333; color: #fff; }
+.ann-copy-fab.visible { display: block; }
 
 .ann-fab {
   position: fixed;
@@ -250,6 +251,23 @@ body.annotating .story .ann-selected {
   outline-offset: -2px;
   border-radius: 2px;
   background: rgba(47, 145, 255, 0.08);
+}
+
+body.annotating .story .ann-drag-highlight {
+  outline: 2px dashed #2F91FF;
+  outline-offset: -2px;
+  border-radius: 2px;
+  background: rgba(47, 145, 255, 0.12);
+}
+
+.ann-drag-rect {
+  display: none;
+  position: fixed;
+  border: 2px dashed #2F91FF;
+  background: rgba(47, 145, 255, 0.06);
+  border-radius: 3px;
+  z-index: 9999;
+  pointer-events: none;
 }
 
 body.annotating {
@@ -411,6 +429,18 @@ body.annotating .sidebar * {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ann-note-nearby {
+  font-size: 10px;
+  color: #7ab;
+  font-style: italic;
+  display: block;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
 }
 
 .ann-note input {

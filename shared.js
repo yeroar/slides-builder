@@ -228,8 +228,60 @@ function initAnnotations(storageKey) {
       slideEl.addEventListener('mouseout', (e) => {
         if (e.target.classList) e.target.classList.remove('hover-highlight');
       });
+
+      // Drag area selection
+      let _dragStart = null, _dragActive = false, _justDragged = false;
+      const _dragRect = document.createElement('div');
+      _dragRect.className = 'drag-select-rect';
+      slideEl.appendChild(_dragRect);
+
+      slideEl.addEventListener('mousedown', (e) => {
+        if (_placingSlide !== slideNum || e.button !== 0) return;
+        if (e.target.classList.contains('pin')) return;
+        _dragStart = { x: e.clientX, y: e.clientY };
+        _dragActive = false;
+      });
+      slideEl.addEventListener('mousemove', (e) => {
+        if (!_dragStart || _placingSlide !== slideNum) return;
+        const dx = e.clientX - _dragStart.x, dy = e.clientY - _dragStart.y;
+        if (!_dragActive && (dx * dx + dy * dy) < 64) return;
+        _dragActive = true;
+        const sr = slideEl.getBoundingClientRect();
+        const left = Math.min(_dragStart.x, e.clientX) - sr.left;
+        const top = Math.min(_dragStart.y, e.clientY) - sr.top;
+        _dragRect.style.display = 'block';
+        _dragRect.style.left = left + 'px';
+        _dragRect.style.top = top + 'px';
+        _dragRect.style.width = Math.abs(dx) + 'px';
+        _dragRect.style.height = Math.abs(dy) + 'px';
+        // Highlight elements in rect
+        _dragHighlightSlide(slideEl, Math.min(_dragStart.x, e.clientX), Math.min(_dragStart.y, e.clientY),
+          Math.max(_dragStart.x, e.clientX), Math.max(_dragStart.y, e.clientY));
+      });
+      slideEl.addEventListener('mouseup', (e) => {
+        if (!_dragStart) return;
+        const wasDrag = _dragActive;
+        _dragStart = null; _dragActive = false;
+        _dragRect.style.display = 'none';
+        if (!wasDrag) return;
+        _justDragged = true;
+        e.stopPropagation();
+        // Collect highlighted elements as pins
+        const highlighted = slideEl.querySelectorAll('.drag-highlight');
+        highlighted.forEach(el => {
+          el.classList.remove('drag-highlight');
+          const elInfo = _identifyElement(el, slideEl);
+          if (!elInfo.selector) return;
+          const rect = slideEl.getBoundingClientRect();
+          const er = el.getBoundingClientRect();
+          const x = +(((er.left + er.width / 2 - rect.left) / rect.width) * 100).toFixed(1);
+          const y = +(((er.top + er.height / 2 - rect.top) / rect.height) * 100).toFixed(1);
+          _addPin(slideNum, x, y, '', elInfo);
+        });
+      });
       slideEl.addEventListener('click', (e) => {
         if (_placingSlide !== slideNum) return;
+        if (_justDragged) { _justDragged = false; return; }
         e.stopPropagation();
         e.target.classList.remove('hover-highlight');
         if (e.target.classList.contains('pin')) return;
@@ -363,64 +415,114 @@ function _identifyElement(target, slideEl) {
   }
   const selector = parts.join(' > ');
 
-  // Human-readable name (inspired by agentation)
-  const name = _elementName(target);
-
-  // Readable path (max 4 ancestors)
-  const pathParts = [];
-  let p = target;
-  let depth = 0;
-  while (p && p !== inner && depth < 4) {
-    const tag = p.tagName.toLowerCase();
-    if (tag === 'html' || tag === 'body') break;
-    const cls = [...(p.classList || [])].filter(c => c.length > 2 && !skipClasses.has(c))[0];
-    pathParts.unshift(cls ? '.' + cls : tag);
-    p = p.parentElement;
-    depth++;
-  }
-  const path = pathParts.join(' > ');
+  // Human-readable name + parent context
+  const elName = _elementName(target, slideEl);
+  const context = _parentContext(target, inner);
+  const name = context ? context + ' → ' + elName : elName;
 
   // Key computed styles snapshot
   const styles = _styleSnapshot(target);
 
-  return { selector, name, text, classes: [...(target.classList || [])].join(' '), path, styles };
+  // Nearby siblings for context
+  const nearby = _nearbySiblings(target);
+
+  return { selector, name, text, classes: [...(target.classList || [])].join(' '), styles, nearby };
 }
 
-function _elementName(el) {
+function _nearbySiblings(el) {
+  const parent = el.parentElement;
+  if (!parent) return '';
+  const siblings = [...parent.children].filter(s => s !== el && s.tagName && !s.classList.contains('pin'));
+  if (!siblings.length) return '';
+  const names = siblings.slice(0, 3).map(s => {
+    const txt = (s.textContent || '').trim();
+    const short = txt.length > 20 ? txt.slice(0, 17) + '...' : txt;
+    return short ? '"' + short + '"' : s.tagName.toLowerCase();
+  });
+  const suffix = siblings.length > 3 ? ' (+' + (siblings.length - 3) + ' more)' : '';
+  return names.join(', ') + suffix;
+}
+
+function _dragHighlightSlide(slideEl, left, top, right, bottom) {
+  slideEl.querySelectorAll('.drag-highlight').forEach(el => el.classList.remove('drag-highlight'));
+  const inner = slideEl.querySelector('.slide-inner');
+  if (!inner) return;
+  const selectors = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.stat-cell,.var-card,.feature-card-noimg,.feature-card,.proof-panel,.proof-stat,.compare-block,.logo-line-item,.carousel-card,img,.data-table td,.data-table th';
+  const candidates = inner.querySelectorAll(selectors);
+  for (const el of candidates) {
+    if (el.classList.contains('pin') || el.classList.contains('footer') || el.classList.contains('drag-select-rect')) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 3 || r.height < 3) continue;
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (cx >= left && cx <= right && cy >= top && cy <= bottom) {
+      el.classList.add('drag-highlight');
+    }
+  }
+}
+
+function _elementName(el, slideEl) {
   const tag = el.tagName.toLowerCase();
-  const txt = (el.textContent || '').trim();
-  const short = txt.length > 35 ? txt.slice(0, 32) + '...' : txt;
-  const cls = [...(el.classList || [])].filter(c => c.length > 2);
+  const allCls = [...(el.classList || [])];
 
-  // Design system classes → readable name
-  const dsMap = { 'h1': 'H1', 'h2': 'H2', 'h3': 'H3', 'h4': 'H4', 'h5': 'H5', 'h6': 'H6',
-    'stat-cell': 'stat cell', 'var-card': 'variable card', 'var-table': 'variable table',
-    'feature-card-noimg': 'feature card', 'feature-card': 'feature card',
-    'proof-panel': 'proof panel', 'proof-grid': 'proof grid', 'proof-stat': 'proof stat',
-    'compare-block': 'compare block', 'footer': 'footer', 'content-frame': 'content frame',
-    'tl-stats': 'header zone', 'tl-stats-title': 'header title', 'carousel-track': 'carousel',
-    'logo-line-item': 'partner row', 'data-table': 'data table' };
-  for (const c of cls) { if (dsMap[c]) return dsMap[c] + (short ? ': "' + short + '"' : ''); }
+  // Typography classes → role name (check FIRST — h5, p2 etc are only 2 chars)
+  const typoMap = { 'h1': 'Display', 'h2': 'Large Title', 'h3': 'Section Title',
+    'h4': 'Subtitle', 'h5': 'Label', 'h6': 'Small Label',
+    'p1': 'Body', 'p2': 'Body Small', 'p3': 'Caption', 'p5': 'Micro' };
+  for (const c of allCls) { if (typoMap[c]) return typoMap[c]; }
 
-  // Typography classes
-  if (cls.some(c => /^(h[1-6]|p[1-5])$/.test(c))) {
-    const typo = cls.find(c => /^(h[1-6]|p[1-5])$/.test(c));
-    return typo.toUpperCase() + (short ? ' "' + short + '"' : '');
-  }
+  // Design system component map → human name
+  const dsMap = {
+    'stat-cell': 'Stat Cell', 'var-card': 'Variable Card', 'var-table': 'Variable Table',
+    'feature-card-noimg': 'Feature Card', 'feature-card': 'Feature Card',
+    'proof-panel': 'Proof Panel', 'proof-grid': 'Proof Grid', 'proof-stat': 'Proof Stat',
+    'compare-block': 'Compare Block', 'footer': 'Footer', 'content-frame': 'Content Frame',
+    'tl-stats': 'Header Zone', 'tl-stats-title': 'Header Title', 'tl-stats-top': 'Header',
+    'carousel-track': 'Carousel', 'carousel-card': 'Carousel Card',
+    'logo-line-item': 'Partner Row', 'logo-line-item-body': 'Partner Info',
+    'data-table': 'Data Table', 'list': 'Bullet List',
+    'slot-tables-row': 'Side-by-Side' };
+  for (const c of allCls) { if (dsMap[c]) return dsMap[c]; }
 
-  // Headings
-  if (/^h[1-6]$/.test(tag)) return tag + (short ? ' "' + short + '"' : '');
-  // Images
-  if (tag === 'img') { const alt = el.getAttribute('alt'); return alt ? 'image "' + alt.slice(0, 30) + '"' : 'image'; }
-  // Text elements
-  if (tag === 'span' || tag === 'p' || tag === 'label') return short ? '"' + short + '"' : tag;
+  // Color hint from utility classes
+  const colorMap = { 'c-primary': '', 'c-secondary': '(secondary)', 'c-tertiary': '(muted)',
+    'c-yellow': '(accent)', 'c-disabled': '(disabled)' };
+  const colorHint = allCls.map(c => colorMap[c]).find(v => v !== undefined) || '';
+
+  // HTML tags
+  if (/^h[1-6]$/.test(tag)) return tag.toUpperCase() + ' Heading';
+  if (tag === 'img') return 'Image';
+  if (tag === 'span' || tag === 'p' || tag === 'label') return 'Text' + (colorHint ? ' ' + colorHint : '');
+
   // Containers with meaningful class
-  if (tag === 'div' && cls.length) {
-    const words = cls[0].split(/[-_]/).filter(w => w.length > 2).slice(0, 2);
-    if (words.length) return words.join(' ') + (short && short.length < 25 ? ': "' + short + '"' : '');
+  const skip = new Set(['c-primary', 'c-secondary', 'c-tertiary', 'c-yellow', 'c-disabled', 'c-accent']);
+  const meaningful = allCls.filter(c => c.length > 2 && !skip.has(c));
+  if (tag === 'div' && meaningful.length) {
+    const words = meaningful[0].split(/[-_]/).filter(w => w.length > 2).slice(0, 2);
+    if (words.length) return words.map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
   }
 
-  return tag === 'div' ? 'container' : tag;
+  return tag === 'div' ? 'Container' : tag;
+}
+
+// Walk up to find the parent component context
+function _parentContext(el, inner) {
+  const dsComponents = new Set(['stat-cell', 'var-card', 'var-table', 'feature-card-noimg',
+    'feature-card', 'proof-panel', 'proof-grid', 'proof-stat', 'compare-block',
+    'tl-stats', 'carousel-card', 'logo-line-item', 'data-table', 'slot-tables-row']);
+  let cur = el.parentElement;
+  while (cur && cur !== inner) {
+    const match = [...(cur.classList || [])].find(c => dsComponents.has(c));
+    if (match) {
+      const nameMap = { 'stat-cell': 'Stat', 'var-card': 'Card', 'var-table': 'Table',
+        'feature-card-noimg': 'Feature', 'feature-card': 'Feature', 'proof-panel': 'Proof',
+        'proof-grid': 'Proof Grid', 'proof-stat': 'Proof Stat', 'compare-block': 'Compare',
+        'tl-stats': 'Header', 'carousel-card': 'Carousel', 'logo-line-item': 'Partner',
+        'data-table': 'Table', 'slot-tables-row': 'Side-by-Side' };
+      return nameMap[match] || match;
+    }
+    cur = cur.parentElement;
+  }
+  return '';
 }
 
 function _styleSnapshot(el) {
@@ -443,7 +545,7 @@ function _addPin(slideNum, x, y, text, elInfo) {
   const data = _pinLoad();
   if (!data[slideNum]) data[slideNum] = [];
   const pin = { x, y, text, selector: elInfo.selector, elText: elInfo.text, classes: elInfo.classes,
-    name: elInfo.name || '', path: elInfo.path || '', styles: elInfo.styles || '' };
+    name: elInfo.name || '', styles: elInfo.styles || '', nearby: elInfo.nearby || '' };
   if (elInfo.selectedText) pin.selectedText = elInfo.selectedText;
   if (elInfo.multiGroup) pin.multiGroup = elInfo.multiGroup;
   data[slideNum].push(pin);
@@ -490,7 +592,7 @@ function _renderPins(slideNum) {
     marker.textContent = num;
     marker.style.left = pin.x + '%';
     marker.style.top = pin.y + '%';
-    const tip = [pin.name || pin.classes || pin.selector, pin.styles, pin.text].filter(Boolean).join('\n');
+    const tip = [pin.name || pin.classes || pin.selector, pin.nearby ? 'nearby: ' + pin.nearby : '', pin.styles, pin.text].filter(Boolean).join('\n');
     marker.title = tip;
     marker.onclick = (e) => {
       e.stopPropagation();
@@ -503,10 +605,12 @@ function _renderPins(slideNum) {
     item.className = 'pin-item';
     item.dataset.idx = idx;
     const elLabel = pin.name || pin.classes || pin.selector.split(' > ').pop() || 'slide';
-    const hasClass = pin.classes && pin.classes.length > 0;
+    const elText = pin.elText && !elLabel.includes(pin.elText.slice(0, 15)) ? pin.elText : '';
+    const textPreview = elText ? `<span class="pin-text-preview">"${escHtml(elText.length > 30 ? elText.slice(0, 27) + '...' : elText)}"</span>` : '';
     const selTextHtml = pin.selectedText ? `<span class="pin-sel-text" title="Selected text">\u201c${escHtml(pin.selectedText.slice(0, 50))}\u201d</span>` : '';
     const stylesHtml = pin.styles ? `<span class="pin-styles" title="Computed styles">${escHtml(pin.styles)}</span>` : '';
-    item.innerHTML = `<div class="pin-item-num">${num}</div><span class="pin-el ${hasClass ? 'has-class' : ''}">${escHtml(elLabel)}</span>${selTextHtml}<input type="text" value="${escHtml(pin.text || '')}" placeholder="What to change..." oninput="updatePinText(${slideNum},${idx},this.value)" onmouseenter="highlightPin(${slideNum},${idx},true)" onmouseleave="highlightPin(${slideNum},${idx},false)">${stylesHtml}<button class="pin-delete" onclick="deletePin(${slideNum},${idx})" title="Delete pin">\u00d7</button>`;
+    const nearbyHtml = pin.nearby ? `<span class="pin-nearby" title="Nearby elements">${escHtml(pin.nearby)}</span>` : '';
+    item.innerHTML = `<div class="pin-item-num">${num}</div><span class="pin-el">${escHtml(elLabel)}</span>${textPreview}${selTextHtml}<input type="text" value="${escHtml(pin.text || '')}" placeholder="What to change..." oninput="updatePinText(${slideNum},${idx},this.value)" onmouseenter="highlightPin(${slideNum},${idx},true)" onmouseleave="highlightPin(${slideNum},${idx},false)">${nearbyHtml}${stylesHtml}<button class="pin-delete" onclick="deletePin(${slideNum},${idx})" title="Delete pin">\u00d7</button>`;
     pinList.appendChild(item);
   });
   _updateBtnState(slideNum);
@@ -525,10 +629,15 @@ function copyNotes() {
     const desc = label ? label.textContent.trim() : '#' + num;
     output += `Slide ${num}  ${desc}\n`;
     pins.forEach((pin, i) => {
-      const label = pin.name || pin.selector || '';
-      const selText = pin.selectedText ? `\n     \u201c${pin.selectedText}\u201d` : '';
-      const styles = pin.styles ? `\n     styles: ${pin.styles}` : '';
-      output += `  ${i + 1}. ${label}${pin.elText ? ' "' + pin.elText + '"' : ''}${selText}${styles}\n     \u2192 ${pin.text || '(no description)'}\n`;
+      const label = pin.name || pin.classes || pin.selector || 'element';
+      const content = pin.elText && !label.includes(pin.elText.slice(0, 15)) ? ` "${pin.elText}"` : '';
+      let line = `  ${i + 1}. [${label}]${content}`;
+      if (pin.text) line += ` -- ${pin.text}`;
+      line += '\n';
+      if (pin.selectedText) line += `     selected: "${pin.selectedText}"\n`;
+      if (pin.styles) line += `     css: ${pin.styles}\n`;
+      if (pin.nearby) line += `     nearby: ${pin.nearby}\n`;
+      output += line;
     });
     output += '\n';
   });

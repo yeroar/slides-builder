@@ -18,7 +18,7 @@
 
   function renderSidebar(root) {
     root.innerHTML = `
-      <div class="sidebar-title">${pageConfig.title}</div>
+      <div class="sidebar-title"><span>${pageConfig.title}</span><button type="button" id="gridToggle" class="sidebar-grid-btn">Grid</button></div>
       ${pageConfig.navGroups.map((group) => {
         const storyLinks = (group.storyIds || []).map((storyId) => {
           const story = getStory(storyId);

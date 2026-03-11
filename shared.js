@@ -275,6 +275,13 @@ function _annCreateDOM() {
     copyFab.title = 'Copy notes to clipboard';
     document.body.appendChild(copyFab);
   }
+  if (!document.getElementById('annClearFab')) {
+    const clearFab = document.createElement('button');
+    clearFab.className = 'ann-clear-fab'; clearFab.id = 'annClearFab';
+    clearFab.title = 'Clear all annotations';
+    clearFab.textContent = 'Clear pins';
+    document.body.appendChild(clearFab);
+  }
   if (!document.getElementById('annPanel')) {
     const panel = document.createElement('div');
     panel.className = 'ann-panel'; panel.id = 'annPanel';
@@ -359,9 +366,12 @@ function _annToggle() {
   if (_annActive) _annRenderAll();
   if (!_annActive) _annClearMulti();
   const copyFab = document.getElementById('annCopyFab');
-  if (copyFab) {
-    if (_annActive) copyFab.classList.remove('visible');
-    else _annUpdateBadge();
+  const clearFab = document.getElementById('annClearFab');
+  if (_annActive) {
+    if (copyFab) copyFab.classList.remove('visible');
+    if (clearFab) clearFab.classList.remove('visible');
+  } else {
+    _annUpdateBadge();
   }
 }
 
@@ -372,6 +382,7 @@ function _annUpdateBadge() {
   const badge = document.getElementById('annBadge');
   const title = document.getElementById('annPanelTitle');
   const copyFab = document.getElementById('annCopyFab');
+  const clearFab = document.getElementById('annClearFab');
   if (total > 0) {
     if (badge) { badge.textContent = total; badge.classList.add('visible'); }
     if (title) title.textContent = `Notes (${total})`;
@@ -379,10 +390,12 @@ function _annUpdateBadge() {
       copyFab.textContent = 'Copy pins';
       copyFab.classList.add('visible');
     }
+    if (clearFab && !_annActive) clearFab.classList.add('visible');
   } else {
     if (badge) badge.classList.remove('visible');
     if (title) title.textContent = 'Notes';
     if (copyFab) copyFab.classList.remove('visible');
+    if (clearFab) clearFab.classList.remove('visible');
   }
   // Update toolbar pin count if present
   const pc = document.getElementById('pinCount');
@@ -681,6 +694,7 @@ function _annBindEvents() {
     const btn = document.getElementById('annCopyFab');
     if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy pins', 1500); }
   });
+  document.getElementById('annClearFab')?.addEventListener('click', _annClearAll);
   document.getElementById('copyNotesButton')?.addEventListener('click', _annCopyAll);
   document.getElementById('clearNotesButton')?.addEventListener('click', _annClearAll);
   document.getElementById('annMultiAdd')?.addEventListener('click', _annCommitMulti);
@@ -1024,19 +1038,29 @@ function _navUpdatePins() {
 
 // ══════════════════════════════════════════════════════════════
 // Inline Editing — edit slide text in browser, save to disk
-// Call initInlineEdit('/path/to/file.html') from presentation files
+// Call initInlineEdit('path/to/file.html') for presentations
+// Call initInlineEdit({ storybook: true, shell }) for storybook pages
 // ══════════════════════════════════════════════════════════════
 let _editActive = false;
 let _editFile = '';
-let _editDirty = new Set(); // slide indices with unsaved changes
+let _editStorybook = false;
+let _editShell = null;
+let _editDirty = new Set(); // slide indices (presentations) or elements (storybook)
+let _editDirtyEls = new Map(); // element → { storyId, selector, text } for storybook
 
 // Editable text selectors inside .slide-inner
-const EDITABLE_SELECTORS = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.p5,.footer-title,.footer-copy,.footer-page,.var-card-title,.var-card-value,.var-table-title,.compare-chip,.logo-chip,.tl-vh-body';
+const EDITABLE_SELECTORS = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.p5,.footer-title,.footer-copy,.footer-page,.var-card-title,.var-card-value,.var-table-title,.compare-chip,.logo-chip,.tl-vh-body,.section-item,.stat-cell .h5,.stat-cell .h1,.stat-cell .h2,.proof-stat .h5,.proof-stat .h3';
 
-function initInlineEdit(filePath) {
-  _editFile = filePath;
+function initInlineEdit(opts) {
+  if (typeof opts === 'string') {
+    _editFile = opts;
+  } else {
+    _editStorybook = opts.storybook || false;
+    _editShell = opts.shell || null;
+  }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  const setup = () => {
+    if (document.getElementById('editToggle')) return; // already initialized
     const toggle = document.createElement('button');
     toggle.className = 'edit-toggle';
     toggle.id = 'editToggle';
@@ -1044,7 +1068,6 @@ function initInlineEdit(filePath) {
     toggle.textContent = '\u270F\uFE0F';
     document.body.appendChild(toggle);
 
-    // Toast
     const toast = document.createElement('div');
     toast.className = 'edit-save-toast';
     toast.id = 'editToast';
@@ -1052,7 +1075,6 @@ function initInlineEdit(filePath) {
 
     toggle.addEventListener('click', () => _toggleEdit());
 
-    // Keyboard: E to toggle, Cmd+S to save
     document.addEventListener('keydown', (e) => {
       if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable') && !e.target.matches('input,textarea')) {
         e.preventDefault();
@@ -1063,7 +1085,13 @@ function initInlineEdit(filePath) {
         _saveAllEdits();
       }
     });
-  });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
 }
 
 function _toggleEdit() {
@@ -1080,46 +1108,116 @@ function _toggleEdit() {
     if (_editActive) {
       const editables = inner.querySelectorAll(EDITABLE_SELECTORS);
       editables.forEach(el => {
-        // Skip elements that are containers with child editables
         if (el.querySelector(EDITABLE_SELECTORS)) return;
         el.setAttribute('contenteditable', 'true');
+        el.dataset.editOriginal = el.textContent;
         el.addEventListener('input', _onEditInput);
         el.addEventListener('blur', _onEditBlur);
       });
     } else {
       inner.querySelectorAll('[contenteditable]').forEach(el => {
         el.removeAttribute('contenteditable');
+        delete el.dataset.editOriginal;
         el.removeEventListener('input', _onEditInput);
         el.removeEventListener('blur', _onEditBlur);
       });
     }
   });
 
-  // Save any pending changes when leaving edit mode
-  if (!_editActive && _editDirty.size > 0) {
+  if (!_editActive && (_editDirty.size > 0 || _editDirtyEls.size > 0)) {
     _saveAllEdits();
   }
 }
 
 function _onEditInput(e) {
-  const slide = e.target.closest('.slide');
-  if (!slide) return;
-  const slides = [...document.querySelectorAll('.slide')];
-  const idx = slides.indexOf(slide);
-  if (idx >= 0) _editDirty.add(idx);
+  if (_editStorybook) {
+    _trackStorybookEdit(e.target);
+  } else {
+    const slide = e.target.closest('.slide');
+    if (!slide) return;
+    const slides = [...document.querySelectorAll('.slide')];
+    const idx = slides.indexOf(slide);
+    if (idx >= 0) _editDirty.add(idx);
+  }
 }
 
-function _onEditBlur(e) {
-  // Auto-save on blur after a short delay
+function _onEditBlur() {
   setTimeout(() => {
-    if (_editDirty.size > 0) _saveAllEdits();
+    if (_editDirty.size > 0 || _editDirtyEls.size > 0) _saveAllEdits();
   }, 500);
 }
 
+function _trackStorybookEdit(el) {
+  const inner = el.closest('[data-story-slide]');
+  if (!inner) return;
+  const storyId = inner.dataset.storySlide;
+  const selector = _editSelector(el, inner);
+  if (!selector) return;
+  _editDirtyEls.set(el, { storyId, selector, text: el.textContent });
+}
+
+// Build a CSS selector path from el to its slide-inner container
+function _editSelector(el, container) {
+  const parts = [];
+  let cur = el;
+  while (cur && cur !== container) {
+    let seg = '';
+    const classes = [...cur.classList].filter(c => c !== 'edit-mode' && !c.startsWith('ann-'));
+    if (classes.length) {
+      seg = '.' + classes.join('.');
+    } else {
+      seg = cur.tagName.toLowerCase();
+    }
+    // Add nth-of-type if needed for uniqueness
+    const parent = cur.parentElement;
+    if (parent) {
+      const siblings = [...parent.children].filter(s => {
+        if (classes.length) return [...s.classList].join('.') === classes.join('.');
+        return s.tagName === cur.tagName;
+      });
+      if (siblings.length > 1) {
+        const idx = siblings.indexOf(cur) + 1;
+        seg += `:nth-of-type(${idx})`;
+      }
+    }
+    parts.unshift(seg);
+    cur = cur.parentElement;
+  }
+  return parts.join(' > ') || null;
+}
+
 async function _saveAllEdits() {
+  const toast = document.getElementById('editToast');
+
+  // Storybook mode: save per-element overrides
+  if (_editStorybook && _editDirtyEls.size > 0) {
+    for (const [el, info] of _editDirtyEls) {
+      if (el.textContent === el.dataset.editOriginal) continue;
+      const state = _editShell ? _editShell.getState(info.storyId) : {};
+      const key = _editShell ? _editShell.overrideKey(info.storyId, state) : info.storyId;
+      try {
+        const resp = await fetch('/edit-storybook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, selector: info.selector, text: info.text }),
+        });
+        const result = await resp.json();
+        if (result.ok) {
+          _showToast(toast, 'Saved');
+        } else {
+          _showToast(toast, `Error: ${result.error}`);
+        }
+      } catch (err) {
+        _showToast(toast, `Save failed: ${err.message}`);
+      }
+    }
+    _editDirtyEls.clear();
+    return;
+  }
+
+  // Presentation mode: save full slide HTML
   if (!_editFile || _editDirty.size === 0) return;
   const slides = document.querySelectorAll('.slide');
-  const toast = document.getElementById('editToast');
 
   for (const idx of _editDirty) {
     const slide = slides[idx];
@@ -1127,14 +1225,12 @@ async function _saveAllEdits() {
     const inner = slide.querySelector('.slide-inner');
     if (!inner) continue;
 
-    // Clone and clean up: remove contenteditable, pins, drag rects
     const clone = inner.cloneNode(true);
     clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelectorAll('[data-edit-original]').forEach(el => el.removeAttribute('data-edit-original'));
     clone.querySelectorAll('.pin, .drag-select-rect, .grid-overlay, .hover-highlight').forEach(el => el.remove());
-    clone.querySelectorAll('.hover-highlight').forEach(el => el.classList.remove('hover-highlight'));
 
     const html = clone.innerHTML.trim();
-
     try {
       const resp = await fetch('/edit', {
         method: 'POST',

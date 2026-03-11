@@ -33,6 +33,41 @@ createServer(async (req, res) => {
     return;
   }
 
+  // POST /edit-storybook — text overrides for storybook pages
+  if (req.method === 'POST' && req.url === '/edit-storybook') {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const { key, selector, text } = JSON.parse(Buffer.concat(chunks).toString());
+    try {
+      const filePath = join(DIR, 'template-overrides.json');
+      let overrides = {};
+      try { overrides = JSON.parse(await readFile(filePath, 'utf-8')); } catch {}
+      if (!overrides[key]) overrides[key] = {};
+      overrides[key][selector] = text;
+      await writeFile(filePath, JSON.stringify(overrides, null, 2), 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
+      console.log(`  ✏️  Override saved: ${key} → ${selector}`);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // GET /edit-storybook — load overrides
+  if (req.method === 'GET' && req.url === '/edit-storybook') {
+    try {
+      const data = await readFile(join(DIR, 'template-overrides.json'), 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+      res.end(data);
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{}');
+    }
+    return;
+  }
+
   // POST /edit — inline edit, patch HTML file on disk
   if (req.method === 'POST' && req.url === '/edit') {
     const chunks = [];

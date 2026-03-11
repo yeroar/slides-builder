@@ -3,8 +3,8 @@
   const ANN_KEY = window.TEMPLATE_PAGE ? 'templates-annotations' : 'components-annotations';
   let shell = null;
 
-  function init() {
-    shell = initStorybookShell(pageConfig, {
+  async function init() {
+    shell = await initStorybookShell(pageConfig, {
       sidebarRootSelector: '#sidebarRoot',
       mainRootSelector: '#mainRoot',
       gridButtonSelector: '#gridToggle',
@@ -18,6 +18,7 @@
     });
 
     initPresentation('.slide');
+    initInlineEdit({ storybook: true, shell });
   }
 
   if (document.readyState === 'loading') {

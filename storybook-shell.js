@@ -4,6 +4,7 @@
   let storyState = new Map();
   let gridEnabled = false;
   let sidebarObserver = null;
+  let _overrides = {};
 
   function getStory(storyId) {
     return storyMap.get(storyId);
@@ -85,6 +86,22 @@
     return document.getElementById('grid-tpl').content.cloneNode(true);
   }
 
+  function _overrideKey(storyId, state) {
+    const keys = Object.keys(state || {}).sort();
+    const statePart = keys.map(k => `${k}=${state[k]}`).join(',');
+    return statePart ? `${storyId}:${statePart}` : storyId;
+  }
+
+  function _applyOverrides(slide, storyId, state) {
+    const key = _overrideKey(storyId, state);
+    const map = _overrides[key];
+    if (!map) return;
+    for (const [selector, text] of Object.entries(map)) {
+      const el = slide.querySelector(selector);
+      if (el) el.textContent = text;
+    }
+  }
+
   function renderStory(storyId) {
     const story = getStory(storyId);
     if (!story) return;
@@ -99,6 +116,7 @@
 
     slide.className = `slide-inner ${result.bg || 'bg-warning'}`;
     slide.innerHTML = result.html;
+    _applyOverrides(slide, storyId, state);
     slide.appendChild(createGridOverlay());
     if (gridEnabled) {
       slide.querySelector('.grid-overlay')?.classList.add('visible');
@@ -174,10 +192,19 @@
     });
   }
 
-  function init(page, options) {
+  async function init(page, options) {
     pageConfig = page;
     storyMap = new Map(page.stories.map((story) => [story.id, story]));
     storyState = new Map(page.stories.map((story) => [story.id, cloneInitialState(story.initialState)]));
+
+    // Load text overrides
+    try {
+      const resp = await fetch('/edit-storybook');
+      if (resp.ok) {
+        const text = await resp.text();
+        if (text && text[0] === '{') _overrides = JSON.parse(text);
+      }
+    } catch {}
 
     const sidebarRoot = document.querySelector(options.sidebarRootSelector);
     const mainRoot = document.querySelector(options.mainRootSelector);
@@ -207,6 +234,7 @@
         return gridEnabled;
       },
       stories: page.stories.map((story) => story.id),
+      overrideKey: _overrideKey,
     };
   }
 

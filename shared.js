@@ -345,7 +345,10 @@ function _annGetGroupLabel(key) {
     return el?.querySelector('.story-title')?.textContent || key;
   }
   const label = document.querySelectorAll('.slide-label')[parseInt(key) - 1];
-  return label ? `Slide ${key}` : `#${key}`;
+  if (!label) return `#${key}`;
+  const text = label.textContent || '';
+  const match = text.match(/—\s*(.+)/);
+  return match ? `Slide ${key} — ${match[1].trim()}` : `Slide ${key}`;
 }
 
 function _annGetContainer(target) {
@@ -425,7 +428,10 @@ function _annCommitMulti() {
   const note = input.value.trim();
   if (!_annMulti.length) return;
   const data = _annLoad();
-  for (const sel of _annMulti) {
+
+  if (_annMulti.length === 1) {
+    // Single selection — save as flat pin
+    const sel = _annMulti[0];
     if (!data[sel.groupKey]) data[sel.groupKey] = [];
     data[sel.groupKey].push({
       x: sel.x, y: sel.y, note,
@@ -433,7 +439,22 @@ function _annCommitMulti() {
       classes: sel.elInfo.classes, name: sel.elInfo.name || '',
       styles: sel.elInfo.styles || '', nearby: sel.elInfo.nearby || '',
     });
+  } else {
+    // Multi-selection — group into one pin with children
+    // Use first element's position for the marker
+    const first = _annMulti[0];
+    if (!data[first.groupKey]) data[first.groupKey] = [];
+    data[first.groupKey].push({
+      x: first.x, y: first.y, note,
+      name: `${_annMulti.length} elements`,
+      children: _annMulti.map(sel => ({
+        selector: sel.elInfo.selector, elText: sel.elInfo.text,
+        classes: sel.elInfo.classes, name: sel.elInfo.name || '',
+        styles: sel.elInfo.styles || '', nearby: sel.elInfo.nearby || '',
+      })),
+    });
   }
+
   _annSave(data);
   _annClearMulti();
   input.value = '';
@@ -603,7 +624,20 @@ function _annRenderAll() {
       element.textContent = elLabel;
       body.appendChild(element);
 
-      if (pin.nearby) {
+      // Render children list for grouped multi-select pins
+      if (pin.children && pin.children.length) {
+        const childList = document.createElement('div');
+        childList.className = 'ann-note-children';
+        pin.children.forEach(child => {
+          const childEl = document.createElement('div');
+          childEl.className = 'ann-note-child';
+          const childName = child.name || child.classes || child.selector?.split(' > ').pop() || 'element';
+          const childText = child.elText ? `: "${child.elText}"` : '';
+          childEl.textContent = childName + childText;
+          childList.appendChild(childEl);
+        });
+        body.appendChild(childList);
+      } else if (pin.nearby) {
         const nearbyEl = document.createElement('span');
         nearbyEl.className = 'ann-note-nearby';
         nearbyEl.textContent = 'nearby: ' + pin.nearby;
@@ -668,8 +702,17 @@ function _annCopyAll() {
       let line = `  ${i + 1}. [${label}]${content}`;
       if (pin.note) line += ` -- ${pin.note}`;
       line += '\n';
-      if (pin.styles) line += `     css: ${pin.styles}\n`;
-      if (pin.nearby) line += `     nearby: ${pin.nearby}\n`;
+      if (pin.children && pin.children.length) {
+        pin.children.forEach(child => {
+          const cName = child.name || child.classes || child.selector?.split(' > ').pop() || 'element';
+          const cText = child.elText ? ` "${child.elText}"` : '';
+          line += `     - ${cName}${cText}\n`;
+          if (child.styles) line += `       css: ${child.styles}\n`;
+        });
+      } else {
+        if (pin.styles) line += `     css: ${pin.styles}\n`;
+        if (pin.nearby) line += `     nearby: ${pin.nearby}\n`;
+      }
       text += line;
     });
     text += '\n';

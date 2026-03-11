@@ -895,6 +895,13 @@ body.annotating .ann-drag-highlight { outline: 2px dashed #2F91FF; outline-offse
   font-size: 10px; color: #7ab; font-style: italic; display: block;
   max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px;
 }
+.ann-note-children {
+  margin-top: 4px; padding-left: 8px; border-left: 2px solid #444;
+}
+.ann-note-child {
+  font-size: 10px; color: #999; line-height: 16px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px;
+}
 .ann-note input {
   width: 100%; background: transparent; border: none; outline: none;
   color: #ddd; font-size: 13px; font-family: 'Geist', sans-serif; padding: 0;

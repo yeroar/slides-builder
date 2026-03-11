@@ -96,16 +96,16 @@
     },
     section: {
       bg: 'bg-warning',
-      label: 'Section — Active item face-secondary, inactive face-disabled, H1 128/120',
+      label: 'Section — Active item with accent line, inactive with default line, H1 128/120',
       suggestNext: ['normal', 'textslide', 'cards', 'features'],
       render: () => `
         <div class="content-1col">
-          <div class="section-slot">
-            <div class="section-item">Introduction</div>
-            <div class="section-item active">Market Analysis</div>
-            <div class="section-item">Product Strategy</div>
-            <div class="section-item">Financial Overview</div>
-            <div class="section-item">Next Steps</div>
+          <div class="slot-agenda" style="width:1760px">
+            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Introduction</div></div>
+            <div class="bullet"><div class="line line-accent"></div><div class="h1 c-accent">Market Analysis</div></div>
+            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Product Strategy</div></div>
+            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Financial Overview</div></div>
+            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Next Steps</div></div>
           </div>
         </div>
         ${footerHTML('Title', '&copy; Company', '3')}`,

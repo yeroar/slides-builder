@@ -31,16 +31,16 @@
   // ── Typography ──
 
   const TYPO_SCALE = [
-    { cls: 'h1', label: 'H1', spec: '128/120 Regular', sample: 'Strategy & growth' },
-    { cls: 'h2', label: 'H2', spec: '88/80 Regular', sample: 'Revenue acceleration' },
-    { cls: 'h3', label: 'H3', spec: '64/64 Regular', sample: 'Enterprise grew 52%' },
-    { cls: 'h4', label: 'H4', spec: '48/48 Regular', sample: 'Key metrics and trends' },
-    { cls: 'h5', label: 'H5', spec: '32/32 Regular', sample: 'Card header label' },
-    { cls: 'h6', label: 'H6', spec: '24/24 Medium', sample: 'Small label text' },
-    { cls: 'p1', label: 'P1', spec: '21/24 Regular', sample: 'Body text for narrative paragraphs and descriptions across the presentation.' },
-    { cls: 'p2', label: 'P2', spec: '16/20 Regular', sample: 'Compact body text used in variable cards and tight layouts.' },
-    { cls: 'p3', label: 'P3', spec: '12/16 Regular', sample: 'Caption and disclaimer text, source lines, and footnotes.' },
-    { cls: 'p5', label: 'P5', spec: '10/12 Medium', sample: 'FOOTER COPYRIGHT · TABLE HEADERS · MICRO LABELS' },
+    { cls: 'h1', label: 'H1', spec: '128/120 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'h2', label: 'H2', spec: '88/80 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'h3', label: 'H3', spec: '64/64 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'h4', label: 'H4', spec: '48/48 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'h5', label: 'H5', spec: '32/32 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'h6', label: 'H6', spec: '24/24 Medium', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'p1', label: 'P1', spec: '21/24 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'p2', label: 'P2', spec: '16/20 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'p3', label: 'P3', spec: '12/16 Regular', sample: 'Pack my box with five dozen liquor jugs' },
+    { cls: 'p5', label: 'P5', spec: '10/12 Medium', sample: 'Pack my box with five dozen liquor jugs' },
   ];
 
   // ── Color tokens ──
@@ -125,7 +125,7 @@
     title: 'Components',
     navGroups: [
       { label: 'Foundations', storyIds: ['colors', 'typography'] },
-      { label: 'Primitives', storyIds: ['line', 'bullet', 'section-prim', 'footer-prim'] },
+      { label: 'Primitives', storyIds: ['bullet-section', 'footer-prim'] },
       { label: 'Layout', storyIds: ['stat-cell', 'feature-card', 'var-card', 'logo-card'] },
       { label: 'Compositions', storyIds: ['proof-comp', 'compare-comp', 'data-table-comp'] },
       { label: 'Pages', links: [
@@ -274,49 +274,65 @@
       },
       // ──────── Line ────────
       {
-        id: 'line',
-        title: 'Line',
+        id: 'bullet-section',
+        title: 'Bullet / Section',
         tag: 'primitive',
         tagClass: 'template',
-        desc: 'Horizontal decorative dash. Two variants: accent (blue) and default (gray).',
-        initialState: {},
-        render() {
-          return {
-            bg: 'bg-warning',
-            label: 'Line — accent + default variants',
-            html: `
-              <div style="position:absolute; top:64px; left:64px; display:flex; flex-direction:column; gap:48px; width:1792px;">
-                <div style="display:flex; flex-direction:column; gap:16px;">
-                  <div class="p3 c-tertiary">Accent (blue)</div>
-                  ${renderLine('accent')}
-                </div>
-                <div style="display:flex; flex-direction:column; gap:16px;">
-                  <div class="p3 c-tertiary">Default (gray)</div>
-                  ${renderLine('default')}
-                </div>
-                <div style="display:flex; flex-direction:column; gap:16px;">
-                  <div class="p3 c-tertiary">Custom widths</div>
-                  <div style="display:flex; gap:24px; align-items:center;">
-                    <div class="line line-accent" style="width:50px;"></div>
-                    <div class="line line-accent" style="width:105px;"></div>
-                    <div class="line line-accent" style="width:200px;"></div>
-                    <div class="line line-accent" style="width:400px;"></div>
+        desc: 'Agenda list items. Line = decorative dash, Bullet = line + H1, Section = plain H1.',
+        initialState: { style: 'bullet' },
+        getControls(state) {
+          return [{
+            key: 'style',
+            options: [
+              { value: 'bullet', label: 'Bullet' },
+              { value: 'section', label: 'Section' },
+            ],
+          }];
+        },
+        render(state) {
+          if (state.style === 'section') {
+            return {
+              bg: 'bg-warning',
+              label: 'Section — active + inactive items',
+              html: `
+                <div style="position:absolute; top:64px; left:64px; width:1760px; display:flex; flex-direction:column;">
+                  <div class="section-slot">
+                    <div class="section-item">Introduction</div>
+                    <div class="section-item active">Market Analysis</div>
+                    <div class="section-item">Product Strategy</div>
+                    <div class="section-item">Financial Overview</div>
                   </div>
                 </div>
-              </div>
-              ${F}`,
-          };
-        },
-      },
-      // ──────── Bullet ────────
-      {
-        id: 'bullet',
-        title: 'Bullet',
-        tag: 'primitive',
-        tagClass: 'template',
-        desc: 'Line + H1 text in a horizontal row. Used in Agenda slots.',
-        initialState: {},
-        render() {
+                ${F}`,
+            };
+          }
+          if (state.style === 'line') {
+            return {
+              bg: 'bg-warning',
+              label: 'Line — accent + default variants',
+              html: `
+                <div style="position:absolute; top:64px; left:64px; display:flex; flex-direction:column; gap:48px; width:1792px;">
+                  <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="p3 c-tertiary">Accent (blue)</div>
+                    ${renderLine('accent')}
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="p3 c-tertiary">Default (gray)</div>
+                    ${renderLine('default')}
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="p3 c-tertiary">Custom widths</div>
+                    <div style="display:flex; gap:24px; align-items:center;">
+                      <div class="line line-accent" style="width:50px;"></div>
+                      <div class="line line-accent" style="width:105px;"></div>
+                      <div class="line line-accent" style="width:200px;"></div>
+                      <div class="line line-accent" style="width:400px;"></div>
+                    </div>
+                  </div>
+                </div>
+                ${F}`,
+            };
+          }
           return {
             bg: 'bg-warning',
             label: 'Bullet — accent + default variants',
@@ -326,31 +342,6 @@
                 ${renderBullet('Market Analysis', 'default')}
                 ${renderBullet('Product Strategy', 'default')}
                 ${renderBullet('Next Steps', 'default')}
-              </div>
-              ${F}`,
-          };
-        },
-      },
-      // ──────── Section ────────
-      {
-        id: 'section-prim',
-        title: 'Section',
-        tag: 'primitive',
-        tagClass: 'template',
-        desc: 'Large section heading. Active = face.primary, inactive = face.disabled. H1 128/120.',
-        initialState: {},
-        render() {
-          return {
-            bg: 'bg-warning',
-            label: 'Section — active + inactive items',
-            html: `
-              <div style="position:absolute; top:64px; left:64px; width:1760px; display:flex; flex-direction:column;">
-                <div class="section-slot">
-                  <div class="section-item">Introduction</div>
-                  <div class="section-item active">Market Analysis</div>
-                  <div class="section-item">Product Strategy</div>
-                  <div class="section-item">Financial Overview</div>
-                </div>
               </div>
               ${F}`,
           };

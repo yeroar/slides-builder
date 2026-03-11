@@ -29,11 +29,12 @@ npm run validate     # Check HTML files for design rule violations
 ## Generated file structure
 
 Every generated presentation HTML file MUST include:
-1. **Annotation toolbar** — pin/comment buttons + clipboard export (provided by `initAnnotations`)
+1. **Annotation pins** — FAB + floating panel for feedback (provided by `initAnnotations`)
 2. **Presentation mode** — F5 fullscreen slide viewer (provided by `initPresentation`)
-3. **Slide navigator** — collapsible left panel with thumbnails (provided by `initSlideNav`)
+3. **Slide navigator** — left panel with thumbnails, section headers, grid toggle (provided by `initSlideNav`)
+4. **Inline editing** — edit text in browser, saves to disk (provided by `initInlineEdit`)
 
-All three are **required** in every generated file. Template:
+All four are **required** in every generated file. Template:
 
 ```html
 <!DOCTYPE html>
@@ -52,12 +53,10 @@ All three are **required** in every generated file. Template:
 <body>
 <h1 class="page-title">Title</h1>
 <div class="page-desc">Description</div>
-<!-- Toolbar: pin count + annotation buttons. Always include this. -->
+<!-- Toolbar: only play button. Copy/clear handled by annotation panel. -->
 <div class="toolbar">
   <span id="pinCount" style="font-size:13px; color:#666;"></span>
   <span style="flex:1"></span>
-  <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
-  <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
   <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
 </div>
 
@@ -67,12 +66,10 @@ All three are **required** in every generated file. Template:
 
 <script src="shared.js"></script>
 <script>
-// REQUIRED: enables per-slide + pin buttons for annotation
 initAnnotations('presentation-name-pins');
-// REQUIRED: enables F5 fullscreen presentation mode
 initPresentation('.slide');
-// REQUIRED: enables left panel with slide thumbnails + grid toggle
 initSlideNav();
+initInlineEdit('presentation-name.html');
 </script>
 </body>
 </html>
@@ -80,7 +77,7 @@ initSlideNav();
 
 For files in `examples/`, use `href="../shared.css"` and `src="../shared.js"`.
 
-**Never omit** `initAnnotations`, `initPresentation`, or `initSlideNav` — every presentation needs all three.
+**Never omit** any of the four init calls — every presentation needs all of them.
 
 ## Quick link pages
 

@@ -33,6 +33,67 @@ createServer(async (req, res) => {
     return;
   }
 
+  // POST /edit — inline edit, patch HTML file on disk
+  if (req.method === 'POST' && req.url === '/edit') {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const { file, slideIndex, html } = JSON.parse(Buffer.concat(chunks).toString());
+    try {
+      const filePath = join(DIR, file);
+      let source = await readFile(filePath, 'utf-8');
+
+      // Find the Nth <div class="slide-inner ..."> ... </div> block
+      // We match opening tag through its closing </div> by counting nesting
+      const openRe = /<div\s+class="slide-inner[^"]*"/g;
+      let match, count = 0, startPos = -1;
+      while ((match = openRe.exec(source)) !== null) {
+        if (count === slideIndex) { startPos = match.index; break; }
+        count++;
+      }
+      if (startPos === -1) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Slide not found', slideIndex }));
+        return;
+      }
+
+      // Find the opening tag end (the >)
+      const tagEnd = source.indexOf('>', startPos);
+      const openTag = source.slice(startPos, tagEnd + 1);
+
+      // Walk forward counting nested divs to find the matching </div>
+      let depth = 1, pos = tagEnd + 1;
+      while (depth > 0 && pos < source.length) {
+        const nextOpen = source.indexOf('<div', pos);
+        const nextClose = source.indexOf('</div>', pos);
+        if (nextClose === -1) break;
+        if (nextOpen !== -1 && nextOpen < nextClose) {
+          depth++;
+          pos = nextOpen + 4;
+        } else {
+          depth--;
+          if (depth === 0) {
+            // Replace content between openTag end and this </div>
+            const before = source.slice(0, tagEnd + 1);
+            const after = source.slice(nextClose);
+            source = before + '\n' + html + '\n' + after;
+            await writeFile(filePath, source, 'utf-8');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true, slideIndex }));
+            console.log(`  ✏️  Slide ${slideIndex + 1} saved in ${file}`);
+            return;
+          }
+          pos = nextClose + 6;
+        }
+      }
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Could not find closing tag' }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   // Static file server
   const path = req.url === '/' ? '/templates.html' : req.url.split('?')[0];
   try {

@@ -115,6 +115,19 @@ function startPresentation(slideSelector) {
   _presActive = true;
   document.body.style.overflow = 'hidden';
   presShow();
+
+  // Esc hint toast
+  let toast = document.getElementById('pres-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'pres-toast';
+    toast.className = 'pres-toast';
+    toast.textContent = 'Press Esc to exit';
+    overlay.appendChild(toast);
+  }
+  toast.classList.add('show');
+  // Hold fully visible for 0.8s, then fade out over 1.5s
+  setTimeout(() => toast.classList.remove('show'), 400);
 }
 
 function stopPresentation() {
@@ -181,297 +194,295 @@ function switchChip(group, variant) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// Pin / Annotation system
-// Call initAnnotations('storage-key') from each page
+// Unified Annotation System (FAB + panel)
+// Works for both presentation pages and storybook pages
+// Call initAnnotations('storage-key', opts) from each page
 // ══════════════════════════════════════════════════════════════
-let _pinStorageKey = '';
-let _placingSlide = null;
-let _multiSelectEls = []; // multi-select buffer
+let _annKey = '';
+let _annActive = false;
+let _annMulti = [];
+let _annOpts = {};
 
-function initAnnotations(storageKey) {
-  _pinStorageKey = storageKey;
+function initAnnotations(storageKey, opts) {
+  _annKey = storageKey;
+  _annOpts = Object.assign({
+    containerSelector: '.slide',   // what to position pins relative to
+    groupBy: 'index',              // 'index' (slide number) or 'id' (element id)
+    syncToServer: false,
+  }, opts);
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const labels = document.querySelectorAll('.slide-label');
-    labels.forEach((label, i) => {
-      const slideNum = i + 1;
-      const slideEl = label.nextElementSibling;
-      if (!slideEl || !slideEl.classList.contains('slide')) return;
+  const ready = () => {
+    _annCreateDOM();
+    _annBindEvents();
+    _annUpdateBadge();
+    _annRenderAll();
+  };
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'slide-wrapper';
-      wrapper.dataset.slide = slideNum;
-      label.parentNode.insertBefore(wrapper, label);
-      wrapper.appendChild(label);
-      wrapper.appendChild(slideEl);
-
-      const btn = document.createElement('button');
-      btn.className = 'pin-btn';
-      btn.id = 'pinbtn-' + slideNum;
-      btn.title = 'Click to place a pin · ⇧⌘+Click for multi-select';
-      btn.onclick = (e) => { e.stopPropagation(); _togglePlacing(slideNum); };
-      label.style.position = 'relative';
-      label.style.paddingRight = '36px';
-      label.appendChild(btn);
-
-      const pinList = document.createElement('div');
-      pinList.className = 'pin-list';
-      pinList.id = 'pinlist-' + slideNum;
-      wrapper.appendChild(pinList);
-
-      slideEl.addEventListener('mouseover', (e) => {
-        if (_placingSlide !== slideNum) return;
-        const t = e.target;
-        if (t === slideEl || t.classList.contains('slide-inner') || t.classList.contains('pin')) return;
-        t.classList.add('hover-highlight');
-      });
-      slideEl.addEventListener('mouseout', (e) => {
-        if (e.target.classList) e.target.classList.remove('hover-highlight');
-      });
-
-      // Drag area selection
-      let _dragStart = null, _dragActive = false, _justDragged = false;
-      const _dragRect = document.createElement('div');
-      _dragRect.className = 'drag-select-rect';
-      slideEl.appendChild(_dragRect);
-
-      slideEl.addEventListener('mousedown', (e) => {
-        if (_placingSlide !== slideNum || e.button !== 0) return;
-        if (e.target.classList.contains('pin')) return;
-        _dragStart = { x: e.clientX, y: e.clientY };
-        _dragActive = false;
-      });
-      slideEl.addEventListener('mousemove', (e) => {
-        if (!_dragStart || _placingSlide !== slideNum) return;
-        const dx = e.clientX - _dragStart.x, dy = e.clientY - _dragStart.y;
-        if (!_dragActive && (dx * dx + dy * dy) < 64) return;
-        _dragActive = true;
-        const sr = slideEl.getBoundingClientRect();
-        const left = Math.min(_dragStart.x, e.clientX) - sr.left;
-        const top = Math.min(_dragStart.y, e.clientY) - sr.top;
-        _dragRect.style.display = 'block';
-        _dragRect.style.left = left + 'px';
-        _dragRect.style.top = top + 'px';
-        _dragRect.style.width = Math.abs(dx) + 'px';
-        _dragRect.style.height = Math.abs(dy) + 'px';
-        // Highlight elements in rect
-        _dragHighlightSlide(slideEl, Math.min(_dragStart.x, e.clientX), Math.min(_dragStart.y, e.clientY),
-          Math.max(_dragStart.x, e.clientX), Math.max(_dragStart.y, e.clientY));
-      });
-      slideEl.addEventListener('mouseup', (e) => {
-        if (!_dragStart) return;
-        const wasDrag = _dragActive;
-        _dragStart = null; _dragActive = false;
-        _dragRect.style.display = 'none';
-        if (!wasDrag) return;
-        _justDragged = true;
-        e.stopPropagation();
-        // Collect highlighted elements as pins
-        const highlighted = slideEl.querySelectorAll('.drag-highlight');
-        highlighted.forEach(el => {
-          el.classList.remove('drag-highlight');
-          const elInfo = _identifyElement(el, slideEl);
-          if (!elInfo.selector) return;
-          const rect = slideEl.getBoundingClientRect();
-          const er = el.getBoundingClientRect();
-          const x = +(((er.left + er.width / 2 - rect.left) / rect.width) * 100).toFixed(1);
-          const y = +(((er.top + er.height / 2 - rect.top) / rect.height) * 100).toFixed(1);
-          _addPin(slideNum, x, y, '', elInfo);
-        });
-      });
-      slideEl.addEventListener('click', (e) => {
-        if (_placingSlide !== slideNum) return;
-        if (_justDragged) { _justDragged = false; return; }
-        e.stopPropagation();
-        e.target.classList.remove('hover-highlight');
-        if (e.target.classList.contains('pin')) return;
-
-        const rect = slideEl.getBoundingClientRect();
-        const x = +((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-        const y = +((e.clientY - rect.top) / rect.height * 100).toFixed(1);
-        const elInfo = _identifyElement(e.target, slideEl);
-        if (!elInfo.selector) return;
-
-        // Capture text selection if any
-        const sel = window.getSelection();
-        if (sel && sel.toString().trim().length > 0) {
-          elInfo.selectedText = sel.toString().trim().slice(0, 200);
-          sel.removeAllRanges();
-        }
-
-        // Multi-select: Cmd+Shift+Click toggles elements in buffer
-        if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
-          const existing = _multiSelectEls.findIndex(m => m.selector === elInfo.selector);
-          if (existing >= 0) {
-            e.target.classList.remove('multi-highlight');
-            _multiSelectEls.splice(existing, 1);
-          } else {
-            e.target.classList.add('multi-highlight');
-            _multiSelectEls.push({ x, y, elInfo, el: e.target });
-          }
-          _updateMultiCount(slideNum);
-          return;
-        }
-
-        // If there are buffered multi-select elements, commit them all as pins
-        if (_multiSelectEls.length > 0) {
-          _multiSelectEls.push({ x, y, elInfo, el: e.target });
-          const names = _multiSelectEls.map(m => m.elInfo.name).join(' + ');
-          _multiSelectEls.forEach(m => {
-            if (m.el) m.el.classList.remove('multi-highlight');
-            m.elInfo.multiGroup = names;
-            _addPin(slideNum, m.x, m.y, '', m.elInfo);
-          });
-          _multiSelectEls = [];
-          _updateMultiCount(slideNum);
-          return;
-        }
-
-        _addPin(slideNum, x, y, '', elInfo);
-      });
-
-      _renderPins(slideNum);
-    });
-
-    _updatePinCount();
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (_multiSelectEls.length) {
-          _multiSelectEls.forEach(m => { if (m.el) m.el.classList.remove('multi-highlight'); });
-          _multiSelectEls = [];
-          if (_placingSlide) _updateMultiCount(_placingSlide);
-        }
-        if (_placingSlide) _togglePlacing(_placingSlide);
-      }
-    });
-  });
-}
-
-function _updateMultiCount(slideNum) {
-  const btn = document.getElementById('pinbtn-' + slideNum);
-  if (!btn || !btn.classList.contains('placing')) return;
-  btn.textContent = _multiSelectEls.length > 0 ? _multiSelectEls.length + '⊕' : '\u00d7';
-}
-
-function _pinLoad() {
-  try { return JSON.parse(localStorage.getItem(_pinStorageKey) || '{}'); } catch { return {}; }
-}
-function _pinSave(data) {
-  localStorage.setItem(_pinStorageKey, JSON.stringify(data));
-  _updatePinCount();
-  if (typeof _navUpdatePins === 'function') _navUpdatePins();
-}
-function _updatePinCount() {
-  const data = _pinLoad();
-  let total = 0;
-  for (const s in data) total += data[s].length;
-  const el = document.getElementById('pinCount');
-  if (el) el.textContent = total > 0 ? `${total} pins` : '';
-}
-
-function _togglePlacing(num) {
-  const wrapper = document.querySelector(`[data-slide="${num}"]`);
-  const slideEl = wrapper.querySelector('.slide');
-  const btn = document.getElementById('pinbtn-' + num);
-  if (_placingSlide === num) {
-    _placingSlide = null;
-    slideEl.classList.remove('placing-mode');
-    btn.classList.remove('placing');
-    _updateBtnState(num);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ready, { once: true });
   } else {
-    if (_placingSlide) _togglePlacing(_placingSlide);
-    _placingSlide = num;
-    slideEl.classList.add('placing-mode');
-    btn.classList.add('placing');
-    btn.textContent = '\u00d7';
+    ready();
   }
 }
 
-function _updateBtnState(num) {
-  const btn = document.getElementById('pinbtn-' + num);
-  if (!btn || btn.classList.contains('placing')) return;
-  const data = _pinLoad();
-  const pins = data[num] || [];
-  if (pins.length > 0) { btn.classList.add('has-pins'); btn.textContent = pins.length; }
-  else { btn.classList.remove('has-pins'); btn.textContent = '+'; }
+function _annLoad() {
+  try { return JSON.parse(localStorage.getItem(_annKey) || '{}'); } catch { return {}; }
 }
 
-function _identifyElement(target, slideEl) {
-  const inner = slideEl.querySelector('.slide-inner');
-  if (!inner || target.classList.contains('pin')) return { selector: '', name: '', text: '', classes: '', path: '', styles: '' };
+function _annSave(data) {
+  localStorage.setItem(_annKey, JSON.stringify(data));
+  _annUpdateBadge();
+  if (typeof _navUpdatePins === 'function') _navUpdatePins();
+  if (_annOpts.syncToServer) {
+    // Enrich with human-readable labels for the JSON file
+    const out = {};
+    for (const [key, pins] of Object.entries(data)) {
+      const label = _annGetGroupLabel(key);
+      out[key] = {
+        story: label,
+        pins: pins.map((pin, i) => ({
+          id: i + 1,
+          element: pin.selector,
+          text: pin.elText || '',
+          note: pin.note || '',
+        })),
+      };
+    }
+    fetch('/annotations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(out, null, 2),
+    }).catch(() => {});
+  }
+}
+
+// Alias for nav system compatibility
+function _pinLoad() { return _annLoad(); }
+let _pinStorageKey = ''; // kept for nav compat
+Object.defineProperty(window, '_pinStorageKey', { get() { return _annKey; } });
+
+function _annCreateDOM() {
+  // Only create if not already in HTML (storybook pages have it pre-rendered)
+  if (!document.getElementById('annFab')) {
+    const fab = document.createElement('div');
+    fab.className = 'ann-fab'; fab.id = 'annFab'; fab.title = 'Toggle annotation mode';
+    fab.innerHTML = '<span id="annFabIcon">\u{1F4CC}</span><span class="badge" id="annBadge"></span>';
+    document.body.appendChild(fab);
+  }
+  if (!document.getElementById('annCopyFab')) {
+    const copyFab = document.createElement('button');
+    copyFab.className = 'ann-copy-fab'; copyFab.id = 'annCopyFab';
+    copyFab.title = 'Copy notes to clipboard';
+    document.body.appendChild(copyFab);
+  }
+  if (!document.getElementById('annPanel')) {
+    const panel = document.createElement('div');
+    panel.className = 'ann-panel'; panel.id = 'annPanel';
+    panel.innerHTML = `
+      <div class="ann-panel-header">
+        <div class="ann-panel-title" id="annPanelTitle">Notes</div>
+        <div class="ann-panel-actions">
+          <button type="button" id="copyNotesButton" title="Copy notes to clipboard">\u{1F4CB}</button>
+          <button type="button" id="clearNotesButton" title="Clear all">\u{1F5D1}</button>
+        </div>
+      </div>
+      <div class="ann-panel-list" id="annList">
+        <div class="ann-panel-empty">Click elements to annotate</div>
+      </div>
+      <div class="ann-multi" id="annMulti">
+        <span class="ann-multi-count" id="annMultiCount">0</span>
+        <input type="text" id="annMultiInput" placeholder="Note for all selected...">
+        <button type="button" class="ann-multi-add" id="annMultiAdd">Add</button>
+        <button type="button" class="ann-multi-cancel" id="annMultiCancel">&times;</button>
+      </div>`;
+    document.body.appendChild(panel);
+  }
+  // Drag rect
+  if (!document.querySelector('.ann-drag-rect')) {
+    const dragRect = document.createElement('div');
+    dragRect.className = 'ann-drag-rect';
+    document.body.appendChild(dragRect);
+  }
+
+  // Wrap slides in slide-wrapper for pin positioning (presentations only)
+  if (_annOpts.groupBy === 'index') {
+    const labels = document.querySelectorAll('.slide-label');
+    labels.forEach((label, i) => {
+      const slideEl = label.nextElementSibling;
+      if (!slideEl || !slideEl.classList.contains('slide')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'slide-wrapper';
+      wrapper.dataset.slide = i + 1;
+      wrapper.style.position = 'relative';
+      label.parentNode.insertBefore(wrapper, label);
+      wrapper.appendChild(label);
+      wrapper.appendChild(slideEl);
+    });
+  }
+}
+
+function _annGetGroupKey(containerEl) {
+  if (_annOpts.groupBy === 'id') return containerEl.id;
+  // For presentations: find slide index
+  const wrapper = containerEl.closest('.slide-wrapper');
+  if (wrapper) return wrapper.dataset.slide;
+  const slides = [...document.querySelectorAll('.slide')];
+  const slide = containerEl.classList.contains('slide') ? containerEl : containerEl.querySelector('.slide');
+  const idx = slides.indexOf(slide);
+  return idx >= 0 ? String(idx + 1) : null;
+}
+
+function _annGetGroupLabel(key) {
+  if (_annOpts.groupBy === 'id') {
+    const el = document.getElementById(key);
+    return el?.querySelector('.story-title')?.textContent || key;
+  }
+  const label = document.querySelectorAll('.slide-label')[parseInt(key) - 1];
+  return label ? `Slide ${key}` : `#${key}`;
+}
+
+function _annGetContainer(target) {
+  if (_annOpts.groupBy === 'id') return target.closest('.story');
+  return target.closest('.slide-wrapper') || target.closest('.slide');
+}
+
+function _annGetPositionParent(target) {
+  if (_annOpts.groupBy === 'id') return target.closest('.story');
+  return target.closest('.slide-wrapper');
+}
+
+function _annToggle() {
+  _annActive = !_annActive;
+  document.body.classList.toggle('annotating', _annActive);
+  document.getElementById('annFab').classList.toggle('active', _annActive);
+  document.getElementById('annPanel').classList.toggle('open', _annActive);
+  if (_annActive) _annRenderAll();
+  if (!_annActive) _annClearMulti();
+  const copyFab = document.getElementById('annCopyFab');
+  if (copyFab) {
+    if (_annActive) copyFab.classList.remove('visible');
+    else _annUpdateBadge();
+  }
+}
+
+function _annUpdateBadge() {
+  const data = _annLoad();
+  let total = 0;
+  for (const k in data) total += data[k].length;
+  const badge = document.getElementById('annBadge');
+  const title = document.getElementById('annPanelTitle');
+  const copyFab = document.getElementById('annCopyFab');
+  if (total > 0) {
+    if (badge) { badge.textContent = total; badge.classList.add('visible'); }
+    if (title) title.textContent = `Notes (${total})`;
+    if (copyFab && !_annActive) {
+      copyFab.textContent = 'Copy pins';
+      copyFab.classList.add('visible');
+    }
+  } else {
+    if (badge) badge.classList.remove('visible');
+    if (title) title.textContent = 'Notes';
+    if (copyFab) copyFab.classList.remove('visible');
+  }
+  // Update toolbar pin count if present
+  const pc = document.getElementById('pinCount');
+  if (pc) pc.textContent = total > 0 ? `${total} pins` : '';
+}
+
+function _annUpdateMulti() {
+  const bar = document.getElementById('annMulti');
+  const count = document.getElementById('annMultiCount');
+  if (_annMulti.length > 0) {
+    bar.classList.add('visible');
+    count.textContent = `${_annMulti.length} selected`;
+    document.getElementById('annMultiInput').focus();
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function _annClearMulti() {
+  _annMulti.forEach(s => s.el.classList.remove('ann-selected'));
+  _annMulti = [];
+  _annUpdateMulti();
+}
+
+function _annCommitMulti() {
+  const input = document.getElementById('annMultiInput');
+  const note = input.value.trim();
+  if (!_annMulti.length) return;
+  const data = _annLoad();
+  for (const sel of _annMulti) {
+    if (!data[sel.groupKey]) data[sel.groupKey] = [];
+    data[sel.groupKey].push({
+      x: sel.x, y: sel.y, note,
+      selector: sel.elInfo.selector, elText: sel.elInfo.text,
+      classes: sel.elInfo.classes, name: sel.elInfo.name || '',
+      styles: sel.elInfo.styles || '', nearby: sel.elInfo.nearby || '',
+    });
+  }
+  _annSave(data);
+  _annClearMulti();
+  input.value = '';
+  _annRenderAll();
+}
+
+function _annIdentify(target, container) {
+  const inner = container.querySelector('.slide-inner') || container;
+  if (target.classList.contains('ann-pin')) return { selector: '', name: '', text: '', classes: '' };
   const rawText = (target.textContent || '').trim();
   const text = rawText.length > 60 ? rawText.slice(0, 57) + '...' : rawText;
 
-  // Build CSS path (for export)
   const parts = [];
   let cur = target;
-  const skipClasses = new Set(['slide-inner', 'bg-brand', 'bg-warning', 'bg-layer', 'bg-warning-subtle']);
-  while (cur && cur !== inner && cur !== slideEl) {
+  const skipCls = new Set(['slide-inner', 'bg-brand', 'bg-warning', 'bg-layer', 'bg-warning-subtle',
+    'story', 'story-header', 'story-desc', 'variants', 'variant', 'row']);
+  while (cur && cur !== inner && cur !== container) {
     let seg = cur.tagName ? cur.tagName.toLowerCase() : '';
-    const classes = [...(cur.classList || [])].filter(c => !skipClasses.has(c));
+    const classes = [...(cur.classList || [])].filter(c => !skipCls.has(c) && !c.startsWith('ann-'));
     if (classes.length) seg = '.' + classes.join('.');
     else if (cur.tagName === 'DIV' && cur.style.cssText) seg = 'div[style]';
     parts.unshift(seg);
     cur = cur.parentElement;
   }
   const selector = parts.join(' > ');
+  const classes = [...(target.classList || [])].filter(c => !c.startsWith('ann-')).join(' ');
+  const name = _annElementName(target, container);
 
-  // Human-readable name + parent context
-  const elName = _elementName(target, slideEl);
-  const context = _parentContext(target, inner);
-  const name = context ? context + ' → ' + elName : elName;
+  const s = window.getComputedStyle(target);
+  const styleParts = [];
+  const bg = s.backgroundColor;
+  if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') styleParts.push('bg:' + bg);
+  if (s.color && s.color !== 'rgb(0, 0, 0)') styleParts.push('color:' + s.color);
+  if (s.fontSize) styleParts.push('font:' + s.fontSize);
+  if (s.fontWeight && s.fontWeight !== '400' && s.fontWeight !== 'normal') styleParts.push('weight:' + s.fontWeight);
+  const styles = styleParts.join(', ');
 
-  // Key computed styles snapshot
-  const styles = _styleSnapshot(target);
-
-  // Nearby siblings for context
-  const nearby = _nearbySiblings(target);
-
-  return { selector, name, text, classes: [...(target.classList || [])].join(' '), styles, nearby };
-}
-
-function _nearbySiblings(el) {
-  const parent = el.parentElement;
-  if (!parent) return '';
-  const siblings = [...parent.children].filter(s => s !== el && s.tagName && !s.classList.contains('pin'));
-  if (!siblings.length) return '';
-  const names = siblings.slice(0, 3).map(s => {
-    const txt = (s.textContent || '').trim();
-    const short = txt.length > 20 ? txt.slice(0, 17) + '...' : txt;
-    return short ? '"' + short + '"' : s.tagName.toLowerCase();
-  });
-  const suffix = siblings.length > 3 ? ' (+' + (siblings.length - 3) + ' more)' : '';
-  return names.join(', ') + suffix;
-}
-
-function _dragHighlightSlide(slideEl, left, top, right, bottom) {
-  slideEl.querySelectorAll('.drag-highlight').forEach(el => el.classList.remove('drag-highlight'));
-  const inner = slideEl.querySelector('.slide-inner');
-  if (!inner) return;
-  const selectors = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.stat-cell,.var-card,.feature-card-noimg,.feature-card,.proof-panel,.proof-stat,.compare-block,.logo-line-item,.carousel-card,img,.data-table td,.data-table th';
-  const candidates = inner.querySelectorAll(selectors);
-  for (const el of candidates) {
-    if (el.classList.contains('pin') || el.classList.contains('footer') || el.classList.contains('drag-select-rect')) continue;
-    const r = el.getBoundingClientRect();
-    if (r.width < 3 || r.height < 3) continue;
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    if (cx >= left && cx <= right && cy >= top && cy <= bottom) {
-      el.classList.add('drag-highlight');
+  const parent = target.parentElement;
+  let nearby = '';
+  if (parent) {
+    const siblings = [...parent.children].filter(s => s !== target && s.tagName && !s.classList.contains('ann-pin'));
+    if (siblings.length) {
+      const names = siblings.slice(0, 3).map(s => {
+        const t = (s.textContent || '').trim();
+        return (t.length > 20 ? t.slice(0, 17) + '...' : t) || s.tagName.toLowerCase();
+      });
+      nearby = names.map(n => `"${n}"`).join(', ') + (siblings.length > 3 ? ` (+${siblings.length - 3} more)` : '');
     }
   }
+
+  return { selector, name, text, classes, styles, nearby };
 }
 
-function _elementName(el, slideEl) {
+function _annElementName(el, container) {
+  const allCls = [...(el.classList || [])].filter(c => !c.startsWith('ann-'));
   const tag = el.tagName.toLowerCase();
-  const allCls = [...(el.classList || [])];
 
-  // Typography classes → role name (check FIRST — h5, p2 etc are only 2 chars)
   const typoMap = { 'h1': 'Display', 'h2': 'Large Title', 'h3': 'Section Title',
     'h4': 'Subtitle', 'h5': 'Label', 'h6': 'Small Label',
     'p1': 'Body', 'p2': 'Body Small', 'p3': 'Caption', 'p5': 'Micro' };
-  for (const c of allCls) { if (typoMap[c]) return typoMap[c]; }
+  for (const c of allCls) { if (typoMap[c]) return _annWithContext(el, container, typoMap[c]); }
 
-  // Design system component map → human name
   const dsMap = {
     'stat-cell': 'Stat Cell', 'var-card': 'Variable Card', 'var-table': 'Variable Table',
     'feature-card-noimg': 'Feature Card', 'feature-card': 'Feature Card',
@@ -480,183 +491,350 @@ function _elementName(el, slideEl) {
     'tl-stats': 'Header Zone', 'tl-stats-title': 'Header Title', 'tl-stats-top': 'Header',
     'carousel-track': 'Carousel', 'carousel-card': 'Carousel Card',
     'logo-line-item': 'Partner Row', 'logo-line-item-body': 'Partner Info',
-    'data-table': 'Data Table', 'list': 'Bullet List',
-    'slot-tables-row': 'Side-by-Side' };
+    'data-table': 'Data Table', 'list': 'Bullet List', 'slot-tables-row': 'Side-by-Side' };
   for (const c of allCls) { if (dsMap[c]) return dsMap[c]; }
 
-  // Color hint from utility classes
-  const colorMap = { 'c-primary': '', 'c-secondary': '(secondary)', 'c-tertiary': '(muted)',
-    'c-yellow': '(accent)', 'c-disabled': '(disabled)' };
-  const colorHint = allCls.map(c => colorMap[c]).find(v => v !== undefined) || '';
-
-  // HTML tags
   if (/^h[1-6]$/.test(tag)) return tag.toUpperCase() + ' Heading';
   if (tag === 'img') return 'Image';
-  if (tag === 'span' || tag === 'p' || tag === 'label') return 'Text' + (colorHint ? ' ' + colorHint : '');
+  if (tag === 'span' || tag === 'p' || tag === 'label') return 'Text';
 
-  // Containers with meaningful class
   const skip = new Set(['c-primary', 'c-secondary', 'c-tertiary', 'c-yellow', 'c-disabled', 'c-accent']);
   const meaningful = allCls.filter(c => c.length > 2 && !skip.has(c));
   if (tag === 'div' && meaningful.length) {
     const words = meaningful[0].split(/[-_]/).filter(w => w.length > 2).slice(0, 2);
     if (words.length) return words.map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
   }
-
   return tag === 'div' ? 'Container' : tag;
 }
 
-// Walk up to find the parent component context
-function _parentContext(el, inner) {
+function _annWithContext(el, container, name) {
   const dsComponents = new Set(['stat-cell', 'var-card', 'var-table', 'feature-card-noimg',
     'feature-card', 'proof-panel', 'proof-grid', 'proof-stat', 'compare-block',
     'tl-stats', 'carousel-card', 'logo-line-item', 'data-table', 'slot-tables-row']);
+  const nameMap = { 'stat-cell': 'Stat', 'var-card': 'Card', 'var-table': 'Table',
+    'feature-card-noimg': 'Feature', 'feature-card': 'Feature', 'proof-panel': 'Proof',
+    'proof-grid': 'Proof Grid', 'proof-stat': 'Proof Stat', 'compare-block': 'Compare',
+    'tl-stats': 'Header', 'carousel-card': 'Carousel', 'logo-line-item': 'Partner',
+    'data-table': 'Table', 'slot-tables-row': 'Side-by-Side' };
   let cur = el.parentElement;
-  while (cur && cur !== inner) {
+  while (cur && cur !== container) {
     const match = [...(cur.classList || [])].find(c => dsComponents.has(c));
-    if (match) {
-      const nameMap = { 'stat-cell': 'Stat', 'var-card': 'Card', 'var-table': 'Table',
-        'feature-card-noimg': 'Feature', 'feature-card': 'Feature', 'proof-panel': 'Proof',
-        'proof-grid': 'Proof Grid', 'proof-stat': 'Proof Stat', 'compare-block': 'Compare',
-        'tl-stats': 'Header', 'carousel-card': 'Carousel', 'logo-line-item': 'Partner',
-        'data-table': 'Table', 'slot-tables-row': 'Side-by-Side' };
-      return nameMap[match] || match;
-    }
+    if (match) return (nameMap[match] || match) + ' \u2192 ' + name;
     cur = cur.parentElement;
   }
-  return '';
+  return name;
 }
 
-function _styleSnapshot(el) {
-  const s = window.getComputedStyle(el);
-  const parts = [];
-  const bg = s.backgroundColor;
-  if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') parts.push('bg:' + bg);
-  const color = s.color;
-  if (color && color !== 'rgb(0, 0, 0)') parts.push('color:' + color);
-  const fs = s.fontSize;
-  if (fs) parts.push('font:' + fs);
-  const fw = s.fontWeight;
-  if (fw && fw !== '400' && fw !== 'normal') parts.push('weight:' + fw);
-  const gap = s.gap;
-  if (gap && gap !== 'normal' && gap !== '0px') parts.push('gap:' + gap);
-  return parts.join(', ');
-}
+function _annRenderAll() {
+  document.querySelectorAll('.ann-pin').forEach(p => p.remove());
+  const data = _annLoad();
+  const list = document.getElementById('annList');
+  if (!list) return;
+  list.innerHTML = '';
+  let globalIndex = 0, hasNotes = false;
 
-function _addPin(slideNum, x, y, text, elInfo) {
-  const data = _pinLoad();
-  if (!data[slideNum]) data[slideNum] = [];
-  const pin = { x, y, text, selector: elInfo.selector, elText: elInfo.text, classes: elInfo.classes,
-    name: elInfo.name || '', styles: elInfo.styles || '', nearby: elInfo.nearby || '' };
-  if (elInfo.selectedText) pin.selectedText = elInfo.selectedText;
-  if (elInfo.multiGroup) pin.multiGroup = elInfo.multiGroup;
-  data[slideNum].push(pin);
-  _pinSave(data);
-  _renderPins(slideNum);
-  const pinList = document.getElementById('pinlist-' + slideNum);
-  const inputs = pinList.querySelectorAll('input');
-  if (inputs.length) inputs[inputs.length - 1].focus();
-}
-
-// These must be global for inline event handlers
-function updatePinText(slideNum, idx, text) {
-  const data = _pinLoad();
-  if (data[slideNum] && data[slideNum][idx]) { data[slideNum][idx].text = text; _pinSave(data); }
-}
-function deletePin(slideNum, idx) {
-  const data = _pinLoad();
-  if (data[slideNum]) {
-    data[slideNum].splice(idx, 1);
-    if (data[slideNum].length === 0) delete data[slideNum];
-    _pinSave(data);
-    _renderPins(slideNum);
-  }
-}
-function highlightPin(slideNum, idx, on) {
-  const wrapper = document.querySelector(`[data-slide="${slideNum}"]`);
-  const markers = wrapper.querySelectorAll('.slide .pin');
-  if (markers[idx]) markers[idx].classList.toggle('active', on);
-}
-
-function _renderPins(slideNum) {
-  const data = _pinLoad();
-  const pins = data[slideNum] || [];
-  const wrapper = document.querySelector(`[data-slide="${slideNum}"]`);
-  if (!wrapper) return;
-  const slideEl = wrapper.querySelector('.slide');
-  const pinList = document.getElementById('pinlist-' + slideNum);
-  slideEl.querySelectorAll('.pin').forEach(p => p.remove());
-  pinList.innerHTML = '';
-  pins.forEach((pin, idx) => {
-    const num = idx + 1;
-    const marker = document.createElement('div');
-    marker.className = 'pin' + (pin.multiGroup ? ' multi' : '');
-    marker.textContent = num;
-    marker.style.left = pin.x + '%';
-    marker.style.top = pin.y + '%';
-    const tip = [pin.name || pin.classes || pin.selector, pin.nearby ? 'nearby: ' + pin.nearby : '', pin.styles, pin.text].filter(Boolean).join('\n');
-    marker.title = tip;
-    marker.onclick = (e) => {
-      e.stopPropagation();
-      const input = pinList.querySelector(`[data-idx="${idx}"] input`);
-      if (input) { input.focus(); input.select(); }
-    };
-    slideEl.appendChild(marker);
-
-    const item = document.createElement('div');
-    item.className = 'pin-item';
-    item.dataset.idx = idx;
-    const elLabel = pin.name || pin.classes || pin.selector.split(' > ').pop() || 'slide';
-    const elText = pin.elText && !elLabel.includes(pin.elText.slice(0, 15)) ? pin.elText : '';
-    const textPreview = elText ? `<span class="pin-text-preview">"${escHtml(elText.length > 30 ? elText.slice(0, 27) + '...' : elText)}"</span>` : '';
-    const selTextHtml = pin.selectedText ? `<span class="pin-sel-text" title="Selected text">\u201c${escHtml(pin.selectedText.slice(0, 50))}\u201d</span>` : '';
-    const stylesHtml = pin.styles ? `<span class="pin-styles" title="Computed styles">${escHtml(pin.styles)}</span>` : '';
-    const nearbyHtml = pin.nearby ? `<span class="pin-nearby" title="Nearby elements">${escHtml(pin.nearby)}</span>` : '';
-    item.innerHTML = `<div class="pin-item-num">${num}</div><span class="pin-el">${escHtml(elLabel)}</span>${textPreview}${selTextHtml}<input type="text" value="${escHtml(pin.text || '')}" placeholder="What to change..." oninput="updatePinText(${slideNum},${idx},this.value)" onmouseenter="highlightPin(${slideNum},${idx},true)" onmouseleave="highlightPin(${slideNum},${idx},false)">${nearbyHtml}${stylesHtml}<button class="pin-delete" onclick="deletePin(${slideNum},${idx})" title="Delete pin">\u00d7</button>`;
-    pinList.appendChild(item);
+  const sortedKeys = Object.keys(data).sort((a, b) => {
+    const na = parseInt(a), nb = parseInt(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
   });
-  _updateBtnState(slideNum);
+
+  for (const groupKey of sortedKeys) {
+    const pins = data[groupKey];
+    if (!pins || !pins.length) continue;
+    hasNotes = true;
+
+    // Find the container to place pin markers
+    let posParent;
+    if (_annOpts.groupBy === 'id') {
+      posParent = document.getElementById(groupKey);
+    } else {
+      posParent = document.querySelector(`[data-slide="${groupKey}"]`);
+    }
+    if (posParent) posParent.style.position = 'relative';
+
+    const groupLabel = _annGetGroupLabel(groupKey);
+
+    pins.forEach((pin, index) => {
+      globalIndex++;
+      // Pin marker on slide
+      if (posParent) {
+        const marker = document.createElement('div');
+        marker.className = 'ann-pin';
+        marker.textContent = globalIndex;
+        marker.style.left = pin.x + '%';
+        marker.style.top = pin.y + '%';
+        marker.title = (pin.name || pin.selector || '') + (pin.note ? '\n' + pin.note : '');
+        posParent.appendChild(marker);
+      }
+
+      // Note in panel
+      const note = document.createElement('div');
+      note.className = 'ann-note';
+
+      const num = document.createElement('div');
+      num.className = 'ann-note-num';
+      num.textContent = globalIndex;
+
+      const body = document.createElement('div');
+      body.className = 'ann-note-body';
+
+      const story = document.createElement('div');
+      story.className = 'ann-note-story';
+      story.textContent = groupLabel;
+      body.appendChild(story);
+
+      const elLabel = pin.name || pin.classes || pin.selector?.split(' > ').pop() || 'element';
+      const element = document.createElement('span');
+      element.className = 'ann-note-el';
+      element.textContent = elLabel;
+      body.appendChild(element);
+
+      if (pin.nearby) {
+        const nearbyEl = document.createElement('span');
+        nearbyEl.className = 'ann-note-nearby';
+        nearbyEl.textContent = 'nearby: ' + pin.nearby;
+        body.appendChild(nearbyEl);
+      }
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = pin.note || pin.text || '';
+      input.placeholder = 'What to change...';
+      input.addEventListener('input', () => {
+        const d = _annLoad();
+        if (d[groupKey] && d[groupKey][index]) {
+          d[groupKey][index].note = input.value;
+          _annSave(d);
+        }
+      });
+      body.appendChild(input);
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ann-note-delete';
+      remove.textContent = '\u00d7';
+      remove.addEventListener('click', () => {
+        const d = _annLoad();
+        if (d[groupKey]) {
+          d[groupKey].splice(index, 1);
+          if (d[groupKey].length === 0) delete d[groupKey];
+          _annSave(d);
+          _annRenderAll();
+        }
+      });
+
+      note.appendChild(num);
+      note.appendChild(body);
+      note.appendChild(remove);
+      list.appendChild(note);
+    });
+  }
+
+  if (!hasNotes) {
+    list.innerHTML = '<div class="ann-panel-empty">Click elements to annotate</div>';
+  }
+  _annUpdateBadge();
 }
 
-function copyNotes() {
-  const data = _pinLoad();
-  const labels = document.querySelectorAll('.slide-label');
-  let output = '';
-  let hasAny = false;
-  Object.keys(data).map(Number).sort((a, b) => a - b).forEach(num => {
-    const pins = data[num];
-    if (!pins || !pins.length) return;
-    hasAny = true;
-    const label = labels[num - 1];
-    const desc = label ? label.textContent.trim() : '#' + num;
-    output += `Slide ${num}  ${desc}\n`;
+function _annCopyAll() {
+  const data = _annLoad();
+  let text = '';
+  const sortedKeys = Object.keys(data).sort((a, b) => {
+    const na = parseInt(a), nb = parseInt(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+  for (const key of sortedKeys) {
+    const pins = data[key];
+    if (!pins || !pins.length) continue;
+    text += `## ${_annGetGroupLabel(key)}\n`;
     pins.forEach((pin, i) => {
-      const label = pin.name || pin.classes || pin.selector || 'element';
-      const content = pin.elText && !label.includes(pin.elText.slice(0, 15)) ? ` "${pin.elText}"` : '';
+      const label = pin.name || pin.classes || pin.selector?.split(' > ').pop() || 'element';
+      const content = pin.elText && !label.includes((pin.elText || '').slice(0, 15)) ? ` "${pin.elText}"` : '';
       let line = `  ${i + 1}. [${label}]${content}`;
-      if (pin.text) line += ` -- ${pin.text}`;
+      if (pin.note) line += ` -- ${pin.note}`;
       line += '\n';
-      if (pin.selectedText) line += `     selected: "${pin.selectedText}"\n`;
       if (pin.styles) line += `     css: ${pin.styles}\n`;
       if (pin.nearby) line += `     nearby: ${pin.nearby}\n`;
-      output += line;
+      text += line;
     });
-    output += '\n';
+    text += '\n';
+  }
+  navigator.clipboard.writeText(text.trim() || '(No annotations yet)').then(() => {
+    const title = document.getElementById('annPanelTitle');
+    if (title) { const prev = title.textContent; title.textContent = 'Copied!'; setTimeout(() => title.textContent = prev, 1500); }
   });
-  navigator.clipboard.writeText(hasAny ? output : '(No annotations yet)');
-  const btn = document.getElementById('exportBtn');
-  if (btn) { const prev = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = prev, 1500); }
 }
 
-function clearAllNotes() {
+function _annClearAll() {
   if (!confirm('Clear all annotations?')) return;
-  localStorage.removeItem(_pinStorageKey);
-  document.querySelectorAll('.slide-wrapper').forEach(w => {
-    const num = +w.dataset.slide;
-    if (num) _renderPins(num);
-  });
-  _updatePinCount();
+  localStorage.removeItem(_annKey);
+  _annRenderAll();
   if (typeof _navUpdatePins === 'function') _navUpdatePins();
 }
+
+function _annBindEvents() {
+  document.getElementById('annFab').addEventListener('click', _annToggle);
+  document.getElementById('annCopyFab')?.addEventListener('click', () => {
+    _annCopyAll();
+    const btn = document.getElementById('annCopyFab');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy pins', 1500); }
+  });
+  document.getElementById('copyNotesButton')?.addEventListener('click', _annCopyAll);
+  document.getElementById('clearNotesButton')?.addEventListener('click', _annClearAll);
+  document.getElementById('annMultiAdd')?.addEventListener('click', _annCommitMulti);
+  document.getElementById('annMultiCancel')?.addEventListener('click', _annClearMulti);
+  document.getElementById('annMultiInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') _annCommitMulti();
+  });
+
+  let justFinishedDrag = false;
+
+  // Click to annotate
+  document.addEventListener('click', (event) => {
+    if (!_annActive) return;
+    if (justFinishedDrag) { justFinishedDrag = false; return; }
+    if (event.target.closest('.sidebar') || event.target.closest('.ann-fab') ||
+        event.target.closest('.ann-panel') || event.target.closest('.toolbar') ||
+        event.target.closest('.slide-nav')) return;
+
+    const slideEl = event.target.closest('.slide');
+    if (!slideEl) { _annToggle(); return; }
+
+    const container = _annGetContainer(event.target);
+    if (!container) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const target = event.target;
+    if (target.classList.contains('ann-pin')) return;
+    target.classList.remove('ann-hover');
+
+    // Toggle selection
+    const existing = _annMulti.findIndex(s => s.el === target);
+    if (existing >= 0) {
+      target.classList.remove('ann-selected');
+      _annMulti.splice(existing, 1);
+      _annUpdateMulti();
+      return;
+    }
+
+    const elInfo = _annIdentify(target, container);
+    if (!elInfo.selector) return;
+    const posParent = _annGetPositionParent(target) || container;
+    const rect = posParent.getBoundingClientRect();
+    const x = +(((event.clientX - rect.left) / rect.width) * 100).toFixed(1);
+    const y = +(((event.clientY - rect.top) / rect.height) * 100).toFixed(1);
+    const groupKey = _annGetGroupKey(container);
+
+    target.classList.add('ann-selected');
+    _annMulti.push({ el: target, groupKey, elInfo, x, y });
+    _annUpdateMulti();
+  }, true);
+
+  // Hover highlight
+  document.addEventListener('mouseover', (event) => {
+    if (!_annActive) return;
+    if (!event.target.closest('.slide')) return;
+    if (event.target.classList.contains('ann-pin')) return;
+    if (event.target.closest('.sidebar') || event.target.closest('.ann-panel') || event.target.closest('.slide-nav')) return;
+    event.target.classList.add('ann-hover');
+  });
+  document.addEventListener('mouseout', (event) => {
+    if (event.target.classList) event.target.classList.remove('ann-hover');
+  });
+
+  // Drag selection
+  let dragStart = null, dragActive = false;
+  const dragRect = document.querySelector('.ann-drag-rect');
+
+  document.addEventListener('mousedown', (e) => {
+    if (!_annActive || e.button !== 0) return;
+    if (e.target.closest('.sidebar') || e.target.closest('.ann-fab') ||
+        e.target.closest('.ann-panel') || e.target.closest('.toolbar') ||
+        e.target.closest('.slide-nav')) return;
+    if (!e.target.closest('.slide')) return;
+    const container = _annGetContainer(e.target);
+    if (!container) return;
+    dragStart = { x: e.clientX, y: e.clientY, container };
+    dragActive = false;
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragStart) return;
+    const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
+    if (!dragActive && (dx * dx + dy * dy) < 64) return;
+    dragActive = true;
+    const left = Math.min(dragStart.x, e.clientX), top = Math.min(dragStart.y, e.clientY);
+    dragRect.style.display = 'block';
+    dragRect.style.left = left + 'px';
+    dragRect.style.top = top + 'px';
+    dragRect.style.width = Math.abs(dx) + 'px';
+    dragRect.style.height = Math.abs(dy) + 'px';
+    _annDragHighlight(dragStart.container, left, top, left + Math.abs(dx), top + Math.abs(dy));
+  });
+
+  document.addEventListener('mouseup', (e) => {
+    if (!dragStart) return;
+    const wasDrag = dragActive;
+    const container = dragStart.container;
+    dragStart = null; dragActive = false;
+    dragRect.style.display = 'none';
+    if (!wasDrag) return;
+    justFinishedDrag = true;
+
+    const highlighted = container.querySelectorAll('.ann-drag-highlight');
+    const posParent = _annGetPositionParent(highlighted[0]) || container;
+    highlighted.forEach(el => {
+      el.classList.remove('ann-drag-highlight');
+      if (_annMulti.findIndex(m => m.el === el) >= 0) return;
+      const elInfo = _annIdentify(el, container);
+      if (!elInfo.selector) return;
+      const rect = posParent.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      const cx = er.left + er.width / 2, cy = er.top + er.height / 2;
+      const x = +(((cx - rect.left) / rect.width) * 100).toFixed(1);
+      const y = +(((cy - rect.top) / rect.height) * 100).toFixed(1);
+      el.classList.add('ann-selected');
+      _annMulti.push({ el, groupKey: _annGetGroupKey(container), elInfo, x, y });
+    });
+    _annUpdateMulti();
+  });
+
+  // Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (_annMulti.length > 0) { _annClearMulti(); return; }
+    if (_annActive) _annToggle();
+  });
+
+  // Re-render on storybook story change
+  document.addEventListener('storybook:story-rendered', () => {
+    if (_annActive) _annRenderAll();
+  });
+}
+
+function _annDragHighlight(container, left, top, right, bottom) {
+  container.querySelectorAll('.ann-drag-highlight').forEach(el => el.classList.remove('ann-drag-highlight'));
+  const inners = container.querySelectorAll('.slide-inner');
+  if (!inners.length) return;
+  const selectors = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.stat-cell,.var-card,.feature-card-noimg,.feature-card,.proof-panel,.proof-stat,.compare-block,.logo-line-item,.carousel-card,img,.data-table td,.data-table th';
+  const skip = new Set(['ann-pin', 'grid-overlay', 'footer', 'ann-drag-rect']);
+  inners.forEach(inner => {
+    for (const el of inner.querySelectorAll(selectors)) {
+      if ([...el.classList].some(c => skip.has(c))) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 3 || r.height < 3) continue;
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      if (cx >= left && cx <= right && cy >= top && cy <= bottom) el.classList.add('ann-drag-highlight');
+    }
+  });
+}
+
+// Legacy aliases for backward compatibility
+function copyNotes() { _annCopyAll(); }
+function clearAllNotes() { _annClearAll(); }
 
 // ══════════════════════════════════════════════════════════════
 // Slide Navigator — left panel with thumbnails
@@ -680,33 +858,38 @@ function _buildSlideNav() {
   nav.innerHTML = `
     <div class="slide-nav-header">
       <span class="slide-nav-title">Slides</span>
-      <button class="slide-nav-btn" id="navGridBtn" title="Toggle grid overlay">&#x25A6;</button>
-      <button class="slide-nav-btn" id="navCloseBtn" title="Collapse navigator">&lsaquo;</button>
+      <button class="slide-nav-btn" id="navGridBtn" title="Toggle grid overlay">Grid</button>
+      <button class="slide-nav-btn" id="navPlayBtn" title="Present (F5)">&#x25B6;</button>
     </div>
     <div class="slide-nav-list" id="navList"></div>
   `;
   document.body.prepend(nav);
   _navEl = nav;
 
-  // Toggle button (shown when collapsed)
-  const toggle = document.createElement('button');
-  toggle.className = 'slide-nav-toggle';
-  toggle.innerHTML = '&#x25A6;';
-  toggle.title = 'Open slide navigator';
-  toggle.onclick = () => { nav.classList.remove('collapsed'); document.body.classList.add('has-slide-nav'); };
-  document.body.appendChild(toggle);
-
-  // Close button
-  document.getElementById('navCloseBtn').onclick = () => {
-    nav.classList.add('collapsed');
-    document.body.classList.remove('has-slide-nav');
-  };
-
-  // Grid button
+  // Grid button — inject overlays on first use, then toggle
   document.getElementById('navGridBtn').onclick = function () {
     const on = this.classList.toggle('active');
+    // Create grid overlays if they don't exist yet
+    document.querySelectorAll('.slide-inner').forEach(inner => {
+      if (!inner.querySelector('.grid-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'grid-overlay';
+        const cols = document.createElement('div');
+        cols.className = 'grid-cols';
+        for (let c = 0; c < 12; c++) { const col = document.createElement('div'); col.className = 'grid-col'; cols.appendChild(col); }
+        overlay.appendChild(cols);
+        const rows = document.createElement('div');
+        rows.className = 'grid-rows';
+        for (let r = 0; r < 12; r++) { const row = document.createElement('div'); row.className = 'grid-row'; rows.appendChild(row); }
+        overlay.appendChild(rows);
+        inner.appendChild(overlay);
+      }
+    });
     document.querySelectorAll('.grid-overlay').forEach(el => el.classList.toggle('visible', on));
   };
+
+  // Play button
+  document.getElementById('navPlayBtn').onclick = () => startPresentation('.slide');
 
   // Build thumbnail list
   const list = document.getElementById('navList');
@@ -761,6 +944,16 @@ function _buildSlideNav() {
       thumb.appendChild(clone);
     }
 
+    // Extract slide title from label (e.g. "#1 — StartSlide" → "StartSlide")
+    const labelEl = labels[i];
+    const labelText = labelEl ? labelEl.textContent : '';
+    const titleMatch = labelText.match(/—\s*(.+)/);
+    const slideTitle = titleMatch ? titleMatch[1].trim() : '';
+
+    const caption = document.createElement('div');
+    caption.className = 'slide-nav-caption';
+    caption.textContent = slideTitle || `Slide ${i + 1}`;
+
     const num = document.createElement('div');
     num.className = 'slide-nav-num';
     num.textContent = i + 1;
@@ -770,6 +963,7 @@ function _buildSlideNav() {
     pin.id = 'navpin-' + (i + 1);
 
     item.appendChild(thumb);
+    item.appendChild(caption);
     item.appendChild(num);
     item.appendChild(pin);
 
@@ -826,5 +1020,143 @@ function _navUpdatePins() {
       }
     }
   });
+}
+
+// ══════════════════════════════════════════════════════════════
+// Inline Editing — edit slide text in browser, save to disk
+// Call initInlineEdit('/path/to/file.html') from presentation files
+// ══════════════════════════════════════════════════════════════
+let _editActive = false;
+let _editFile = '';
+let _editDirty = new Set(); // slide indices with unsaved changes
+
+// Editable text selectors inside .slide-inner
+const EDITABLE_SELECTORS = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.p5,.footer-title,.footer-copy,.footer-page,.var-card-title,.var-card-value,.var-table-title,.compare-chip,.logo-chip,.tl-vh-body';
+
+function initInlineEdit(filePath) {
+  _editFile = filePath;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.createElement('button');
+    toggle.className = 'edit-toggle';
+    toggle.id = 'editToggle';
+    toggle.title = 'Edit mode (E)';
+    toggle.textContent = '\u270F\uFE0F';
+    document.body.appendChild(toggle);
+
+    // Toast
+    const toast = document.createElement('div');
+    toast.className = 'edit-save-toast';
+    toast.id = 'editToast';
+    document.body.appendChild(toast);
+
+    toggle.addEventListener('click', () => _toggleEdit());
+
+    // Keyboard: E to toggle, Cmd+S to save
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable') && !e.target.matches('input,textarea')) {
+        e.preventDefault();
+        _toggleEdit();
+      }
+      if (_editActive && (e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        _saveAllEdits();
+      }
+    });
+  });
+}
+
+function _toggleEdit() {
+  _editActive = !_editActive;
+  const toggle = document.getElementById('editToggle');
+  toggle.classList.toggle('active', _editActive);
+
+  const slides = document.querySelectorAll('.slide');
+  slides.forEach(slide => {
+    slide.classList.toggle('edit-mode', _editActive);
+    const inner = slide.querySelector('.slide-inner');
+    if (!inner) return;
+
+    if (_editActive) {
+      const editables = inner.querySelectorAll(EDITABLE_SELECTORS);
+      editables.forEach(el => {
+        // Skip elements that are containers with child editables
+        if (el.querySelector(EDITABLE_SELECTORS)) return;
+        el.setAttribute('contenteditable', 'true');
+        el.addEventListener('input', _onEditInput);
+        el.addEventListener('blur', _onEditBlur);
+      });
+    } else {
+      inner.querySelectorAll('[contenteditable]').forEach(el => {
+        el.removeAttribute('contenteditable');
+        el.removeEventListener('input', _onEditInput);
+        el.removeEventListener('blur', _onEditBlur);
+      });
+    }
+  });
+
+  // Save any pending changes when leaving edit mode
+  if (!_editActive && _editDirty.size > 0) {
+    _saveAllEdits();
+  }
+}
+
+function _onEditInput(e) {
+  const slide = e.target.closest('.slide');
+  if (!slide) return;
+  const slides = [...document.querySelectorAll('.slide')];
+  const idx = slides.indexOf(slide);
+  if (idx >= 0) _editDirty.add(idx);
+}
+
+function _onEditBlur(e) {
+  // Auto-save on blur after a short delay
+  setTimeout(() => {
+    if (_editDirty.size > 0) _saveAllEdits();
+  }, 500);
+}
+
+async function _saveAllEdits() {
+  if (!_editFile || _editDirty.size === 0) return;
+  const slides = document.querySelectorAll('.slide');
+  const toast = document.getElementById('editToast');
+
+  for (const idx of _editDirty) {
+    const slide = slides[idx];
+    if (!slide) continue;
+    const inner = slide.querySelector('.slide-inner');
+    if (!inner) continue;
+
+    // Clone and clean up: remove contenteditable, pins, drag rects
+    const clone = inner.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelectorAll('.pin, .drag-select-rect, .grid-overlay, .hover-highlight').forEach(el => el.remove());
+    clone.querySelectorAll('.hover-highlight').forEach(el => el.classList.remove('hover-highlight'));
+
+    const html = clone.innerHTML.trim();
+
+    try {
+      const resp = await fetch('/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: _editFile, slideIndex: idx, html }),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        _showToast(toast, `Slide ${idx + 1} saved`);
+      } else {
+        _showToast(toast, `Error: ${result.error}`);
+      }
+    } catch (err) {
+      _showToast(toast, `Save failed: ${err.message}`);
+    }
+  }
+  _editDirty.clear();
+}
+
+function _showToast(toast, msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
 }
 

@@ -26,8 +26,6 @@
 <div class="toolbar">
   <span id="pinCount" style="font-size:13px; color:#666;"></span>
   <span style="flex:1"></span>
-  <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
-  <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
   <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
 </div>
 
@@ -38,8 +36,8 @@
 <!-- Slide 1: StartSlide -->
 <div class="slide-label">#1 — <code>StartSlide</code></div>
 <div class="slide"><div class="slide-inner bg-brand">
-  <div class="start-title">
-    <div class="h1 c-primary">The Fold Bitcoin Rewards Credit Card</div>
+<div class="start-title">
+    <div class="h1 c-primary">The Fold Bitcoin Rewards Credsit Card</div>
   </div>
 </div></div>
 
@@ -591,6 +589,7 @@
 initAnnotations('credit-card-pins');
 initPresentation('.slide');
 initSlideNav();
+initInlineEdit('examples/credit-card.html');
 
 const F3 = '<div class="footer"><span class="footer-title">Fold Credit Card</span><span class="footer-copy">&copy; Fold 2025 &middot; Confidential</span><span class="footer-page">3</span></div>';
 

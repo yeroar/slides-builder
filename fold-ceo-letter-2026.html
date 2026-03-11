@@ -26,8 +26,7 @@
 <div class="toolbar">
   <span id="pinCount" style="font-size:13px; color:#666;"></span>
   <span style="flex:1"></span>
-  <button class="toolbar-btn" onclick="copyNotes()" title="Copy notes to clipboard" id="exportBtn">&#x1f4cb;</button>
-  <button class="toolbar-btn" onclick="clearAllNotes()" title="Clear all annotations">&#x1f5d1;</button>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
 </div>
 
 <!-- ============================================================ -->
@@ -393,6 +392,7 @@
 <script>
 initAnnotations('fold-ceo-letter-pins');
 initPresentation('.slide');
+initSlideNav();
 </script>
 </body>
 </html>

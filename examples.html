@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Builder — Examples</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="storybook-shell.css">
+  <style>
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 24px;
+    }
+    .example-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      overflow: hidden;
+      text-decoration: none;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .example-card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+    .example-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #111;
+      border-bottom: 1px solid #2a2a2a;
+      overflow: hidden;
+      position: relative;
+    }
+    .example-thumb iframe {
+      width: 1920px;
+      height: 1080px;
+      transform: scale(0.23);
+      transform-origin: top left;
+      border: none;
+      pointer-events: none;
+    }
+    .example-info {
+      padding: 16px 20px;
+    }
+    .example-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .example-path {
+      font-size: 12px;
+      color: #555;
+      font-family: monospace;
+    }
+    .examples-empty {
+      color: #555;
+      font-size: 14px;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="sidebar" id="sidebarRoot">
+    <!-- Page nav will be injected by examples-page.js -->
+  </nav>
+  <main class="main" id="mainRoot">
+    <div>
+      <div style="font-size:20px; font-weight:500; color:#fff; margin-bottom:4px;">Examples</div>
+      <div style="font-size:13px; color:#666; margin-bottom:24px;">All presentation files generated with the slide builder.</div>
+      <div class="examples-grid" id="examplesGrid">
+        <div class="examples-empty">Loading...</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="shared.js"></script>
+  <script src="storybook-shell.js"></script>
+  <script>
+    (async function () {
+      // Render page nav in sidebar
+      const sidebar = document.getElementById('sidebarRoot');
+      const PAGE_NAV = [
+        { label: 'Templates', href: '/templates.html' },
+        { label: 'Components', href: '/components.html' },
+        { label: 'Examples', href: '/examples.html' },
+        { label: 'Chat', href: '/chat.html' },
+      ];
+      const currentPath = location.pathname.replace(/\/$/, '') || '/templates.html';
+      sidebar.innerHTML = `
+        <nav class="page-nav">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:#555; padding:0 0 8px;">Design System</div>
+          ${PAGE_NAV.map(p => {
+            const isActive = currentPath === p.href;
+            return `<a class="page-nav-link${isActive ? ' active' : ''}" href="${p.href}"><span class="page-nav-dot"></span>${p.label}</a>`;
+          }).join('')}
+        </nav>
+        <div class="sidebar-title"><span>Examples</span></div>`;
+
+      // Load examples list
+      const grid = document.getElementById('examplesGrid');
+      try {
+        const resp = await fetch('/api/examples');
+        const examples = await resp.json();
+        if (!examples.length) {
+          grid.innerHTML = '<div class="examples-empty">No examples found. Generate a presentation to see it here.</div>';
+          return;
+        }
+
+        // Also add sidebar links
+        const linksHtml = examples.map(ex =>
+          `<a class="sidebar-item" href="${ex.path}">${ex.title}</a>`
+        ).join('');
+        sidebar.innerHTML += `<div class="sidebar-group">Presentations</div>${linksHtml}`;
+
+        // Render cards
+        grid.innerHTML = examples.map(ex => `
+          <a class="example-card" href="${ex.path}">
+            <div class="example-thumb">
+              <iframe src="${ex.path}" loading="lazy" tabindex="-1" sandbox="allow-same-origin"></iframe>
+            </div>
+            <div class="example-info">
+              <div class="example-title">${ex.title}</div>
+              <div class="example-path">${ex.path}</div>
+            </div>
+          </a>
+        `).join('');
+      } catch (e) {
+        grid.innerHTML = '<div class="examples-empty">Failed to load examples.</div>';
+      }
+    })();
+  </script>
+</body>
+
+</html>

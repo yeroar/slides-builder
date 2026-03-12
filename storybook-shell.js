@@ -17,8 +17,26 @@
       : structuredClone(initialState);
   }
 
+  const PAGE_NAV = [
+    { label: 'Templates', href: '/templates.html' },
+    { label: 'Components', href: '/components.html' },
+    { label: 'Examples', href: '/examples.html' },
+    { label: 'Chat', href: '/chat.html' },
+  ];
+
+  function renderPageNav() {
+    const currentPath = location.pathname.replace(/\/$/, '') || '/templates.html';
+    return `<nav class="page-nav">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:#555; padding:0 0 8px;">Design System</div>
+      ${PAGE_NAV.map((p) => {
+        const isActive = currentPath === p.href || (currentPath === '/' && p.href === '/templates.html');
+        return `<a class="page-nav-link${isActive ? ' active' : ''}" href="${p.href}"><span class="page-nav-dot"></span>${p.label}</a>`;
+      }).join('')}</nav>`;
+  }
+
   function renderSidebar(root) {
     root.innerHTML = `
+      ${renderPageNav()}
       <div class="sidebar-title"><span>${pageConfig.title}</span><button type="button" id="gridToggle" class="sidebar-grid-btn">Grid</button></div>
       ${pageConfig.navGroups.map((group) => {
         const storyLinks = (group.storyIds || []).map((storyId) => {

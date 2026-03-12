@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 
 const PORT = parseInt(process.env.PORT, 10) || 3456;
@@ -166,8 +166,127 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // Static file server
-  const path = req.url === '/' ? '/templates.html' : req.url.split('?')[0];
+  // POST /api/save-presentation — save generated presentation
+  if (req.method === 'POST' && req.url === '/api/save-presentation') {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const { name, title, html } = JSON.parse(Buffer.concat(chunks).toString());
+    if (!name || !html) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'name and html required' }));
+      return;
+    }
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    try {
+      // Save HTML file
+      await writeFile(join(DIR, `${slug}.html`), html, 'utf-8');
+      // Update index
+      const indexPath = join(DIR, 'saved-presentations.json');
+      let index = [];
+      try { index = JSON.parse(await readFile(indexPath, 'utf-8')); } catch {}
+      const existing = index.findIndex(e => e.slug === slug);
+      const entry = { slug, title: title || name, created: new Date().toISOString() };
+      if (existing >= 0) index[existing] = entry;
+      else index.push(entry);
+      await writeFile(indexPath, JSON.stringify(index, null, 2), 'utf-8');
+      console.log(`  ✔ Presentation saved: ${slug}.html`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, slug, url: `/${slug}.html` }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // GET /api/save-presentation — list saved presentations
+  if (req.method === 'GET' && req.url === '/api/save-presentation') {
+    try {
+      const data = await readFile(join(DIR, 'saved-presentations.json'), 'utf-8');
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+      res.end(data);
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('[]');
+    }
+    return;
+  }
+
+  // POST /api/chat — proxy to Claude API
+  if (req.method === 'POST' && req.url === '/api/chat') {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'ANTHROPIC_API_KEY not set. Run: ANTHROPIC_API_KEY=sk-... npm start' }));
+      return;
+    }
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const body = JSON.parse(Buffer.concat(chunks).toString());
+
+    try {
+      const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: body.context ? `You are a slide presentation assistant.\n\n${body.context}` : 'You are a slide presentation assistant.',
+          messages: body.messages,
+        }),
+      });
+      const data = await apiResp.json();
+      const text = data.content?.[0]?.text || '';
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ text }));
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // GET /api/examples — list HTML files in examples/ and root
+  if (req.method === 'GET' && req.url === '/api/examples') {
+    try {
+      const examples = [];
+      // Root-level presentation files
+      const rootFiles = await readdir(DIR);
+      for (const f of rootFiles) {
+        if (f.endsWith('.html') && !['templates.html', 'components.html', 'examples.html'].includes(f)) {
+          const content = await readFile(join(DIR, f), 'utf-8');
+          const titleMatch = content.match(/<title>([^<]*)<\/title>/);
+          examples.push({ file: f, path: `/${f}`, title: titleMatch?.[1] || f.replace('.html', '') });
+        }
+      }
+      // examples/ subfolder
+      try {
+        const exFiles = await readdir(join(DIR, 'examples'));
+        for (const f of exFiles) {
+          if (f.endsWith('.html')) {
+            const content = await readFile(join(DIR, 'examples', f), 'utf-8');
+            const titleMatch = content.match(/<title>([^<]*)<\/title>/);
+            examples.push({ file: f, path: `/examples/${f}`, title: titleMatch?.[1] || f.replace('.html', '') });
+          }
+        }
+      } catch {}
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+      res.end(JSON.stringify(examples));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // Static file server — also handle /p/:slug as alias
+  let path = req.url === '/' ? '/templates.html' : req.url.split('?')[0];
+  const pMatch = path.match(/^\/p\/([a-z0-9-]+)$/);
+  if (pMatch) path = `/${pMatch[1]}.html`;
   try {
     const file = await readFile(join(DIR, path));
     const ext = extname(path);

@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Builder — Chat</title>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="storybook-shell.css">
+  <style>
+    .chat-layout {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .chat-preview {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      background: #111;
+    }
+    .chat-preview .slide { flex-shrink: 0; }
+    .chat-preview .slide-label {
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+      font-family: monospace;
+      margin-top: -8px;
+    }
+    .chat-panel {
+      width: 420px;
+      flex-shrink: 0;
+      background: #0a0a0a;
+      border-left: 1px solid #2a2a2a;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-header-file {
+      font-size: 11px;
+      font-weight: 400;
+      color: #555;
+      font-family: monospace;
+    }
+    .chat-header-file[href]:hover {
+      color: #FFDD33;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-msg {
+      max-width: 100%;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    .chat-msg.user {
+      align-self: flex-end;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      color: #c8c8ff;
+      padding: 8px 12px;
+      border-radius: 12px 12px 2px 12px;
+      max-width: 85%;
+    }
+    .chat-msg.assistant {
+      align-self: flex-start;
+      color: #ccc;
+      padding: 8px 0;
+    }
+    .chat-msg.assistant code {
+      background: #1a1a1a;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #FFDD33;
+    }
+    .chat-msg.system {
+      align-self: center;
+      font-size: 11px;
+      color: #555;
+      font-style: italic;
+      text-align: center;
+    }
+    .chat-action {
+      margin: 4px 0;
+      padding: 6px 10px;
+      background: rgba(255, 221, 51, 0.08);
+      border: 1px solid rgba(255, 221, 51, 0.2);
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: monospace;
+      color: #FFDD33;
+      word-break: break-all;
+    }
+    .chat-action.create {
+      background: rgba(47, 145, 255, 0.08);
+      border-color: rgba(47, 145, 255, 0.2);
+      color: #2F91FF;
+    }
+    .chat-action-status {
+      font-size: 10px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .chat-link {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 4px 10px;
+      background: rgba(47, 145, 255, 0.1);
+      border: 1px solid rgba(47, 145, 255, 0.3);
+      border-radius: 4px;
+      color: #2F91FF;
+      font-size: 11px;
+      text-decoration: none;
+    }
+    .chat-link:hover { background: rgba(47, 145, 255, 0.2); }
+    .chat-input-wrap {
+      padding: 12px 20px 16px;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chat-attachments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chat-attachment {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #888;
+      max-width: 200px;
+    }
+    .chat-attachment-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chat-attachment-icon {
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    .chat-attachment-remove {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: #555;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .chat-attachment-remove:hover { color: #f66; }
+    .chat-attachment-thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input {
+      flex: 1;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      font-family: 'Geist', sans-serif;
+      outline: none;
+      resize: none;
+      min-height: 20px;
+      max-height: 120px;
+    }
+    .chat-input:focus { border-color: #555; }
+    .chat-input::placeholder { color: #444; }
+    .chat-input.dragover { border-color: #FFDD33; background: rgba(255, 221, 51, 0.05); }
+    .chat-attach {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      cursor: pointer;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: flex-end;
+      flex-shrink: 0;
+    }
+    .chat-attach:hover { border-color: #555; color: #fff; }
+    .chat-send {
+      background: #FFDD33;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-end;
+      font-family: 'Geist', sans-serif;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .chat-send:hover { background: #ffe566; }
+    .chat-send:disabled { opacity: 0.3; cursor: default; }
+
+    .chat-file-select {
+      padding: 8px 20px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .chat-file-btn {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Geist', sans-serif;
+    }
+    .chat-file-btn:hover { border-color: #444; color: #fff; }
+    .chat-file-btn.active { border-color: #FFDD33; color: #FFDD33; background: rgba(255, 221, 51, 0.08); }
+    .chat-file-btn.new {
+      border-color: rgba(47, 145, 255, 0.3);
+      color: #2F91FF;
+      border-style: dashed;
+    }
+    .chat-file-btn.new:hover { border-color: #2F91FF; background: rgba(47, 145, 255, 0.08); }
+    .chat-file-btn.new.active { border-style: solid; background: rgba(47, 145, 255, 0.12); }
+
+    .chat-typing {
+      display: inline-flex;
+      gap: 4px;
+      padding: 8px 0;
+    }
+    .chat-typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #444;
+      animation: chatBounce 1.2s infinite;
+    }
+    .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes chatBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .sidebar { width: 200px; }
+    .main { margin-left: 200px; padding: 0; }
+
+    .chat-edit-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 0 8px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #111;
+      padding: 12px 0;
+    }
+    .chat-edit-toggle {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #888;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Geist', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-edit-toggle:hover { border-color: #555; color: #fff; }
+    .chat-edit-toggle.active { border-color: #FFDD33; color: #FFDD33; background: rgba(255, 221, 51, 0.08); }
+    .chat-edit-hint {
+      font-size: 11px;
+      color: #444;
+    }
+    .chat-edit-saved {
+      font-size: 11px;
+      color: #4a4;
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .chat-preview .slide.edit-mode .slide-inner [contenteditable=true] {
+      outline: 1px dashed rgba(255, 221, 51, 0.3);
+      outline-offset: 2px;
+      cursor: text;
+    }
+    .chat-preview .slide.edit-mode .slide-inner [contenteditable=true]:focus {
+      outline: 2px solid #FFDD33;
+      background: rgba(255, 221, 51, 0.05);
+    }
+    .chat-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      color: #444;
+    }
+    .chat-empty-icon { font-size: 48px; opacity: 0.3; }
+    .chat-empty-text { font-size: 14px; }
+    .chat-empty-hint { font-size: 12px; color: #333; max-width: 300px; text-align: center; line-height: 1.6; }
+  </style>
+</head>
+
+<body>
+  <nav class="sidebar" id="sidebarRoot"></nav>
+  <main class="main">
+    <div class="chat-layout">
+      <div class="chat-preview" id="chatPreview">
+        <div class="chat-empty">
+          <div class="chat-empty-icon">&#x25B6;</div>
+          <div class="chat-empty-text">No presentation loaded</div>
+          <div class="chat-empty-hint">Select an existing file to review and edit, or click "+ New" to create a presentation from scratch.</div>
+        </div>
+      </div>
+      <div class="chat-panel">
+        <div class="chat-header">
+          <span>Chat</span>
+          <a class="chat-header-file" id="chatFileName" target="_blank" style="text-decoration:none; color:inherit;"></a>
+        </div>
+        <div class="chat-file-select" id="chatFileSelect"></div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg system">Select a presentation to review, annotate, or edit.</div>
+        </div>
+        <div class="chat-input-wrap">
+          <div class="chat-attachments" id="chatAttachments"></div>
+          <div class="chat-input-row">
+            <button class="chat-attach" id="chatAttachBtn" title="Attach file (PDF, text, image)">+</button>
+            <textarea class="chat-input" id="chatInput" placeholder="Describe a presentation, paste content, or drop files..." rows="1"></textarea>
+            <button class="chat-send" id="chatSend">&#x2191;</button>
+          </div>
+          <input type="file" id="chatFileInput" hidden multiple accept=".pdf,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp,.svg">
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="shared.js"></script>
+  <script src="storybook-shell.js"></script>
+  <script>
+    (function () {
+      // ── Page nav ──
+      const PAGE_NAV = [
+        { label: 'Templates', href: '/templates.html' },
+        { label: 'Components', href: '/components.html' },
+        { label: 'Examples', href: '/examples.html' },
+        { label: 'Chat', href: '/chat.html' },
+      ];
+      const sidebar = document.getElementById('sidebarRoot');
+      sidebar.innerHTML = `
+        <nav class="page-nav">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:#555; padding:0 0 8px;">Design System</div>
+          ${PAGE_NAV.map(p => {
+            const isActive = location.pathname === p.href;
+            return `<a class="page-nav-link${isActive ? ' active' : ''}" href="${p.href}"><span class="page-nav-dot"></span>${p.label}</a>`;
+          }).join('')}
+        </nav>
+        <div id="sidebarPresentations"></div>`;
+
+      function updateSidebarPresentations(examples, saved) {
+        const all = [
+          ...examples.map(ex => ({ title: ex.title, path: ex.path })),
+          ...saved.map(s => ({ title: s.title, path: `/p/${s.slug}` })),
+        ];
+        const container = document.getElementById('sidebarPresentations');
+        if (!all.length) { container.innerHTML = ''; return; }
+        container.innerHTML = `
+          <div class="sidebar-group">Presentations</div>
+          ${all.map(p => `<a class="sidebar-item" href="#" data-pres-path="${p.path}" data-pres-title="${p.title}">${p.title.split('—')[0].trim()}</a>`).join('')}`;
+
+        container.addEventListener('click', e => {
+          const item = e.target.closest('.sidebar-item[data-pres-path]');
+          if (!item) return;
+          e.preventDefault();
+          // Also update file select buttons
+          fileSelect.querySelectorAll('.chat-file-btn').forEach(b => b.classList.remove('active'));
+          container.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+          item.classList.add('active');
+          loadPresentation(item.dataset.presPath, item.dataset.presTitle);
+        });
+      }
+
+      // Normalize file path to match initInlineEdit key (no leading /)
+      function editKey() {
+        if (!currentFile) return '';
+        return currentFile.replace(/^\//, '');
+      }
+
+      // ── State ──
+      let currentFile = null;
+      let currentMode = null; // 'existing' | 'new'
+      let slideData = [];
+      let messages = [];
+      let pins = {};
+      let attachments = []; // { name, type, content, dataUrl? }
+      let currentTitle = '';
+
+      // Save current presentation back to Redis after edits
+      async function saveCurrentPresentation() {
+        if (!currentFile?.startsWith('/p/') || !slideData.length) return;
+        const slug = currentFile.replace('/p/', '');
+        const fullHtml = buildPresHTML(currentTitle || 'Untitled', slideData);
+        try {
+          await fetch('/api/save-presentation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: slug, title: currentTitle || slug, html: fullHtml }),
+          });
+        } catch (e) { console.warn('Auto-save failed:', e); }
+      }
+
+      // Re-sync when user returns from editing in separate tab
+      document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible' && currentFile) {
+          await applyChatOverrides();
+          // Sync slideData with current DOM so future saves include the changes
+          preview.querySelectorAll('[data-chat-slide]').forEach((slideEl, i) => {
+            const inner = slideEl.querySelector('.slide-inner');
+            if (inner && slideData[i]) {
+              slideData[i].html = inner.innerHTML;
+            }
+          });
+        }
+      });
+
+      const preview = document.getElementById('chatPreview');
+      const msgContainer = document.getElementById('chatMessages');
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSend');
+      const fileSelect = document.getElementById('chatFileSelect');
+      const fileName = document.getElementById('chatFileName');
+      const attachBtn = document.getElementById('chatAttachBtn');
+      const fileInput = document.getElementById('chatFileInput');
+      const attachmentsEl = document.getElementById('chatAttachments');
+
+      // ── Load file list ──
+      async function loadFileList() {
+        try {
+          const resp = await fetch('/api/examples');
+          const examples = await resp.json();
+
+          // Also load saved presentations
+          let saved = [];
+          try {
+            const savedResp = await fetch('/api/save-presentation');
+            saved = await savedResp.json();
+          } catch {}
+
+          const existingBtns = examples.map(ex =>
+            `<button class="chat-file-btn" data-path="${ex.path}" data-title="${ex.title}">${ex.title.split('—')[0].trim()}</button>`
+          ).join('');
+
+          const savedBtns = saved.map(s =>
+            `<button class="chat-file-btn" data-path="/p/${s.slug}" data-title="${s.title}">${s.title.split('—')[0].trim()}</button>`
+          ).join('');
+
+          fileSelect.innerHTML = existingBtns + savedBtns;
+          updateSidebarPresentations(examples, saved);
+        } catch {
+          fileSelect.innerHTML = '';
+          updateSidebarPresentations([], []);
+        }
+
+        fileSelect.addEventListener('click', e => {
+          const btn = e.target.closest('.chat-file-btn');
+          if (!btn) return;
+          fileSelect.querySelectorAll('.chat-file-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          loadPresentation(btn.dataset.path, btn.dataset.title);
+        });
+      }
+
+      // ── New presentation mode ──
+      function startNewPresentation() {
+        currentMode = 'new';
+        currentFile = null;
+        slideData = [];
+        pins = {};
+        messages = [];
+        msgContainer.innerHTML = '';
+        fileName.textContent = 'new presentation';
+        fileName.removeAttribute('href');
+
+        preview.innerHTML = `
+          <div class="chat-empty">
+            <div class="chat-empty-icon" style="font-size:36px;">&#x2728;</div>
+            <div class="chat-empty-text">New presentation</div>
+            <div class="chat-empty-hint">Describe your presentation topic, paste an outline or bullet points, and I'll generate slides using the design system.</div>
+          </div>`;
+
+        addSystemMsg('Ready to create. Describe your presentation — topic, audience, key points — and I\'ll generate slides.');
+        input.focus();
+      }
+
+      // ── Apply Redis overrides to preview slides ──
+      async function applyChatOverrides() {
+        try {
+          const resp = await fetch('/edit-storybook');
+          if (!resp.ok) return;
+          const text = await resp.text();
+          if (!text || text[0] !== '{') return;
+          const overrides = JSON.parse(text);
+          const prefix = `pres:${editKey()}:`;
+          const slides = preview.querySelectorAll('[data-chat-slide]');
+          for (const [key, map] of Object.entries(overrides)) {
+            if (!key.startsWith(prefix)) continue;
+            const idx = parseInt(key.slice(prefix.length));
+            const slide = preview.querySelector(`[data-chat-slide="${idx}"]`);
+            if (!slide) continue;
+            const inner = slide.querySelector('.slide-inner');
+            if (!inner) continue;
+            for (const [selector, txt] of Object.entries(map)) {
+              const el = inner.querySelector(selector);
+              if (el) el.textContent = txt;
+            }
+          }
+        } catch {}
+      }
+
+      // ── Load existing presentation ──
+      async function loadPresentation(path, title) {
+        currentMode = 'existing';
+        currentFile = path;
+        currentTitle = title;
+        fileName.textContent = path;
+        fileName.href = path;
+        preview.innerHTML = '<div style="color:#555; font-size:13px; padding:40px 0;">Loading...</div>';
+
+        try {
+          const resp = await fetch(path);
+          const html = await resp.text();
+          renderSlidesFromHTML(html);
+          await applyChatOverrides();
+          // Re-save to fix edit keys in stored HTML
+          saveCurrentPresentation();
+
+          pins = {};
+          messages = [];
+          msgContainer.innerHTML = '';
+          addSystemMsg(`Loaded "${title}" — ${slideData.length} slides. Ask me to review, add pins, or edit text.`);
+        } catch (e) {
+          preview.innerHTML = `<div style="color:#f66; font-size:13px; padding:40px 0;">Failed to load: ${e.message}</div>`;
+        }
+      }
+
+      const EDITABLE = '.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.p5,.footer-title,.footer-copy,.footer-page,.var-card-title,.var-card-value,.stat-cell .h5,.stat-cell .h1,.stat-cell .h2,.proof-stat .h5,.proof-stat .h3,.section-item';
+      let chatEditActive = false;
+      let chatEditDirty = new Map(); // slideIndex → Map(selector → text)
+
+      function addEditBar() {
+        const bar = document.createElement('div');
+        bar.className = 'chat-edit-bar';
+        bar.innerHTML = `
+          <button class="chat-edit-toggle" id="chatEditToggle">&#x270F;&#xFE0F; Edit</button>
+          <span class="chat-edit-hint" id="chatEditHint"></span>
+          <span class="chat-edit-saved" id="chatEditSaved">Saved</span>`;
+        preview.prepend(bar);
+
+        document.getElementById('chatEditToggle').addEventListener('click', toggleChatEdit);
+      }
+
+      function toggleChatEdit() {
+        chatEditActive = !chatEditActive;
+        const btn = document.getElementById('chatEditToggle');
+        const hint = document.getElementById('chatEditHint');
+        btn.classList.toggle('active', chatEditActive);
+        hint.textContent = chatEditActive ? 'Click text to edit. Auto-saves on blur.' : '';
+
+        preview.querySelectorAll('.slide').forEach(slide => {
+          slide.classList.toggle('edit-mode', chatEditActive);
+          const inner = slide.querySelector('.slide-inner');
+          if (!inner) return;
+
+          if (chatEditActive) {
+            inner.querySelectorAll(EDITABLE).forEach(el => {
+              if (el.querySelector(EDITABLE)) return;
+              el.setAttribute('contenteditable', 'true');
+              el.dataset.editOriginal = el.textContent;
+              el.addEventListener('input', onChatEditInput);
+              el.addEventListener('blur', onChatEditBlur);
+            });
+          } else {
+            // Save any pending edits before exiting edit mode
+            if (chatEditDirty.size) saveChatEdits();
+            inner.querySelectorAll('[contenteditable]').forEach(el => {
+              el.removeAttribute('contenteditable');
+              el.removeEventListener('input', onChatEditInput);
+              el.removeEventListener('blur', onChatEditBlur);
+            });
+          }
+        });
+      }
+
+      function onChatEditInput(e) {
+        const el = e.target;
+        const slide = el.closest('[data-chat-slide]');
+        if (!slide) return;
+        const slideIndex = Number(slide.dataset.chatSlide);
+        const inner = slide.querySelector('.slide-inner');
+        const selector = getChatEditSelector(el, inner);
+        if (!selector) return;
+
+        if (!chatEditDirty.has(slideIndex)) chatEditDirty.set(slideIndex, new Map());
+        chatEditDirty.get(slideIndex).set(selector, el.textContent);
+      }
+
+      function onChatEditBlur() {
+        // Auto-save when clicking away from edited element
+        if (chatEditDirty.size) saveChatEdits();
+      }
+
+      function getChatEditSelector(el, container) {
+        // Try class-based selector first
+        const classes = [...el.classList].filter(c => /^(h[1-6]|p[1-5]|footer-|section-|stat-|proof-|var-)/.test(c));
+        if (!classes.length) return null;
+        const sel = '.' + classes.join('.');
+        const matches = container.querySelectorAll(sel);
+        if (matches.length === 1) return sel;
+        // Add nth-of-type
+        const idx = [...matches].indexOf(el);
+        return `${sel}:nth-of-type(${idx + 1})`;
+      }
+
+      async function saveChatEdits() {
+        if (!chatEditDirty.size) return;
+        const saved = document.getElementById('chatEditSaved');
+
+        for (const [slideIndex, edits] of chatEditDirty) {
+          for (const [selector, text] of edits) {
+            const key = `pres:${editKey()}:${slideIndex}`;
+            try {
+              await fetch('/edit-storybook', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, selector, text }),
+              });
+            } catch {}
+          }
+        }
+
+        chatEditDirty.clear();
+        if (saved) {
+          saved.style.opacity = '1';
+          setTimeout(() => { saved.style.opacity = '0'; }, 2000);
+        }
+      }
+
+
+      function renderSlidesFromHTML(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const slides = doc.querySelectorAll('.slide');
+
+        slideData = [];
+        preview.innerHTML = '';
+        chatEditActive = false;
+        chatEditDirty.clear();
+
+        addEditBar();
+
+        slides.forEach((slide, i) => {
+          const inner = slide.querySelector('.slide-inner');
+          if (!inner) return;
+
+          const labelEl = slide.previousElementSibling;
+          const rawLabel = labelEl?.classList.contains('slide-label') ? labelEl.textContent : `Slide ${i + 1}`;
+          const label = rawLabel.replace(/^(#\d+\s*—?\s*)+/, '');
+
+          slideData.push({ index: i, label, html: inner.innerHTML, bg: inner.className.replace('slide-inner', '').trim() });
+
+          const labelDiv = document.createElement('div');
+          labelDiv.className = 'slide-label';
+          labelDiv.textContent = `#${i + 1} — ${label}`;
+          preview.appendChild(labelDiv);
+
+          const slideDiv = document.createElement('div');
+          slideDiv.className = 'slide';
+          slideDiv.dataset.chatSlide = i;
+          const innerDiv = document.createElement('div');
+          innerDiv.className = inner.className;
+          innerDiv.innerHTML = inner.innerHTML;
+          slideDiv.appendChild(innerDiv);
+          preview.appendChild(slideDiv);
+        });
+      }
+
+      // ── Render slides from create_presentation action ──
+      function renderSlidesFromData(slides) {
+        slideData = [];
+        preview.innerHTML = '';
+        chatEditActive = false;
+        chatEditDirty.clear();
+
+        addEditBar();
+
+        slides.forEach((s, i) => {
+          slideData.push({ index: i, label: s.label, html: s.html, bg: s.bg || 'bg-warning' });
+
+          const labelDiv = document.createElement('div');
+          labelDiv.className = 'slide-label';
+          labelDiv.textContent = `#${i + 1} — ${s.label}`;
+          preview.appendChild(labelDiv);
+
+          const slideDiv = document.createElement('div');
+          slideDiv.className = 'slide';
+          slideDiv.dataset.chatSlide = i;
+          const innerDiv = document.createElement('div');
+          innerDiv.className = `slide-inner ${s.bg || 'bg-warning'}`;
+          innerDiv.innerHTML = s.html;
+          slideDiv.appendChild(innerDiv);
+          preview.appendChild(slideDiv);
+        });
+      }
+
+      // ── Build full presentation HTML ──
+      function buildPresHTML(title, slides) {
+        const slidesHtml = slides.map((s, i) => `
+<div class="slide-label">#${i + 1} — <code>${s.label}</code></div>
+<div class="slide"><div class="slide-inner ${s.bg || 'bg-warning'}">
+${s.html}
+</div></div>`).join('\n');
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<link rel="stylesheet" href="/shared.css">
+<style>
+  body { background: #1a1a1a; font-family: 'Geist', sans-serif; padding: 40px;
+         display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  h1.page-title { color: #fff; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .page-desc { color: #888; font-size: 14px; margin-bottom: 16px; width: 960px; }
+</style>
+</head>
+<body>
+<h1 class="page-title">${title}</h1>
+<div class="toolbar">
+  <span id="pinCount" style="font-size:13px; color:#666;"></span>
+  <span style="flex:1"></span>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
+</div>
+
+${slidesHtml}
+
+<script src="/shared.js"><\/script>
+<script>
+initDeckSettings();
+initAnnotations('${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-pins');
+initPresentation('.slide');
+initSlideNav();
+initInlineEdit('${currentFile ? currentFile.replace(/^\//, '') : title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html"}');
+initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}');
+<\/script>
+</body>
+</html>`;
+      }
+
+      // ── Chat messages ──
+      function addMsg(role, content) {
+        const div = document.createElement('div');
+        div.className = `chat-msg ${role}`;
+        if (role === 'assistant') {
+          const parts = content.split(/<action>([\s\S]*?)<\/action>/g);
+          let html = '';
+          for (let i = 0; i < parts.length; i++) {
+            if (i % 2 === 0) {
+              const text = parts[i].trim();
+              if (text) html += escapeHtml(text).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
+            } else {
+              try {
+                const action = JSON.parse(parts[i]);
+                if (action.tool === 'create_presentation') {
+                  html += `<div class="chat-action create">Creating "${action.params.title}" — ${action.params.slides?.length || 0} slides</div>`;
+                  html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">saving...</div>`;
+                } else {
+                  html += `<div class="chat-action">${action.tool}(${JSON.stringify(action.params).slice(0, 100)})</div>`;
+                  html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">executing...</div>`;
+                }
+                executeAction(action);
+              } catch {
+                html += `<div class="chat-action">${escapeHtml(parts[i]).slice(0, 200)}</div>`;
+              }
+            }
+          }
+          div.innerHTML = html;
+        } else {
+          div.textContent = content;
+        }
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+      }
+
+      function addSystemMsg(text) {
+        const div = document.createElement('div');
+        div.className = 'chat-msg system';
+        div.textContent = text;
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+      }
+
+      function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'chat-msg assistant';
+        div.id = 'chatTyping';
+        div.innerHTML = '<div class="chat-typing"><span></span><span></span><span></span></div>';
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+      }
+
+      function hideTyping() {
+        document.getElementById('chatTyping')?.remove();
+      }
+
+      function escapeHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      // ── Execute actions ──
+      function executeAction(action) {
+        const { tool, params } = action;
+        switch (tool) {
+          case 'add_pin':
+            addPin(params.slideIndex, params.selector, params.note);
+            break;
+          case 'edit_text':
+            editText(params.slideIndex, params.selector, params.text);
+            break;
+          case 'list_pins':
+            addSystemMsg(JSON.stringify(pins, null, 2));
+            break;
+          case 'clear_pins':
+            clearPins(params.slideIndex);
+            break;
+          case 'create_presentation':
+            createPresentation(params);
+            break;
+          case 'replace_slide':
+            replaceSlide(params.slideIndex, params.bg, params.label, params.html);
+            break;
+        }
+      }
+
+      function replaceSlide(slideIndex, bg, label, html) {
+        const slideEl = preview.querySelector(`[data-chat-slide="${slideIndex}"]`);
+        if (!slideEl) return updateActionStatus('Slide not found');
+
+        const inner = slideEl.querySelector('.slide-inner');
+        if (!inner) return updateActionStatus('Slide inner not found');
+
+        inner.className = `slide-inner ${bg || 'bg-warning'}`;
+        inner.innerHTML = html;
+
+        // Update label
+        const labelEl = slideEl.previousElementSibling;
+        if (labelEl?.classList.contains('slide-label') && label) {
+          labelEl.textContent = `#${slideIndex + 1} — ${label}`;
+        }
+
+        // Update slideData
+        if (slideData[slideIndex]) {
+          slideData[slideIndex].html = html;
+          slideData[slideIndex].bg = inner.className.replace('slide-inner', '').trim();
+          if (label) slideData[slideIndex].label = label;
+        }
+
+        // Flash
+        inner.style.transition = 'outline 0.3s';
+        inner.style.outline = '2px solid #FFDD33';
+        setTimeout(() => { inner.style.outline = ''; }, 2000);
+
+        // Scroll to it
+        slideEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        updateActionStatus('Slide replaced');
+        saveCurrentPresentation();
+      }
+
+      async function createPresentation(params) {
+        const { name, title, slides } = params;
+        if (!slides?.length) return updateActionStatus('No slides provided');
+
+        // Render in preview
+        renderSlidesFromData(slides);
+        currentMode = 'existing';
+        currentTitle = title;
+
+        // Build full HTML
+        const fullHtml = buildPresHTML(title, slides);
+
+        // Save to server
+        try {
+          const resp = await fetch('/api/save-presentation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, title, html: fullHtml }),
+          });
+          const result = await resp.json();
+          if (result.ok) {
+            currentFile = result.url;
+            fileName.textContent = result.url;
+            fileName.href = result.url;
+
+            // Add link in chat
+            const statusEls = msgContainer.querySelectorAll('.chat-action-status');
+            const last = statusEls[statusEls.length - 1];
+            if (last) {
+              last.innerHTML = `Saved! <a class="chat-link" href="${result.url}" target="_blank">Open ${result.url}</a>`;
+            }
+
+            // Add button to file list
+            const btn = document.createElement('button');
+            btn.className = 'chat-file-btn active';
+            btn.dataset.path = result.url;
+            btn.dataset.title = title;
+            btn.textContent = title.split('—')[0].trim();
+            fileSelect.querySelectorAll('.chat-file-btn').forEach(b => b.classList.remove('active'));
+            fileSelect.appendChild(btn);
+          } else {
+            updateActionStatus(`Save failed: ${result.error || 'unknown error'}`);
+          }
+        } catch (e) {
+          updateActionStatus(`Save failed: ${e.message}`);
+        }
+      }
+
+      function addPin(slideIndex, selector, note) {
+        if (!pins[slideIndex]) pins[slideIndex] = [];
+        pins[slideIndex].push({ selector, note });
+
+        const slideEl = preview.querySelector(`[data-chat-slide="${slideIndex}"]`);
+        if (slideEl) {
+          const inner = slideEl.querySelector('.slide-inner');
+          const target = inner?.querySelector(selector);
+          if (target) {
+            target.style.outline = '2px solid #FFDD33';
+            target.style.outlineOffset = '2px';
+            const pin = document.createElement('div');
+            pin.style.cssText = 'position:absolute; top:-8px; right:-8px; width:16px; height:16px; background:#FFDD33; border-radius:50%; font-size:9px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:600; z-index:10;';
+            pin.textContent = pins[slideIndex].length;
+            target.style.position = 'relative';
+            target.appendChild(pin);
+          }
+        }
+        savePins();
+        updateActionStatus('Pin added');
+      }
+
+      const SAFE_EDIT_SELECTORS = /^\.(h[1-6]|p[1-5]|footer-title|footer-copy|footer-page|var-card-title|var-card-value|section-item|logo-chip|compare-chip|tl-vh-body)/;
+
+      function editText(slideIndex, selector, text) {
+        // Block edits on container/layout elements — only allow leaf text elements
+        if (!SAFE_EDIT_SELECTORS.test(selector)) {
+          return updateActionStatus(`Blocked: "${selector}" is a container, not a text element`);
+        }
+
+        const slideEl = preview.querySelector(`[data-chat-slide="${slideIndex}"]`);
+        if (!slideEl) return updateActionStatus('Slide not found');
+
+        const inner = slideEl.querySelector('.slide-inner');
+        const target = inner?.querySelector(selector);
+        if (!target) return updateActionStatus(`Element ${selector} not found`);
+
+        // Extra safety: don't edit elements that have child elements with classes
+        if (target.querySelector('.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.feature-card,.stat-cell,.proof-stat')) {
+          return updateActionStatus(`Blocked: "${selector}" contains child components`);
+        }
+
+        target.style.transition = 'background 0.3s';
+        target.style.background = 'rgba(255, 221, 51, 0.2)';
+        target.textContent = text;
+        setTimeout(() => {
+          target.style.background = '';
+          target.style.transition = '';
+          // Update slideData after highlight clears (so inline styles aren't saved)
+          if (slideData[slideIndex]) {
+            slideData[slideIndex].html = inner.innerHTML;
+          }
+          saveCurrentPresentation();
+        }, 1600);
+
+        const key = `pres:${editKey()}:${slideIndex}`;
+        fetch('/edit-storybook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, selector, text }),
+        }).catch(() => {});
+
+        updateActionStatus('Text updated');
+      }
+
+      function clearPins(slideIndex) {
+        if (slideIndex !== undefined) {
+          delete pins[slideIndex];
+          const slideEl = preview.querySelector(`[data-chat-slide="${slideIndex}"]`);
+          if (slideEl) slideEl.querySelectorAll('[style*="outline"]').forEach(el => { el.style.outline = ''; el.style.outlineOffset = ''; });
+        } else {
+          pins = {};
+          preview.querySelectorAll('[style*="outline"]').forEach(el => { el.style.outline = ''; el.style.outlineOffset = ''; });
+        }
+        savePins();
+        updateActionStatus('Pins cleared');
+      }
+
+      function savePins() {
+        const out = {};
+        for (const [idx, pinList] of Object.entries(pins)) {
+          out[idx] = {
+            story: `Slide ${Number(idx) + 1}`,
+            pins: pinList.map((p, i) => ({ id: i + 1, element: p.selector, note: p.note })),
+          };
+        }
+        fetch('/annotations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(out),
+        }).catch(() => {});
+      }
+
+      function updateActionStatus(text) {
+        const statuses = msgContainer.querySelectorAll('.chat-action-status');
+        const last = statuses[statuses.length - 1];
+        if (last && !last.querySelector('a')) last.textContent = text;
+      }
+
+      // ── Build context for AI ──
+      function buildContext() {
+        const lines = [];
+        if (currentMode === 'new' && !slideData.length) {
+          lines.push('Mode: creating new presentation');
+          lines.push('No slides yet — generate with create_presentation tool');
+          return lines.join('\n');
+        }
+        if (currentFile) lines.push(`File: ${currentFile}`);
+        lines.push(`Slides: ${slideData.length}`, '');
+        slideData.forEach(s => {
+          const div = document.createElement('div');
+          div.innerHTML = s.html;
+          const text = div.textContent.replace(/\s+/g, ' ').trim().slice(0, 200);
+          lines.push(`Slide ${s.index + 1}: ${s.label}`);
+          lines.push(`  Text: ${text}`);
+        });
+        if (Object.keys(pins).length) {
+          lines.push('', 'Current pins:');
+          for (const [idx, pinList] of Object.entries(pins)) {
+            pinList.forEach(p => lines.push(`  Slide ${Number(idx) + 1} ${p.selector}: ${p.note}`));
+          }
+        }
+        return lines.join('\n');
+      }
+
+      // ── Stream reader for Claude SSE ──
+      async function readStream(resp) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let buffer = '';
+
+        // Show a live typing indicator that updates with streamed text
+        const liveDiv = document.createElement('div');
+        liveDiv.className = 'chat-msg assistant';
+        liveDiv.style.color = '#666';
+        liveDiv.textContent = '...';
+        msgContainer.appendChild(liveDiv);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const event = JSON.parse(data);
+                if (event.type === 'content_block_delta' && event.delta?.text) {
+                  fullText += event.delta.text;
+                  // Update live preview (plain text, no action parsing yet)
+                  const preview = fullText.replace(/<action>[\s\S]*?<\/action>/g, '[...]').slice(-300);
+                  liveDiv.textContent = preview.length < fullText.length ? '...' + preview : preview;
+                  msgContainer.scrollTop = msgContainer.scrollHeight;
+                }
+              } catch {}
+            }
+          }
+        } catch (e) {
+          if (!fullText) {
+            addSystemMsg(`Stream error: ${e.message}`);
+          }
+        }
+
+        // Remove live preview — the caller will render the full message
+        liveDiv.remove();
+        return fullText;
+      }
+
+      // ── Send message ──
+      async function send() {
+        const text = input.value.trim();
+        if (!text && !attachments.length) return;
+
+        const currentAttachments = [...attachments];
+        const userContent = buildUserContent(text || 'Please analyze the attached files and create a presentation from this content.');
+
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Show user message with attachment badges
+        const attachLabels = currentAttachments.map(a => `[${a.name}]`).join(' ');
+        addMsg('user', attachLabels ? `${attachLabels}\n${text}` : text);
+
+        // Build API message — text-only for message history (images go separately)
+        messages.push({ role: 'user', content: userContent });
+
+        // Clear attachments
+        attachments = [];
+        renderAttachments();
+
+        sendBtn.disabled = true;
+        input.disabled = true;
+        showTyping();
+
+        try {
+          const payload = JSON.stringify({ messages, context: buildContext() });
+          if (payload.length > 4 * 1024 * 1024) {
+            hideTyping();
+            addSystemMsg('Message too large. Try a smaller file or fewer attachments.');
+            messages.pop();
+            sendBtn.disabled = false;
+            input.disabled = false;
+            return;
+          }
+
+          const resp = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+          });
+
+          hideTyping();
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            try {
+              const errJson = JSON.parse(errText);
+              addSystemMsg(`Error: ${errJson.error || errText.slice(0, 200)}`);
+            } catch {
+              addSystemMsg(`Server error ${resp.status}: ${errText.slice(0, 200)}`);
+            }
+          } else if (resp.headers.get('content-type')?.includes('text/event-stream')) {
+            // Streaming response — read SSE
+            const fullText = await readStream(resp);
+            if (fullText) {
+              messages.push({ role: 'assistant', content: fullText });
+              addMsg('assistant', fullText);
+            }
+          } else {
+            // Non-streaming fallback
+            const data = await resp.json();
+            if (data.error) {
+              addSystemMsg(`Error: ${data.error}`);
+            } else {
+              messages.push({ role: 'assistant', content: data.text });
+              addMsg('assistant', data.text);
+            }
+          }
+        } catch (e) {
+          hideTyping();
+          addSystemMsg(`Network error: ${e.message}`);
+        }
+
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+
+      // ── File attachments ──
+      function isImageType(type) {
+        return type.startsWith('image/');
+      }
+
+      function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      }
+
+      function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function extractPdfText(file) {
+        if (!window.pdfjsLib) throw new Error('PDF.js not loaded');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const arrayBuf = await readFileAsArrayBuffer(file);
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+        const pages = [];
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const text = content.items.map(item => item.str).join(' ');
+          if (text.trim()) pages.push(`[Page ${i}]\n${text}`);
+        }
+        return pages.join('\n\n');
+      }
+
+      async function processFiles(files) {
+        for (const file of files) {
+          if (file.size > 10 * 1024 * 1024) {
+            addSystemMsg(`Skipped ${file.name} — max 10MB`);
+            continue;
+          }
+
+          if (isImageType(file.type)) {
+            const dataUrl = await readFileAsDataURL(file);
+            const match = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
+            if (match) {
+              attachments.push({
+                name: file.name,
+                type: 'image',
+                mediaType: match[1],
+                base64: match[2],
+                dataUrl,
+              });
+            }
+          } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+            // PDF — extract text with pdf.js
+            try {
+              addSystemMsg(`Extracting text from ${file.name}...`);
+              const text = await extractPdfText(file);
+              if (!text.trim()) {
+                addSystemMsg(`${file.name} — no text found (scanned PDF?). Try uploading as image instead.`);
+                continue;
+              }
+              attachments.push({
+                name: file.name,
+                type: 'text',
+                content: text.slice(0, 50000),
+              });
+              addSystemMsg(`${file.name} — ${Math.round(text.length / 1024)}KB text extracted`);
+            } catch (e) {
+              addSystemMsg(`Could not read ${file.name}: ${e.message}`);
+              continue;
+            }
+          } else {
+            // Text-based files
+            try {
+              const text = await readFileAsText(file);
+              attachments.push({
+                name: file.name,
+                type: 'text',
+                content: text.slice(0, 50000),
+              });
+            } catch {
+              addSystemMsg(`Could not read ${file.name}`);
+              continue;
+            }
+          }
+        }
+        renderAttachments();
+      }
+
+      function renderAttachments() {
+        if (!attachments.length) {
+          attachmentsEl.innerHTML = '';
+          return;
+        }
+        attachmentsEl.innerHTML = attachments.map((a, i) => {
+          const icon = a.type === 'image' ? `<img class="chat-attachment-thumb" src="${a.dataUrl}">` : `<span class="chat-attachment-icon">&#x1F4C4;</span>`;
+          const size = a.type === 'image' ? '' : ` (${Math.round(a.content.length / 1024)}KB)`;
+          return `<div class="chat-attachment">
+            ${icon}
+            <span class="chat-attachment-name">${a.name}${size}</span>
+            <button class="chat-attachment-remove" data-idx="${i}" title="Remove">&times;</button>
+          </div>`;
+        }).join('');
+      }
+
+      attachmentsEl.addEventListener('click', e => {
+        const btn = e.target.closest('.chat-attachment-remove');
+        if (!btn) return;
+        attachments.splice(Number(btn.dataset.idx), 1);
+        renderAttachments();
+      });
+
+      // ── Build message content with attachments ──
+      function buildUserContent(text) {
+        if (!attachments.length) return text;
+
+        // Build multi-part content for Claude API
+        const parts = [];
+
+        // Add text attachments as context
+        const textAttachments = attachments.filter(a => a.type === 'text');
+        if (textAttachments.length) {
+          const fileContext = textAttachments.map(a =>
+            `--- ${a.name} ---\n${a.content}`
+          ).join('\n\n');
+          parts.push({ type: 'text', text: `[Attached files]\n${fileContext}\n\n[User message]\n${text}` });
+        } else {
+          parts.push({ type: 'text', text });
+        }
+
+        // Add images
+        const imageAttachments = attachments.filter(a => a.type === 'image');
+        for (const img of imageAttachments) {
+          parts.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: img.mediaType,
+              data: img.base64,
+            },
+          });
+        }
+
+        return parts;
+      }
+
+      // ── Event bindings ──
+      attachBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) processFiles([...fileInput.files]);
+        fileInput.value = '';
+      });
+
+      // Drag and drop on input
+      input.addEventListener('dragover', e => { e.preventDefault(); input.classList.add('dragover'); });
+      input.addEventListener('dragleave', () => input.classList.remove('dragover'));
+      input.addEventListener('drop', e => {
+        e.preventDefault();
+        input.classList.remove('dragover');
+        if (e.dataTransfer.files.length) processFiles([...e.dataTransfer.files]);
+      });
+
+      // Also support dropping on the whole chat panel
+      const chatPanel = document.querySelector('.chat-panel');
+      chatPanel.addEventListener('dragover', e => { e.preventDefault(); });
+      chatPanel.addEventListener('drop', e => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length) processFiles([...e.dataTransfer.files]);
+      });
+
+      sendBtn.addEventListener('click', send);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+      });
+      input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+      });
+
+      // Paste handler for images
+      input.addEventListener('paste', e => {
+        const items = [...(e.clipboardData?.items || [])];
+        const files = items
+          .filter(item => item.kind === 'file')
+          .map(item => item.getAsFile())
+          .filter(Boolean);
+        if (files.length) processFiles(files);
+      });
+
+      loadFileList();
+    })();
+  </script>
+</body>
+
+</html>

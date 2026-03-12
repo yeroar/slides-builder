@@ -3,6 +3,10 @@
     { "source": "/", "destination": "/templates.html" },
     { "source": "/annotations", "destination": "/api/annotations" },
     { "source": "/deck-settings", "destination": "/api/deck-settings" },
-    { "source": "/edit-storybook", "destination": "/api/edit-storybook" }
+    { "source": "/edit-storybook", "destination": "/api/edit-storybook" },
+    { "source": "/api/examples", "destination": "/api/examples" },
+    { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/save-presentation", "destination": "/api/save-presentation" },
+    { "source": "/p/:name", "destination": "/api/presentation?name=:name" }
   ]
 }

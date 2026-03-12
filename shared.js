@@ -1321,8 +1321,13 @@ function _onEditInput(e) {
 
 function _onEditBlur() {
   setTimeout(() => {
-    if (_editDirty.size > 0 || _editDirtyEls.size > 0) _saveAllEdits();
-  }, 500);
+    // Don't auto-exit if user clicked into another editable element
+    if (document.activeElement?.getAttribute('contenteditable')) return;
+    if (_editActive && (_editDirty.size > 0 || _editDirtyEls.size > 0)) {
+      _saveAllEdits();
+      _toggleEdit();
+    }
+  }, 300);
 }
 
 function _trackStorybookEdit(el) {
@@ -1422,7 +1427,28 @@ async function _saveAllEdits() {
     _editDirtyEls.clear();
   }
 
-  // Also save full HTML locally (dev only)
+  // Save full HTML back to Redis for /p/ presentations
+  if (_editFile && _editFile.startsWith('p/') && _editDirty.size > 0) {
+    const slug = _editFile.replace('p/', '');
+    const title = document.querySelector('.page-title')?.textContent || slug;
+    const fullHtml = _buildFullHTML();
+    if (fullHtml) {
+      try {
+        await fetch('/api/save-presentation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: slug, title, html: fullHtml }),
+        });
+        _showToast(toast, 'Saved');
+      } catch (err) {
+        _showToast(toast, `Save failed: ${err.message}`);
+      }
+    }
+    _editDirty.clear();
+    return;
+  }
+
+  // Save full HTML locally (dev only)
   if (!_editFile || _editDirty.size === 0) return;
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   if (!isLocal) {
@@ -1463,9 +1489,606 @@ async function _saveAllEdits() {
   _editDirty.clear();
 }
 
+// Rebuild full HTML from current DOM for /p/ presentations
+function _buildFullHTML() {
+  const title = document.querySelector('.page-title')?.textContent || 'Untitled';
+  const slideEls = document.querySelectorAll('.slide');
+  if (!slideEls.length) return null;
+
+  const slidesHtml = [...slideEls].map((slide, i) => {
+    const inner = slide.querySelector('.slide-inner');
+    if (!inner) return '';
+    const clone = inner.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelectorAll('[data-edit-original]').forEach(el => el.removeAttribute('data-edit-original'));
+    clone.querySelectorAll('.pin, .drag-select-rect, .grid-overlay, .hover-highlight, .ann-dot').forEach(el => el.remove());
+    const labelEl = slide.previousElementSibling;
+    const label = labelEl?.classList.contains('slide-label') ? labelEl.textContent.replace(/^(#\d+\s*—?\s*)+/, '') : `Slide ${i + 1}`;
+    return `\n<div class="slide-label">#${i + 1} — <code>${label}</code></div>\n<div class="slide"><div class="${clone.className}">\n${clone.innerHTML.trim()}\n</div></div>`;
+  }).join('\n');
+
+  const scripts = document.querySelectorAll('script:not([src])');
+  let scriptBlock = '';
+  scripts.forEach(s => { if (s.textContent.includes('initDeckSettings')) scriptBlock = s.textContent.trim(); });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<link rel="stylesheet" href="/shared.css">
+<style>
+  body { background: #1a1a1a; font-family: 'Geist', sans-serif; padding: 40px;
+         display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  h1.page-title { color: #fff; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .page-desc { color: #888; font-size: 14px; margin-bottom: 16px; width: 960px; }
+</style>
+</head>
+<body>
+<h1 class="page-title">${title}</h1>
+<div class="toolbar">
+  <span id="pinCount" style="font-size:13px; color:#666;"></span>
+  <span style="flex:1"></span>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
+</div>
+${slidesHtml}
+
+<script src="/shared.js"><\/script>
+<script>
+initDeckSettings();
+initAnnotations('${_editFile.replace(/[^a-z0-9]+/g, '-')}-pins');
+initPresentation('.slide');
+initSlideNav();
+initInlineEdit('${_editFile}');
+initChat('${_editFile.replace(/^p\//, '')}');
+<\/script>
+</body>
+</html>`;
+}
+
 function _showToast(toast, msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// Embedded Chat — AI chat bar for /p/ presentation pages
+// Call initChat('slug-name') from presentation files
+// ══════════════════════════════════════════════════════════════
+
+function initChat(slug) {
+  const setup = () => {
+    // State
+    let messages = [];
+    let chatPins = {};
+    let attachments = [];
+    let panelOpen = false;
+
+    // Build slideData from current DOM
+    function scanSlides() {
+      const slides = document.querySelectorAll('.slide');
+      const labels = document.querySelectorAll('.slide-label');
+      const data = [];
+      slides.forEach((slide, i) => {
+        const inner = slide.querySelector('.slide-inner');
+        if (!inner) return;
+        const labelEl = labels[i];
+        const rawLabel = labelEl ? labelEl.textContent.replace(/^(#\d+\s*—?\s*)+/, '') : `Slide ${i + 1}`;
+        data.push({
+          index: i,
+          label: rawLabel,
+          html: inner.innerHTML,
+          bg: inner.className.replace('slide-inner', '').trim(),
+        });
+      });
+      return data;
+    }
+
+    // Create toggle FAB
+    const fab = document.createElement('button');
+    fab.className = 'chat-toggle-fab';
+    fab.id = 'chatToggleFab';
+    fab.title = 'Toggle AI chat';
+    fab.innerHTML = '&#x1F4AC;';
+    document.body.appendChild(fab);
+
+    // Create right drawer panel
+    const panel = document.createElement('div');
+    panel.className = 'chat-drawer-panel';
+    panel.id = 'chatDrawerPanel';
+    panel.innerHTML = `
+      <div class="chat-drawer-header">
+        <span>Chat</span>
+        <button class="chat-drawer-close" id="chatDrawerClose">&times;</button>
+      </div>
+      <div class="chat-drawer-messages" id="chatDrawerMessages"></div>
+      <div class="chat-drawer-input-wrap">
+        <div class="chat-bar-attachments" id="chatBarAttachments"></div>
+        <div class="chat-bar-input">
+          <button class="chat-bar-attach" id="chatBarAttachBtn" title="Attach file">+</button>
+          <textarea class="chat-bar-textarea" id="chatBarInput" placeholder="Ask AI to review, edit, or create slides..." rows="1"></textarea>
+          <button class="chat-bar-send" id="chatBarSend">&#x2191;</button>
+        </div>
+        <input type="file" id="chatBarFileInput" hidden multiple accept=".pdf,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp,.svg">
+      </div>
+    `;
+    document.body.appendChild(panel);
+
+    // Load pdf.js if not already loaded
+    if (!window.pdfjsLib) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      document.head.appendChild(script);
+    }
+
+    const drawerInner = document.getElementById('chatDrawerMessages');
+    const inputEl = document.getElementById('chatBarInput');
+    const sendBtn = document.getElementById('chatBarSend');
+    const attachBtn = document.getElementById('chatBarAttachBtn');
+    const fileInput = document.getElementById('chatBarFileInput');
+    const attachmentsEl = document.getElementById('chatBarAttachments');
+
+    function openPanel() {
+      if (!panelOpen) togglePanel();
+    }
+    function togglePanel() {
+      panelOpen = !panelOpen;
+      panel.classList.toggle('open', panelOpen);
+      fab.classList.toggle('active', panelOpen);
+      document.body.classList.toggle('has-chat', panelOpen);
+      if (panelOpen) inputEl.focus();
+    }
+
+    fab.addEventListener('click', togglePanel);
+    document.getElementById('chatDrawerClose').addEventListener('click', togglePanel);
+
+    // Messages
+    function addMsg(role, content) {
+      const div = document.createElement('div');
+      div.className = `chat-bar-msg ${role}`;
+      if (role === 'assistant') {
+        const parts = content.split(/<action>([\s\S]*?)<\/action>/g);
+        let html = '';
+        for (let i = 0; i < parts.length; i++) {
+          if (i % 2 === 0) {
+            const text = parts[i].trim();
+            if (text) html += escHtml(text).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
+          } else {
+            try {
+              const action = JSON.parse(parts[i]);
+              if (action.tool === 'create_presentation') {
+                html += `<div class="chat-bar-action create">Creating "${action.params.title}" — ${action.params.slides?.length || 0} slides</div>`;
+              } else {
+                html += `<div class="chat-bar-action">${action.tool}(${JSON.stringify(action.params).slice(0, 100)})</div>`;
+              }
+              executeAction(action);
+            } catch {
+              html += `<div class="chat-bar-action">${escHtml(parts[i]).slice(0, 200)}</div>`;
+            }
+          }
+        }
+        div.innerHTML = html;
+      } else {
+        div.textContent = content;
+      }
+      drawerInner.appendChild(div);
+      drawerInner.scrollTop = drawerInner.scrollHeight;
+      openPanel();
+    }
+
+    function addSystemMsg(text) {
+      const div = document.createElement('div');
+      div.className = 'chat-bar-msg system';
+      div.textContent = text;
+      drawerInner.appendChild(div);
+      drawerInner.scrollTop = drawerInner.scrollHeight;
+    }
+
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'chat-bar-msg assistant';
+      div.id = 'chatBarTyping';
+      div.innerHTML = '<div class="chat-bar-typing"><span></span><span></span><span></span></div>';
+      drawerInner.appendChild(div);
+      drawerInner.scrollTop = drawerInner.scrollHeight;
+      openPanel();
+    }
+
+    function hideTyping() {
+      document.getElementById('chatBarTyping')?.remove();
+    }
+
+    // Actions
+    const SAFE_EDIT_RE = /^\.(h[1-6]|p[1-5]|footer-title|footer-copy|footer-page|var-card-title|var-card-value|section-item|logo-chip|compare-chip|tl-vh-body)/;
+
+    function executeAction(action) {
+      const { tool, params } = action;
+      switch (tool) {
+        case 'add_pin': _chatAddPin(params.slideIndex, params.selector, params.note); break;
+        case 'edit_text': _chatEditText(params.slideIndex, params.selector, params.text); break;
+        case 'list_pins': addSystemMsg(JSON.stringify(chatPins, null, 2)); break;
+        case 'clear_pins': _chatClearPins(params.slideIndex); break;
+        case 'replace_slide': _chatReplaceSlide(params.slideIndex, params.bg, params.label, params.html); break;
+        case 'create_presentation': _chatCreatePresentation(params); break;
+      }
+    }
+
+    function _chatEditText(slideIndex, selector, text) {
+      if (!SAFE_EDIT_RE.test(selector)) { addSystemMsg(`Blocked: "${selector}" is a container`); return; }
+      const slides = document.querySelectorAll('.slide');
+      const slideEl = slides[slideIndex];
+      if (!slideEl) { addSystemMsg('Slide not found'); return; }
+      const inner = slideEl.querySelector('.slide-inner');
+      const target = inner?.querySelector(selector);
+      if (!target) { addSystemMsg(`Element ${selector} not found`); return; }
+      if (target.querySelector('.h1,.h2,.h3,.h4,.h5,.h6,.p1,.p2,.p3,.feature-card,.stat-cell,.proof-stat')) {
+        addSystemMsg(`Blocked: "${selector}" contains child components`); return;
+      }
+      target.style.transition = 'background 0.3s';
+      target.style.background = 'rgba(255, 221, 51, 0.2)';
+      target.textContent = text;
+      setTimeout(() => {
+        target.style.background = '';
+        target.style.transition = '';
+        _chatSavePresentation();
+      }, 1600);
+      slideEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      addSystemMsg('Text updated');
+    }
+
+    function _chatReplaceSlide(slideIndex, bg, label, html) {
+      const slides = document.querySelectorAll('.slide');
+      const slideEl = slides[slideIndex];
+      if (!slideEl) { addSystemMsg('Slide not found'); return; }
+      const inner = slideEl.querySelector('.slide-inner');
+      if (!inner) { addSystemMsg('Slide inner not found'); return; }
+      inner.className = `slide-inner ${bg || 'bg-warning'}`;
+      inner.innerHTML = html;
+      // Update label
+      const wrapper = slideEl.closest('.slide-wrapper');
+      const labelEl = wrapper ? wrapper.querySelector('.slide-label') : slideEl.previousElementSibling;
+      if (labelEl?.classList.contains('slide-label') && label) {
+        labelEl.textContent = `#${slideIndex + 1} — ${label}`;
+      }
+      // Flash
+      inner.style.transition = 'outline 0.3s';
+      inner.style.outline = '2px solid #FFDD33';
+      setTimeout(() => { inner.style.outline = ''; }, 2000);
+      slideEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      addSystemMsg('Slide replaced');
+      _chatSavePresentation();
+      // Refresh slide nav thumbnails
+      if (typeof _buildSlideNav === 'function') {
+        const oldNav = document.querySelector('.slide-nav');
+        if (oldNav) oldNav.remove();
+        document.body.classList.remove('has-slide-nav');
+        _buildSlideNav();
+        _navTrackScroll();
+        _navUpdatePins();
+      }
+    }
+
+    function _chatAddPin(slideIndex, selector, note) {
+      if (!chatPins[slideIndex]) chatPins[slideIndex] = [];
+      chatPins[slideIndex].push({ selector, note });
+      const slides = document.querySelectorAll('.slide');
+      const slideEl = slides[slideIndex];
+      if (slideEl) {
+        const inner = slideEl.querySelector('.slide-inner');
+        const target = inner?.querySelector(selector);
+        if (target) {
+          target.style.outline = '2px solid #FFDD33';
+          target.style.outlineOffset = '2px';
+        }
+      }
+      addSystemMsg('Pin added');
+    }
+
+    function _chatClearPins(slideIndex) {
+      if (slideIndex !== undefined) {
+        delete chatPins[slideIndex];
+        const slides = document.querySelectorAll('.slide');
+        const slideEl = slides[slideIndex];
+        if (slideEl) slideEl.querySelectorAll('[style*="outline"]').forEach(el => { el.style.outline = ''; el.style.outlineOffset = ''; });
+      } else {
+        chatPins = {};
+        document.querySelectorAll('.slide [style*="outline"]').forEach(el => { el.style.outline = ''; el.style.outlineOffset = ''; });
+      }
+      addSystemMsg('Pins cleared');
+    }
+
+    function _chatCreatePresentation(params) {
+      // For /p/ pages, create_presentation redirects to a new URL
+      const { name, title, slides } = params;
+      if (!slides?.length) { addSystemMsg('No slides provided'); return; }
+      const slidesHtml = slides.map((s, i) => `
+<div class="slide-label">#${i + 1} — <code>${s.label}</code></div>
+<div class="slide"><div class="slide-inner ${s.bg || 'bg-warning'}">
+${s.html}
+</div></div>`).join('\n');
+
+      const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<link rel="stylesheet" href="/shared.css">
+<style>
+  body { background: #1a1a1a; font-family: 'Geist', sans-serif; padding: 40px;
+         display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  h1.page-title { color: #fff; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .page-desc { color: #888; font-size: 14px; margin-bottom: 16px; width: 960px; }
+</style>
+</head>
+<body>
+<h1 class="page-title">${title}</h1>
+<div class="toolbar">
+  <span id="pinCount" style="font-size:13px; color:#666;"></span>
+  <span style="flex:1"></span>
+  <button class="toolbar-btn" onclick="startPresentation('.slide')" title="Present (F5)">&#x25B6;</button>
+</div>
+${slidesHtml}
+<script src="/shared.js"><\/script>
+<script>
+initDeckSettings();
+initAnnotations('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-pins');
+initPresentation('.slide');
+initSlideNav();
+initInlineEdit('p/${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
+initChat('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
+<\/script>
+</body>
+</html>`;
+
+      fetch('/api/save-presentation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, title, html: fullHtml }),
+      }).then(r => r.json()).then(result => {
+        if (result.ok) {
+          addSystemMsg(`Created! Redirecting to ${result.url}...`);
+          setTimeout(() => { window.location.href = result.url; }, 1000);
+        } else {
+          addSystemMsg(`Save failed: ${result.error || 'unknown'}`);
+        }
+      }).catch(e => addSystemMsg(`Save failed: ${e.message}`));
+    }
+
+    // Save presentation back to Redis
+    function _chatSavePresentation() {
+      const slideData = scanSlides();
+      if (!slideData.length) return;
+      const title = document.querySelector('.page-title')?.textContent || slug;
+      const fullHtml = _buildFullHTML();
+      if (!fullHtml) return;
+      fetch('/api/save-presentation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: slug, title, html: fullHtml }),
+      }).catch(e => console.warn('Chat auto-save failed:', e));
+    }
+
+    // Build context for AI
+    function buildContext() {
+      const slideData = scanSlides();
+      const lines = [`File: /p/${slug}`, `Slides: ${slideData.length}`, ''];
+      slideData.forEach(s => {
+        const div = document.createElement('div');
+        div.innerHTML = s.html;
+        const text = div.textContent.replace(/\s+/g, ' ').trim().slice(0, 200);
+        lines.push(`Slide ${s.index + 1}: ${s.label}`);
+        lines.push(`  Text: ${text}`);
+      });
+      if (Object.keys(chatPins).length) {
+        lines.push('', 'Current pins:');
+        for (const [idx, pinList] of Object.entries(chatPins)) {
+          pinList.forEach(p => lines.push(`  Slide ${Number(idx) + 1} ${p.selector}: ${p.note}`));
+        }
+      }
+      return lines.join('\n');
+    }
+
+    // Stream reader
+    async function readStream(resp) {
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let buffer = '';
+      const liveDiv = document.createElement('div');
+      liveDiv.className = 'chat-bar-msg assistant';
+      liveDiv.style.color = '#666';
+      liveDiv.textContent = '...';
+      drawerInner.appendChild(liveDiv);
+      openPanel();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const event = JSON.parse(data);
+              if (event.type === 'content_block_delta' && event.delta?.text) {
+                fullText += event.delta.text;
+                const preview = fullText.replace(/<action>[\s\S]*?<\/action>/g, '[...]').slice(-300);
+                liveDiv.textContent = preview.length < fullText.length ? '...' + preview : preview;
+                drawerInner.scrollTop = drawerInner.scrollHeight;
+              }
+            } catch {}
+          }
+        }
+      } catch (e) {
+        if (!fullText) addSystemMsg(`Stream error: ${e.message}`);
+      }
+      liveDiv.remove();
+      return fullText;
+    }
+
+    // Send
+    async function send() {
+      const text = inputEl.value.trim();
+      if (!text && !attachments.length) return;
+      const currentAttachments = [...attachments];
+      const userContent = buildUserContent(text || 'Please analyze the attached files.');
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      const attachLabels = currentAttachments.map(a => `[${a.name}]`).join(' ');
+      addMsg('user', attachLabels ? `${attachLabels}\n${text}` : text);
+      messages.push({ role: 'user', content: userContent });
+      attachments = [];
+      renderAttachments();
+      sendBtn.disabled = true;
+      inputEl.disabled = true;
+      showTyping();
+
+      try {
+        const payload = JSON.stringify({ messages, context: buildContext() });
+        if (payload.length > 4 * 1024 * 1024) {
+          hideTyping();
+          addSystemMsg('Message too large.');
+          messages.pop();
+          sendBtn.disabled = false;
+          inputEl.disabled = false;
+          return;
+        }
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+        });
+        hideTyping();
+        if (!resp.ok) {
+          const errText = await resp.text();
+          try { addSystemMsg(`Error: ${JSON.parse(errText).error}`); } catch { addSystemMsg(`Server error ${resp.status}`); }
+        } else if (resp.headers.get('content-type')?.includes('text/event-stream')) {
+          const fullText = await readStream(resp);
+          if (fullText) {
+            messages.push({ role: 'assistant', content: fullText });
+            addMsg('assistant', fullText);
+          }
+        } else {
+          const data = await resp.json();
+          if (data.error) addSystemMsg(`Error: ${data.error}`);
+          else { messages.push({ role: 'assistant', content: data.text }); addMsg('assistant', data.text); }
+        }
+      } catch (e) {
+        hideTyping();
+        addSystemMsg(`Network error: ${e.message}`);
+      }
+      sendBtn.disabled = false;
+      inputEl.disabled = false;
+      inputEl.focus();
+    }
+
+    // File handling
+    function buildUserContent(text) {
+      if (!attachments.length) return text;
+      const parts = [];
+      const textAtts = attachments.filter(a => a.type === 'text');
+      if (textAtts.length) {
+        const ctx = textAtts.map(a => `--- ${a.name} ---\n${a.content}`).join('\n\n');
+        parts.push({ type: 'text', text: `[Attached files]\n${ctx}\n\n[User message]\n${text}` });
+      } else {
+        parts.push({ type: 'text', text });
+      }
+      const imgAtts = attachments.filter(a => a.type === 'image');
+      for (const img of imgAtts) {
+        parts.push({ type: 'image', source: { type: 'base64', media_type: img.mediaType, data: img.base64 } });
+      }
+      return parts;
+    }
+
+    function readFileAsText(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(file); }); }
+    function readFileAsDataURL(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); }); }
+    function readFileAsArrayBuffer(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsArrayBuffer(file); }); }
+
+    async function extractPdfText(file) {
+      if (!window.pdfjsLib) throw new Error('PDF.js not loaded');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const buf = await readFileAsArrayBuffer(file);
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map(item => item.str).join(' ');
+        if (text.trim()) pages.push(`[Page ${i}]\n${text}`);
+      }
+      return pages.join('\n\n');
+    }
+
+    async function processFiles(files) {
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) { addSystemMsg(`Skipped ${file.name} — max 10MB`); continue; }
+        if (file.type.startsWith('image/')) {
+          const dataUrl = await readFileAsDataURL(file);
+          const match = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
+          if (match) attachments.push({ name: file.name, type: 'image', mediaType: match[1], base64: match[2], dataUrl });
+        } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+          try {
+            addSystemMsg(`Extracting text from ${file.name}...`);
+            const text = await extractPdfText(file);
+            if (!text.trim()) { addSystemMsg(`${file.name} — no text found`); continue; }
+            attachments.push({ name: file.name, type: 'text', content: text.slice(0, 50000) });
+          } catch (e) { addSystemMsg(`Could not read ${file.name}: ${e.message}`); continue; }
+        } else {
+          try {
+            const text = await readFileAsText(file);
+            attachments.push({ name: file.name, type: 'text', content: text.slice(0, 50000) });
+          } catch { addSystemMsg(`Could not read ${file.name}`); continue; }
+        }
+      }
+      renderAttachments();
+    }
+
+    function renderAttachments() {
+      if (!attachments.length) { attachmentsEl.innerHTML = ''; return; }
+      attachmentsEl.innerHTML = attachments.map((a, i) => {
+        const icon = a.type === 'image' ? `<img class="chat-bar-att-thumb" src="${a.dataUrl}">` : '<span class="chat-bar-att-icon">&#x1F4C4;</span>';
+        const size = a.type === 'image' ? '' : ` (${Math.round(a.content.length / 1024)}KB)`;
+        return `<div class="chat-bar-att">${icon}<span class="chat-bar-att-name">${a.name}${size}</span><button class="chat-bar-att-remove" data-idx="${i}">&times;</button></div>`;
+      }).join('');
+    }
+
+    // Event bindings
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) processFiles([...fileInput.files]); fileInput.value = ''; });
+    attachmentsEl.addEventListener('click', e => {
+      const btn = e.target.closest('.chat-bar-att-remove');
+      if (!btn) return;
+      attachments.splice(Number(btn.dataset.idx), 1);
+      renderAttachments();
+    });
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'; });
+
+    // Drag and drop
+    inputEl.addEventListener('dragover', e => { e.preventDefault(); inputEl.classList.add('dragover'); });
+    inputEl.addEventListener('dragleave', () => inputEl.classList.remove('dragover'));
+    inputEl.addEventListener('drop', e => { e.preventDefault(); inputEl.classList.remove('dragover'); if (e.dataTransfer.files.length) processFiles([...e.dataTransfer.files]); });
+
+    // Paste images
+    inputEl.addEventListener('paste', e => {
+      const files = [...(e.clipboardData?.items || [])].filter(i => i.kind === 'file').map(i => i.getAsFile()).filter(Boolean);
+      if (files.length) processFiles(files);
+    });
+
+    addSystemMsg(`Chat ready — ${scanSlides().length} slides loaded. Ask me to review, edit, or add slides.`);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
 }
 

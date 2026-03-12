@@ -21,6 +21,36 @@ body {
   z-index: 100;
 }
 
+.page-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #2a2a2a;
+  gap: 1px;
+}
+.page-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  text-decoration: none;
+  transition: color 0.1s;
+}
+.page-nav-link:hover { color: #fff; }
+.page-nav-link.active { color: #fff; }
+.page-nav-link .page-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #333;
+  flex-shrink: 0;
+}
+.page-nav-link.active .page-nav-dot { background: #FFDD33; }
+
 .sidebar-title {
   font-size: 14px;
   font-weight: 600;

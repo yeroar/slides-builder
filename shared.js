@@ -1239,10 +1239,34 @@ function initInlineEdit(opts) {
     });
   };
 
+  const applyOverrides = async () => {
+    if (_editStorybook) return; // storybook handles its own overrides
+    try {
+      const resp = await fetch('/edit-storybook');
+      if (!resp.ok) return;
+      const text = await resp.text();
+      if (!text || text[0] !== '{') return;
+      const overrides = JSON.parse(text);
+      const prefix = `pres:${_editFile}:`;
+      const slides = document.querySelectorAll('.slide-inner');
+      for (const [key, map] of Object.entries(overrides)) {
+        if (!key.startsWith(prefix)) continue;
+        const idx = parseInt(key.slice(prefix.length));
+        const inner = slides[idx];
+        if (!inner) continue;
+        for (const [selector, txt] of Object.entries(map)) {
+          const el = inner.querySelector(selector);
+          if (el) el.textContent = txt;
+        }
+      }
+    } catch {}
+  };
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setup, { once: true });
+    document.addEventListener('DOMContentLoaded', () => { setup(); applyOverrides(); }, { once: true });
   } else {
     setup();
+    applyOverrides();
   }
 }
 
@@ -1290,6 +1314,8 @@ function _onEditInput(e) {
     const slides = [...document.querySelectorAll('.slide')];
     const idx = slides.indexOf(slide);
     if (idx >= 0) _editDirty.add(idx);
+    // Also track per-element for remote override saves
+    _trackPresEdit(e.target);
   }
 }
 
@@ -1306,6 +1332,20 @@ function _trackStorybookEdit(el) {
   const selector = _editSelector(el, inner);
   if (!selector) return;
   _editDirtyEls.set(el, { storyId, selector, text: el.textContent });
+}
+
+function _trackPresEdit(el) {
+  const inner = el.closest('.slide-inner');
+  if (!inner) return;
+  const slide = inner.closest('.slide');
+  if (!slide) return;
+  const slides = [...document.querySelectorAll('.slide')];
+  const idx = slides.indexOf(slide);
+  if (idx < 0) return;
+  const selector = _editSelector(el, inner);
+  if (!selector) return;
+  const key = `pres:${_editFile}:${idx}`;
+  _editDirtyEls.set(el, { storyId: key, selector, text: el.textContent });
 }
 
 // Build a CSS selector path from el to its slide-inner container
@@ -1367,12 +1407,27 @@ async function _saveAllEdits() {
     return;
   }
 
-  // Presentation mode: save full slide HTML (local dev only)
+  // Presentation mode: save overrides to server (works on Vercel too)
+  if (_editDirtyEls.size > 0) {
+    for (const [el, info] of _editDirtyEls) {
+      if (el.textContent === el.dataset.editOriginal) continue;
+      try {
+        await fetch('/edit-storybook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: info.storyId, selector: info.selector, text: info.text }),
+        });
+      } catch {}
+    }
+    _editDirtyEls.clear();
+  }
+
+  // Also save full HTML locally (dev only)
   if (!_editFile || _editDirty.size === 0) return;
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   if (!isLocal) {
-    _showToast(toast, 'Editing saves locally only');
     _editDirty.clear();
+    _showToast(toast, 'Saved');
     return;
   }
   const slides = document.querySelectorAll('.slide');

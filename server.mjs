@@ -181,18 +181,20 @@ const server = createServer(async (req, res) => {
 
 function tryListen(server, port, maxRetries = 10) {
   server.listen(port, () => {
-    console.log(`\n  Preview server running at http://localhost:${port}\n`);
-    console.log('  Open examples:');
+    console.log('');
+    console.log('  ▶ Loading templates and skills...');
+    console.log(`  ✔ Ready at http://localhost:${port}`);
+    console.log('');
     console.log(`    http://localhost:${port}/examples/credit-card.html`);
     console.log(`    http://localhost:${port}/examples/cryptoswitch.html`);
-    console.log('  Press Ctrl+C to stop\n');
+    console.log('');
   });
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && maxRetries > 0) {
-      console.log(`  Port ${port} in use, trying ${port + 1}...`);
+      console.log(`  ▶ Port ${port} in use, trying ${port + 1}...`);
       tryListen(server, port + 1, maxRetries - 1);
     } else {
-      console.error(`  Failed to start server: ${err.message}`);
+      console.error(`  ✘ Failed to start: ${err.message}`);
       process.exit(1);
     }
   });

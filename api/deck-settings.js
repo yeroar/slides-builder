@@ -1,21 +1,25 @@
 import { Redis } from '@upstash/redis';
 
+export const config = { runtime: 'edge' };
+
 const redis = Redis.fromEnv();
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
-
-  if (req.method === 'POST') {
-    const { file, title, copy, start } = req.body;
-    await redis.set(`deck-settings:${file}`, JSON.stringify({ title, copy, start }));
-    return res.json({ ok: true });
+export default async function handler(req) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
   }
 
-  const file = req.query.file;
-  if (!file) return res.json({});
+  const headers = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+
+  if (req.method === 'POST') {
+    const { file, title, copy, start } = await req.json();
+    await redis.set(`deck-settings:${file}`, JSON.stringify({ title, copy, start }));
+    return new Response('{"ok":true}', { headers });
+  }
+
+  const url = new URL(req.url);
+  const file = url.searchParams.get('file');
+  if (!file) return new Response('{}', { headers });
   const data = await redis.get(`deck-settings:${file}`);
-  return res.json(data ? JSON.parse(data) : {});
+  return new Response(data ? (typeof data === 'string' ? data : JSON.stringify(data)) : '{}', { headers });
 }

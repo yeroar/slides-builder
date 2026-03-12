@@ -821,10 +821,20 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
               try {
                 const action = JSON.parse(parts[i]);
                 if (action.tool === 'create_presentation') {
-                  html += `<div class="chat-action create">Creating "${action.params.title}" — ${action.params.slides?.length || 0} slides</div>`;
+                  html += `<div class="chat-action create">▶ Creating "${action.params.title}" — ${action.params.slides?.length || 0} slides</div>`;
                   html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">saving...</div>`;
+                } else if (action.tool === 'add_slides') {
+                  const n = action.params.slides?.length || 0;
+                  html += `<div class="chat-action create">▶ Adding ${n} more slides (batch ${Math.floor(i / 2) + 1})</div>`;
+                  html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">appending...</div>`;
+                } else if (action.tool === 'replace_slide') {
+                  html += `<div class="chat-action">▶ Replacing slide ${(action.params.slideIndex || 0) + 1} → ${action.params.label || 'slide'}</div>`;
+                  html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">executing...</div>`;
+                } else if (action.tool === 'edit_text') {
+                  html += `<div class="chat-action">▶ Editing slide ${(action.params.slideIndex || 0) + 1} ${action.params.selector}</div>`;
+                  html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">executing...</div>`;
                 } else {
-                  html += `<div class="chat-action">${action.tool}(${JSON.stringify(action.params).slice(0, 100)})</div>`;
+                  html += `<div class="chat-action">▶ ${action.tool}(${JSON.stringify(action.params).slice(0, 80)})</div>`;
                   html += `<div class="chat-action-status" data-action-idx="${Math.floor(i / 2)}">executing...</div>`;
                 }
                 executeAction(action);
@@ -887,6 +897,9 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
             break;
           case 'replace_slide':
             replaceSlide(params.slideIndex, params.bg, params.label, params.html);
+            break;
+          case 'add_slides':
+            addSlides(params);
             break;
         }
       }
@@ -972,6 +985,45 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
         } catch (e) {
           updateActionStatus(`Save failed: ${e.message}`);
         }
+      }
+
+      async function addSlides(params) {
+        const { slides } = params;
+        if (!slides?.length) return updateActionStatus('No slides provided');
+        const startIndex = slideData.length;
+        slides.forEach((s, i) => {
+          const idx = startIndex + i;
+          slideData.push({ index: idx, label: s.label, html: s.html, bg: s.bg || 'bg-warning' });
+          const labelDiv = document.createElement('div');
+          labelDiv.className = 'slide-label';
+          labelDiv.textContent = `#${idx + 1} — ${s.label}`;
+          preview.appendChild(labelDiv);
+          const slideDiv = document.createElement('div');
+          slideDiv.className = 'slide';
+          slideDiv.dataset.chatSlide = idx;
+          const innerDiv = document.createElement('div');
+          innerDiv.className = `slide-inner ${s.bg || 'bg-warning'}`;
+          innerDiv.innerHTML = s.html;
+          slideDiv.appendChild(innerDiv);
+          preview.appendChild(slideDiv);
+        });
+        updateActionStatus(`Added ${slides.length} slides (${startIndex + 1}–${startIndex + slides.length})`);
+        // Re-save the full presentation
+        if (currentFile) {
+          const allSlides = slideData.map(s => ({ label: s.label, bg: s.bg, html: s.html }));
+          const fullHtml = buildPresHTML(currentTitle || 'Presentation', allSlides);
+          const name = currentFile.replace(/^\/p\//, '');
+          try {
+            await fetch('/api/save-presentation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, title: currentTitle, html: fullHtml }),
+            });
+          } catch (e) { console.warn('Save after add_slides failed:', e); }
+        }
+        // Scroll to first new slide
+        const firstNew = preview.querySelector(`[data-chat-slide="${startIndex}"]`);
+        if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
       function addPin(slideIndex, selector, note) {

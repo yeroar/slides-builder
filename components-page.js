@@ -128,10 +128,6 @@
       { label: 'Primitives', storyIds: ['bullet-section', 'footer-prim'] },
       { label: 'Layout', storyIds: ['stat-cell', 'feature-card', 'var-card', 'logo-card'] },
       { label: 'Compositions', storyIds: ['proof-comp', 'compare-comp', 'data-table-comp'] },
-      { label: 'Pages', links: [
-        { label: 'Templates', href: '/templates.html', external: true },
-        { label: 'Credit Card', href: '/examples/credit-card.html', external: true },
-      ] },
     ],
     stories: [
       // ──────── Colors ────────

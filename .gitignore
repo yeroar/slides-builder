@@ -3,3 +3,4 @@ node_modules/
 annotations.json
 template-overrides.json
 deck-settings.json
+.vercel

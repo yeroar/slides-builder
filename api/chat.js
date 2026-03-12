@@ -20,13 +20,25 @@ AVAILABLE TOOLS:
    Use this when: changing template type, restructuring layout, or making changes that edit_text can't handle.
    The html param is the FULL contents of the slide-inner div.
 
-5. create_presentation — generate a new presentation from scratch
+5. create_presentation — start a new presentation (first batch of slides only)
    {"tool": "create_presentation", "params": {"name": "quarterly-update", "title": "Q1 2026 Update", "slides": [...]}}
    Each slide object: { "label": "StartSlide", "bg": "bg-brand", "html": "<inner HTML>" }
+
+6. add_slides — append more slides to the current presentation
+   {"tool": "add_slides", "params": {"slides": [...]}}
+   Same slide object format as create_presentation. Use this to add slides in batches after create_presentation.
 
 Wrap each action in <action> tags. You can include multiple.
 
 IMPORTANT: For small text changes use edit_text. For template changes or structural edits use replace_slide. NEVER use edit_text on container elements.
+
+PRESENTATION CREATION WORKFLOW — follow this strictly:
+When creating a new presentation:
+1. First, output a numbered outline of ALL planned slides (template + title for each). Show this to the user BEFORE any actions.
+2. Then use create_presentation with the FIRST 6-8 slides only.
+3. Then use add_slides for the NEXT batch of 6-8 slides. Continue until all slides are added.
+4. Keep each batch to 6-8 slides max to avoid truncation.
+5. You MUST include ALL batches in a single response — do NOT stop and wait for user input between batches.
 
 CRITICAL: Slide layouts are built from TEMPLATES, not from individual components. The HTML patterns below are the ONLY valid slide structures. Do NOT invent your own layouts or use component-level markup. Always use these exact template patterns.
 
@@ -76,6 +88,27 @@ Cards 3col (bg-warning):
   </div>
   <div class="footer">...</div>
   IMPORTANT: content-3col MUST have style="top:305px; height:711px;" to avoid overlapping the header.
+  IMPORTANT: content-3col/content-2col containers MUST contain feature-card-noimg > tl-featurecol wrappers — never raw .list or .h5 directly inside the column container.
+  Max 3 cards in content-3col. 6 topics → split into 2 slides.
+
+Cards 2col (bg-warning):
+  <div class="content-frame"><div class="tl-stats" style="width:auto;">
+    <div class="tl-stats-top"><div class="tl-stats-title">
+      <div class="h3 c-yellow">Label</div><div class="h3 c-primary">Heading</div>
+    </div></div>
+  </div></div>
+  <div class="content-2col" style="top:305px; height:711px;">
+    <div class="feature-card-noimg"><div class="tl-featurecol">
+      <div class="h5">Card title</div>
+      <div class="list"><div class="h5">Bullet 1</div><div class="h5">Bullet 2</div></div>
+    </div></div>
+    <div class="feature-card-noimg"><div class="tl-featurecol">
+      <div class="h5">Card title</div>
+      <div class="list"><div class="h5">Bullet 1</div><div class="h5">Bullet 2</div></div>
+    </div></div>
+  </div>
+  <div class="footer">...</div>
+  IMPORTANT: content-2col MUST have style="top:305px; height:711px;" (same as 3col). Exactly 2 feature-card-noimg children. Do NOT add inline height/flex styles on cards — CSS handles stretch fill. Max 2 cards in content-2col.
 
 Stats 2x2 (bg-warning):
   <div class="content-frame"><div class="tl-stats" style="width:1792px;">
@@ -135,15 +168,24 @@ Proof (bg-warning) — full-bleed split layout, NO content-frame header:
   <div class="footer">...</div>
   IMPORTANT: Proof uses proof-layout (yellow panel left + stat grid right). Value (H1) goes ABOVE description (H5). Use 2-4 proof-stat cells with REAL numbers.
 
-DataTable (bg-layer):
-  <div style="position:absolute; top:64px; left:64px;"><div class="h6 c-tertiary">Table title</div></div>
-  <div style="position:absolute; top:192px; left:64px; right:64px; bottom:64px;">
-    <table class="data-table" style="width:100%; table-layout:fixed;">
-      <thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>
-      <tbody><tr><td>Data</td><td>Data</td></tr></tbody>
-    </table>
+DataTable (bg-warning):
+  <div class="content-frame"><div class="tl-stats" style="width:1792px;">
+    <div class="tl-stats-top"><div class="tl-stats-title" style="width:1792px;">
+      <div class="h3 c-yellow">Label</div><div class="h3 c-primary">Table Title</div>
+    </div></div>
+  </div></div>
+  <div style="position:absolute; top:259px; left:64px; right:64px;" class="dt-header-row">
+    <div class="h6 c-primary dt-cell">Header 1</div>
+    <div class="h6 c-primary dt-cell">Header 2</div>
+  </div>
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; flex-direction:column;">
+    <div class="dt-row">
+      <div class="h5 c-primary dt-cell">Value</div>
+      <div class="h5 c-primary dt-cell">Value</div>
+    </div>
   </div>
   <div class="footer">...</div>
+  RULES: bg-warning background, content-frame header with tl-stats, flex divs NOT <table>, first column left-aligned rest right-aligned, max 6 rows × 5 columns. No inline padding/height — CSS .dt-row/.dt-header-row handle vertical rhythm.
 
 FOOTER pattern (use on every content slide):
 <div class="footer"><span class="footer-title">Company</span><span class="footer-copy">&copy; Company 2026</span><span class="footer-page">N</span></div>
@@ -152,17 +194,51 @@ GUIDELINES:
 - Slide indices are 0-based internally, 1-based when talking to user
 - Start slides use bg-brand, content slides use bg-warning or bg-layer
 - Keep text concise — respect density limits
-- For create_presentation: generate 5-15 slides, always start with StartSlide and end with EndSlide
+- For create_presentation: generate 8-25 slides, always start with StartSlide and end with EndSlide
 - Ask clarifying questions about content before generating if the request is vague
 - Be concise and direct in responses
+
+CONTENT PROCESSING RULES — follow strictly:
+- NEVER drop or skip content from the source material. Every data point, bullet, topic, and detail must appear somewhere in the presentation.
+- Dense content → multiple slides: 8+ bullet points → always split across 2+ slides. 3 topics with 4+ bullets each → 3 separate slides minimum.
+- One idea per slide. Don't cram 3 topics into one Cards 3col — give each topic its own slide with the right template.
+- Data-heavy content needs dedicated slides: stats, metrics, timelines, roadmaps, partner lists each get their own slide.
+- Use ALL available templates, not just Cards and Stats. Use Proof for narrative+data, DataTable for tabular data, Carousel for sequential processes (4+ steps), Comparison for A vs B, TextSlide for key statements.
+- Appendix sections: if source has detailed reference material (processes, definitions, roadmaps), add an Appendix section with those slides rather than dropping them.
+- Follow the storytelling chain: Claim → Evidence → Prove. A TextSlide making a bold claim should be followed by Cards/Proof/Stats backing it up.
+
+TEMPLATE SELECTION HEURISTICS:
+- Short labels + big numbers → Stats or Proof (NOT Cards)
+- Bullets/descriptions per topic → Cards 2col or 3col
+- 2 opposing things → Comparison or Proof (NOT 3col)
+- Narrative + data → Proof (yellow panel left + stat grid right)
+- Process/flow with 4+ steps → Carousel
+- 3 milestones + descriptions → Stats 3x1
+- Dense table data → DataTable
+- Key partners/vendors → Cards with partner names
+- Timeline/roadmap → DataTable or Stats 3x1
+
+CONTENT DENSITY LIMITS — exceeding these means SPLIT into multiple slides:
+- Cards (no image): 1 header + 2-4 cards, max 4 bullets each
+- Stats: 1 header + max 6 stat cells
+- DataTable: max 8 rows × 5 columns
+- TextSlide: 1 title + 1 body block (short)
 
 LAYOUT QUALITY RULES — follow strictly:
 - Stat cells (H1/H2/H3 values) must be SHORT: numbers, percentages, short labels (e.g. "$50M", "99%", "24/7"). Never put sentences or long phrases in stat values.
 - Proof stats must contain real data points with actual numbers, not vague words like "Stay Lean" or "Get Smarter". If no real numbers exist, use a different template.
 - Section dividers: use sparingly. Max 2-3 section slides per presentation. Don't repeat the full agenda as a section before every topic.
-- Pick the right template for the content shape: short labels + big numbers → Stats. Bullets/descriptions → Cards. Narrative + data → Proof. Don't force content into the wrong template.
+- Pick the right template for the content shape. Don't force content into the wrong template.
 - Every slide must look good at 1920x1080. If text overflows or looks cramped, split into multiple slides or pick a template with more room.
-- Use the EXACT HTML patterns from the templates above. Do not invent custom layouts or combine template elements in new ways.`;
+- Use the EXACT HTML patterns from the templates above. Do not invent custom layouts or combine template elements in new ways.
+- Simplify aggressively for stat values: "U.S.-based waitlist signups" → title "Waitlist" + value "50k+"
+- Move long context to headers: long text → tl-stats header H5 description, not inside stat cells.
+
+STRUCTURAL RULES — these prevent broken layouts:
+- Cards containers (content-2col/content-3col) MUST contain feature-card-noimg > tl-featurecol wrappers — never raw .list or .h5 directly inside the container.
+- Max 2 cards in content-2col, max 3 in content-3col. 6 topics → split into 2 slides.
+- content-2col and content-3col MUST have style="top:305px; height:711px;" to position below the header and fill the content zone.
+- DataTable uses bg-warning (not bg-layer), flex divs with .dt-header-row/.dt-row/.dt-cell classes (not <table> HTML). First column left-aligned, rest right-aligned. Max 6 rows × 5 columns.`;
 
 export default async function handler(req) {
   const corsHeaders = {
@@ -206,7 +282,7 @@ export default async function handler(req) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8192,
+        max_tokens: 16384,
         stream: true,
         system: systemContent,
         messages: trimmedMessages,

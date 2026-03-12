@@ -103,7 +103,7 @@
   height: 952px;
   display: flex;
   gap: 162px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .content-3col {
@@ -373,6 +373,19 @@
 .data-table td.num,
 .data-table th.num { text-align: right; padding-left: 0; padding-right: 0; }
 .data-table .highlight { color: var(--yellow-500); }
+
+/* ── DataTable flex layout (new) ── */
+.dt-header-row {
+  display: flex; gap: 10px; padding: 10px 10px 12px;
+  border-bottom: 1px solid var(--border-secondary, #dbd4bf);
+}
+.dt-row {
+  display: flex; gap: 10px; padding: 24px 10px;
+  border-bottom: 1px solid var(--border-secondary, #dbd4bf);
+}
+.dt-row:last-child { border-bottom: none; }
+.dt-cell { flex: 1; }
+.dt-cell:not(:first-child) { text-align: right; }
 
 /* ── Table / VariableCard ── */
 .var-table {
@@ -1148,34 +1161,19 @@ body.has-slide-nav { padding-left: 216px; }
 /* Body adjustment when chat is present */
 body.has-chat { padding-right: 420px; }
 
-/* Chat toggle FAB */
-.chat-toggle-fab {
-  position: fixed; bottom: 24px; right: 24px; z-index: 200;
-  width: 48px; height: 48px; border-radius: 50%;
-  background: #2a2a2a; border: 1px solid #444; color: #888; font-size: 18px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-  font-family: 'Geist', sans-serif;
-}
-.chat-toggle-fab:hover { background: #333; color: #ccc; }
-.chat-toggle-fab.active { background: #FFDD33; color: #1a1a1a; border-color: #FFDD33; }
-body.has-chat .chat-toggle-fab { right: 432px; }
+/* FABs sit left of chat panel (keep original offsets: edit=24, pin=80) */
+body.has-chat .edit-toggle { right: 444px; }
+body.has-chat .ann-fab { right: 500px; }
+body.has-chat .ann-copy-fab { right: 500px; }
+body.has-chat .ann-clear-fab { right: 500px; }
+body.has-chat .edit-save-toast { right: 444px; }
 
-/* Move other FABs left when chat is open */
-body.has-chat .ann-fab { right: 432px; }
-body.has-chat .edit-toggle { right: 432px; }
-body.has-chat .ann-copy-fab { right: 432px; }
-body.has-chat .ann-clear-fab { right: 432px; }
-body.has-chat .edit-save-toast { right: 432px; }
-
-/* Right drawer panel */
+/* Right drawer panel — always open */
 .chat-drawer-panel {
   position: fixed; top: 0; right: 0; bottom: 0; width: 420px; z-index: 150;
   background: #0a0a0a; border-left: 1px solid #2a2a2a;
   display: flex; flex-direction: column;
-  transform: translateX(100%); transition: transform 0.3s ease;
 }
-.chat-drawer-panel.open { transform: translateX(0); }
 
 /* Header */
 .chat-drawer-header {

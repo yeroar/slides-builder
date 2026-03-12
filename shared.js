@@ -1563,7 +1563,6 @@ function initChat(slug) {
     let messages = [];
     let chatPins = {};
     let attachments = [];
-    let panelOpen = false;
 
     // Build slideData from current DOM
     function scanSlides() {
@@ -1585,22 +1584,13 @@ function initChat(slug) {
       return data;
     }
 
-    // Create toggle FAB
-    const fab = document.createElement('button');
-    fab.className = 'chat-toggle-fab';
-    fab.id = 'chatToggleFab';
-    fab.title = 'Toggle AI chat';
-    fab.innerHTML = '&#x1F4AC;';
-    document.body.appendChild(fab);
-
-    // Create right drawer panel
+    // Create right chat panel — always visible
     const panel = document.createElement('div');
     panel.className = 'chat-drawer-panel';
     panel.id = 'chatDrawerPanel';
     panel.innerHTML = `
       <div class="chat-drawer-header">
         <span>Chat</span>
-        <button class="chat-drawer-close" id="chatDrawerClose">&times;</button>
       </div>
       <div class="chat-drawer-messages" id="chatDrawerMessages"></div>
       <div class="chat-drawer-input-wrap">
@@ -1614,6 +1604,7 @@ function initChat(slug) {
       </div>
     `;
     document.body.appendChild(panel);
+    document.body.classList.add('has-chat');
 
     // Load pdf.js if not already loaded
     if (!window.pdfjsLib) {
@@ -1629,19 +1620,7 @@ function initChat(slug) {
     const fileInput = document.getElementById('chatBarFileInput');
     const attachmentsEl = document.getElementById('chatBarAttachments');
 
-    function openPanel() {
-      if (!panelOpen) togglePanel();
-    }
-    function togglePanel() {
-      panelOpen = !panelOpen;
-      panel.classList.toggle('open', panelOpen);
-      fab.classList.toggle('active', panelOpen);
-      document.body.classList.toggle('has-chat', panelOpen);
-      if (panelOpen) inputEl.focus();
-    }
-
-    fab.addEventListener('click', togglePanel);
-    document.getElementById('chatDrawerClose').addEventListener('click', togglePanel);
+    function openPanel() { /* always open */ }
 
     // Messages
     function addMsg(role, content) {
@@ -1658,9 +1637,17 @@ function initChat(slug) {
             try {
               const action = JSON.parse(parts[i]);
               if (action.tool === 'create_presentation') {
-                html += `<div class="chat-bar-action create">Creating "${action.params.title}" — ${action.params.slides?.length || 0} slides</div>`;
+                html += `<div class="chat-bar-action create">▶ Creating "${action.params.title}" — ${action.params.slides?.length || 0} slides</div>`;
+              } else if (action.tool === 'add_slides') {
+                const n = action.params.slides?.length || 0;
+                const existing = document.querySelectorAll('.slide').length;
+                html += `<div class="chat-bar-action create">▶ Adding slides ${existing + 1}–${existing + n} (${n} slides)</div>`;
+              } else if (action.tool === 'replace_slide') {
+                html += `<div class="chat-bar-action">▶ Replacing slide ${(action.params.slideIndex || 0) + 1} → ${action.params.label || 'slide'}</div>`;
+              } else if (action.tool === 'edit_text') {
+                html += `<div class="chat-bar-action">▶ Editing slide ${(action.params.slideIndex || 0) + 1} ${action.params.selector}</div>`;
               } else {
-                html += `<div class="chat-bar-action">${action.tool}(${JSON.stringify(action.params).slice(0, 100)})</div>`;
+                html += `<div class="chat-bar-action">▶ ${action.tool}(${JSON.stringify(action.params).slice(0, 80)})</div>`;
               }
               executeAction(action);
             } catch {
@@ -1711,6 +1698,7 @@ function initChat(slug) {
         case 'clear_pins': _chatClearPins(params.slideIndex); break;
         case 'replace_slide': _chatReplaceSlide(params.slideIndex, params.bg, params.label, params.html); break;
         case 'create_presentation': _chatCreatePresentation(params); break;
+        case 'add_slides': _chatAddSlides(params); break;
       }
     }
 
@@ -1853,6 +1841,60 @@ initChat('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
           addSystemMsg(`Save failed: ${result.error || 'unknown'}`);
         }
       }).catch(e => addSystemMsg(`Save failed: ${e.message}`));
+    }
+
+    function _chatAddSlides(params) {
+      const { slides } = params;
+      if (!slides?.length) { addSystemMsg('No slides provided'); return; }
+      const existingSlides = document.querySelectorAll('.slide');
+      const startIndex = existingSlides.length;
+      // Find insertion point — after the last slide (or last slide-wrapper)
+      let insertBefore = null;
+      const lastSlide = existingSlides[existingSlides.length - 1];
+      if (lastSlide) {
+        const wrapper = lastSlide.closest('.slide-wrapper');
+        const ref = wrapper || lastSlide;
+        insertBefore = ref.nextSibling;
+      }
+      slides.forEach((s, i) => {
+        const idx = startIndex + i;
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'slide-label';
+        labelDiv.innerHTML = `#${idx + 1} — <code>${s.label || ''}</code>`;
+        const slideDiv = document.createElement('div');
+        slideDiv.className = 'slide';
+        slideDiv.innerHTML = `<div class="slide-inner ${s.bg || 'bg-warning'}">${s.html}</div>`;
+        if (insertBefore) {
+          insertBefore.parentNode.insertBefore(labelDiv, insertBefore);
+          insertBefore.parentNode.insertBefore(slideDiv, insertBefore);
+        } else {
+          // Insert before <script> tags at end of body
+          const scripts = document.querySelectorAll('body > script');
+          const firstScript = scripts[0];
+          if (firstScript) {
+            firstScript.parentNode.insertBefore(labelDiv, firstScript);
+            firstScript.parentNode.insertBefore(slideDiv, firstScript);
+          } else {
+            document.body.appendChild(labelDiv);
+            document.body.appendChild(slideDiv);
+          }
+        }
+      });
+      addSystemMsg(`Added ${slides.length} slides (${startIndex + 1}–${startIndex + slides.length})`);
+      // Scroll to first new slide
+      const allSlides = document.querySelectorAll('.slide');
+      const firstNew = allSlides[startIndex];
+      if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      _chatSavePresentation();
+      // Refresh slide nav
+      if (typeof _buildSlideNav === 'function') {
+        const oldNav = document.querySelector('.slide-nav');
+        if (oldNav) oldNav.remove();
+        document.body.classList.remove('has-slide-nav');
+        _buildSlideNav();
+        _navTrackScroll();
+        _navUpdatePins();
+      }
     }
 
     // Save presentation back to Redis

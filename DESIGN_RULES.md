@@ -530,3 +530,38 @@ Emphasis is achieved through the type scale (H5 label vs P1 body) and color role
 
 - ✅ **Do**: User pastes `**Revenue** grew _significantly_` → slide shows `Revenue grew significantly` styled with DS classes
 - ❌ **Don't**: Preserve markdown bold/italic as inline `<strong>`/`<em>` in slide HTML
+
+---
+
+## DataTable & Cards Structure
+
+### 38. DataTable uses flex divs, not HTML tables
+**Rule**: DataTable slides use `bg-warning` background with flex-based `.dt-header-row`, `.dt-row`, and `.dt-cell` classes. Not `<table>` HTML elements. Not `bg-layer`.
+
+**Layout zones**:
+- Title header (y=64): standard `content-frame > tl-stats` with H3 yellow label + H3 primary heading
+- Column headers (y=259, absolute): `.dt-header-row` with H6 cells. Padding `10px 10px 12px` → 46px total height. Border-bottom lands at y=305.
+- Data rows (y=305, absolute): `.dt-row` with H5 cells. Padding `24px 10px` → 80px total height (= 1 grid row stride). Border-bottom on each row.
+- First column left-aligned, remaining columns right-aligned (handled by `.dt-cell:not(:first-child) { text-align: right }`).
+- Max 6 data rows × 5 columns.
+
+**Why**: Flex divs align to the 12-row vertical grid (80.33px stride). HTML `<table>` doesn't respect the grid rhythm and has inconsistent cross-browser padding behavior.
+
+- ✅ **Do**: `<div class="dt-row"><div class="h5 c-primary dt-cell">Revenue</div><div class="h5 c-primary dt-cell">$4.2M</div></div>`
+- ❌ **Don't**: `<table class="data-table"><tr><td>Revenue</td><td>$4.2M</td></tr></table>`
+
+### 39. Cards containers require feature-card-noimg wrappers
+**Rule**: `content-2col` and `content-3col` MUST contain `feature-card-noimg > tl-featurecol` wrappers. Never place raw `.list`, `.h5`, or other elements directly inside the column container.
+
+**Why**: `feature-card-noimg` provides the yellow background, padding, and flex layout. Without it, cards lack visual containment, padding collapses, and `align-items: stretch` has nothing to fill.
+
+- ✅ **Do**: `<div class="content-2col"><div class="feature-card-noimg"><div class="tl-featurecol">...</div></div></div>`
+- ❌ **Don't**: `<div class="content-2col"><div class="h5">Title</div><div class="list">...</div></div>`
+
+### 40. Cards 2col uses stretch alignment
+**Rule**: `content-2col` uses `align-items: stretch` (same as `content-3col`) so cards fill the full container height. Both must have `style="top:305px; height:711px;"` to position below the header.
+
+**Density**: Max 2 cards in `content-2col`, max 3 in `content-3col`. 6 topics → split into 2 slides.
+
+- ✅ **Do**: 2 full-height feature cards filling 711px of content zone
+- ❌ **Don't**: 2 cards vertically centered with empty space above and below

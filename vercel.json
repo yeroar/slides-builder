@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/templates.html" },
+    { "source": "/annotations", "destination": "/api/annotations" },
+    { "source": "/deck-settings", "destination": "/api/deck-settings" },
+    { "source": "/edit-storybook", "destination": "/api/edit-storybook" }
+  ]
+}

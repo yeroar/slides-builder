@@ -1367,8 +1367,14 @@ async function _saveAllEdits() {
     return;
   }
 
-  // Presentation mode: save full slide HTML
+  // Presentation mode: save full slide HTML (local dev only)
   if (!_editFile || _editDirty.size === 0) return;
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!isLocal) {
+    _showToast(toast, 'Editing saves locally only');
+    _editDirty.clear();
+    return;
+  }
   const slides = document.querySelectorAll('.slide');
 
   for (const idx of _editDirty) {

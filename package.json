@@ -6,5 +6,8 @@
   "scripts": {
     "start": "node server.mjs",
     "validate": "node validate.mjs"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.37.0"
   }
 }

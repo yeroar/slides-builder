@@ -144,6 +144,15 @@
   gap: 12px;
 }
 
+/* ── Section items (no bullets, stacked H1, top-left) ── */
+.section-items {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 64px;
+  left: 64px;
+}
+
 /* ── Section Slot ── */
 .section-slot {
   display: flex;
@@ -654,8 +663,18 @@
 /* ── Chips (variant switcher) ── */
 .chips {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+}
+.chips-row-end {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  width: var(--chips-row-width, 100%);
+}
+.chips-row-end .chip {
+  white-space: nowrap;
 }
 .chip-group {
   display: flex;

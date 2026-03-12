@@ -76,10 +76,42 @@
     if (!controlsHost) return;
 
     const controls = story.getControls ? story.getControls(state) : [];
-    controlsHost.innerHTML = controls
-      .filter((control) => control.visible !== false)
-      .map((control) => createControlGroup(storyId, control, state))
-      .join('');
+    const visible = controls.filter((control) => control.visible !== false);
+
+    // Group by row (default row 1)
+    const rows = new Map();
+    for (const control of visible) {
+      const row = control.row || 1;
+      if (!rows.has(row)) rows.set(row, []);
+      rows.get(row).push(control);
+    }
+
+    let html = '';
+    for (const [row, ctrls] of [...rows.entries()].sort((a, b) => a[0] - b[0])) {
+      const groups = ctrls.map((c) => createControlGroup(storyId, c, state)).join('');
+      if (row === 1) {
+        html += groups;
+      } else {
+        html += `<div class="chips-row-end">${groups}</div>`;
+      }
+    }
+    controlsHost.innerHTML = html;
+
+    // Set --chips-row-width from the first chip-group's row width
+    if (rows.size > 1) {
+      requestAnimationFrame(() => {
+        const firstGroup = controlsHost.querySelector('.chip-group');
+        if (firstGroup) {
+          // Measure total width of all row-1 chip groups
+          const row1Groups = [...controlsHost.children].filter(c => !c.classList.contains('chips-row-end'));
+          if (row1Groups.length) {
+            const last = row1Groups[row1Groups.length - 1];
+            const width = last.offsetLeft - controlsHost.offsetLeft + last.offsetWidth;
+            controlsHost.style.setProperty('--chips-row-width', width + 'px');
+          }
+        }
+      });
+    }
   }
 
   function createGridOverlay() {

@@ -96,17 +96,15 @@
     },
     section: {
       bg: 'bg-warning',
-      label: 'Section — Active item with accent line, inactive with default line, H1 128/120',
+      label: 'Section — Active item primary, inactive disabled, H1 128/120, no bullets',
       suggestNext: ['normal', 'textslide', 'cards', 'features'],
       render: () => `
-        <div class="content-1col">
-          <div class="slot-agenda" style="width:1760px">
-            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Introduction</div></div>
-            <div class="bullet"><div class="line line-accent"></div><div class="h1 c-accent">Market Analysis</div></div>
-            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Product Strategy</div></div>
-            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Financial Overview</div></div>
-            <div class="bullet"><div class="line line-default"></div><div class="h1 c-disabled">Next Steps</div></div>
-          </div>
+        <div class="section-items">
+          <div class="h1 c-primary">Market Analysis</div>
+          <div class="h1 c-disabled">Product Strategy</div>
+          <div class="h1 c-disabled">Financial Overview</div>
+          <div class="h1 c-disabled">Next Steps</div>
+          <div class="h1 c-disabled">Timeline</div>
         </div>
         ${footerHTML('Title', '&copy; Company', '3')}`,
     },
@@ -842,6 +840,7 @@
             },
             {
               key: 'partnerLayout',
+              row: 2,
               visible: state.variant === 'partners',
               options: [
                 { value: 'desc', label: 'Desc+Grid' },
@@ -852,6 +851,7 @@
             },
             {
               key: 'partnerRows',
+              row: 2,
               visible: state.variant === 'partners',
               options: [
                 { value: '4', label: '4 rows' },
@@ -861,6 +861,7 @@
             },
             {
               key: 'partnerCols',
+              row: 2,
               visible: state.variant === 'partners' && state.partnerLayout !== 'desc' && state.partnerLayout !== 'lineItem',
               options: [
                 { value: '4', label: '4 cols' },

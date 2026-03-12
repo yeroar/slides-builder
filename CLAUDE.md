@@ -8,9 +8,10 @@ Start the server before anything else. Without it, editing and saving won't work
 
 ```bash
 npm start &
+sleep 1 && curl -s http://localhost:3456 > /dev/null && echo "✔ Server ready at http://localhost:3456" || echo "✘ Server not responding"
 ```
 
-Auto-finds an open port (3456 → 3457 → ...). Tell the user the URL after starting.
+Auto-finds an open port (3456 → 3457 → ...). After starting, confirm the URL to the user.
 
 ## Commands
 

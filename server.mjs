@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 
-const PORT = 3456;
+const PORT = parseInt(process.env.PORT, 10) || 3456;
 const DIR = new URL('.', import.meta.url).pathname;
 
 const MIME = {
@@ -14,7 +14,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
 };
 
-createServer(async (req, res) => {
+const server = createServer(async (req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -177,10 +177,25 @@ createServer(async (req, res) => {
     res.writeHead(404);
     res.end('Not found');
   }
-}).listen(PORT, () => {
-  console.log(`\n  Preview server running at http://localhost:${PORT}\n`);
-  console.log('  Open examples:');
-  console.log('    http://localhost:3456/examples/credit-card.html');
-  console.log('    http://localhost:3456/examples/cryptoswitch.html');
-  console.log('  Press Ctrl+C to stop\n');
 });
+
+function tryListen(server, port, maxRetries = 10) {
+  server.listen(port, () => {
+    console.log(`\n  Preview server running at http://localhost:${port}\n`);
+    console.log('  Open examples:');
+    console.log(`    http://localhost:${port}/examples/credit-card.html`);
+    console.log(`    http://localhost:${port}/examples/cryptoswitch.html`);
+    console.log('  Press Ctrl+C to stop\n');
+  });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && maxRetries > 0) {
+      console.log(`  Port ${port} in use, trying ${port + 1}...`);
+      tryListen(server, port + 1, maxRetries - 1);
+    } else {
+      console.error(`  Failed to start server: ${err.message}`);
+      process.exit(1);
+    }
+  });
+}
+
+tryListen(server, PORT);

@@ -2,10 +2,27 @@
 
 Generate professional slide decks from free-text outlines, bullet points, or pasted content. Claude reads your content, picks the best template for each slide, and outputs a self-contained HTML file using a design system.
 
+## First thing to do
+
+When a user opens this project, **start the preview server immediately** before doing anything else:
+
+```bash
+npm start &
+```
+
+This runs `server.mjs` in the background. It auto-finds an open port (default 3456, falls back to 3457+ if busy). The server provides:
+- Static file serving for previews
+- `POST /edit` — inline editing (saves slide content back to HTML)
+- `POST /edit-storybook` — storybook text overrides
+- `POST /deck-settings` — footer settings persistence
+- `POST /annotations` — pin/annotation sync
+
+**Without the server, editing and saving will not work.** Tell the user the URL after starting.
+
 ## Commands
 
 ```
-npm start            # Preview server on :3456
+npm start            # Preview server (auto-finds open port)
 npm run validate     # Check HTML files for design rule violations
 ```
 

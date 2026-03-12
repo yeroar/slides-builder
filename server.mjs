@@ -186,7 +186,6 @@ function tryListen(server, port, maxRetries = 10) {
     console.log(`  ✔ Ready at http://localhost:${port}`);
     console.log('');
     console.log(`    http://localhost:${port}/examples/credit-card.html`);
-    console.log(`    http://localhost:${port}/examples/cryptoswitch.html`);
     console.log('');
   });
   server.on('error', (err) => {

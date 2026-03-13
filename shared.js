@@ -187,7 +187,11 @@ document.addEventListener('click', (e) => {
 // ── Chip variant switcher ──
 function switchChip(group, variant) {
   document.querySelectorAll(`[data-chip-group="${group}"] .chip`).forEach(c => c.classList.remove('active'));
-  event.target.classList.add('active');
+  // The clicked chip gets activated by the click delegation handler above,
+  // but we also need to handle it here for programmatic calls
+  document.querySelectorAll(`[data-chip-group="${group}"] .chip`).forEach(c => {
+    if (c.getAttribute('onclick')?.includes(`'${variant}'`)) c.classList.add('active');
+  });
   document.querySelectorAll(`[data-variant="${group}"]`).forEach(el => {
     el.style.display = el.dataset.variantName === variant ? '' : 'none';
   });
@@ -1010,11 +1014,12 @@ let _navEl = null;
 let _navItems = [];
 
 function initSlideNav() {
-  document.addEventListener('DOMContentLoaded', () => {
-    _buildSlideNav();
-    _navTrackScroll();
-    _navUpdatePins();
-  });
+  const ready = () => { _buildSlideNav(); _navTrackScroll(); _navUpdatePins(); };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ready, { once: true });
+  } else {
+    ready();
+  }
 }
 
 function _buildSlideNav() {
@@ -1511,11 +1516,12 @@ function _buildFullHTML() {
   let scriptBlock = '';
   scripts.forEach(s => { if (s.textContent.includes('initDeckSettings')) scriptBlock = s.textContent.trim(); });
 
+  const safeTitle = escHtml(title);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${title}</title>
+<title>${safeTitle}</title>
 <link rel="stylesheet" href="/shared.css">
 <style>
   body { background: #1a1a1a; font-family: 'Geist', sans-serif; padding: 40px;
@@ -1525,7 +1531,7 @@ function _buildFullHTML() {
 </style>
 </head>
 <body>
-<h1 class="page-title">${title}</h1>
+<h1 class="page-title">${safeTitle}</h1>
 <div class="toolbar">
   <span id="pinCount" style="font-size:13px; color:#666;"></span>
   <span style="flex:1"></span>
@@ -1550,6 +1556,84 @@ function _showToast(toast, msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// Slide HTML Validator — checks generated HTML before rendering
+// ══════════════════════════════════════════════════════════════
+
+const _ALLOWED_CLASSES = new Set([
+  // Layout
+  'content-frame', 'content-1col', 'content-2col', 'content-3col', 'content-4col',
+  'stat-grid', 'stat-grid-row', 'stat-grid-3', 'proof-layout', 'proof-panel',
+  'proof-panel-inner', 'proof-grid', 'proof-stat', 'carousel-viewport', 'carousel-track',
+  'carousel-card', 'slot', 'slot-text-740', 'slot-fill', 'slot-quarter-img', 'slot-agenda',
+  'slot-tables-row', 'section-items', 'section-slot',
+  // Typography
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p1', 'p2', 'p3', 'p5', 'semibold',
+  // Color
+  'c-primary', 'c-secondary', 'c-tertiary', 'c-accent', 'c-disabled', 'c-yellow', 'c-inverse',
+  // Components
+  'feature-card', 'feature-card-noimg', 'feature-card-img', 'tl-featurecol',
+  'tl-stats', 'tl-stats-top', 'tl-stats-title', 'tl-vertical-header', 'tl-vh-body',
+  'var-card', 'var-table', 'var-table-title', 'var-table-grid', 'stat-cell',
+  'logo-grid', 'logo-grid-row', 'logo-card', 'logo-card-img', 'logo-card-footer', 'logo-chip',
+  'logo-line-grid', 'logo-line-row', 'logo-line-item', 'logo-line-item-card',
+  'logo-line-item-body', 'logo-line-item-body-wrap', 'logo-line-chip',
+  'compare-block', 'compare-block-content', 'compare-block-img', 'compare-chip',
+  // Table
+  'dt-header-row', 'dt-row', 'dt-cell', 'data-table',
+  // Structure
+  'start-title', 'end-text', 'section-item', 'bullet', 'line', 'line-accent', 'line-default',
+  'list', 'footer', 'footer-title', 'footer-copy', 'footer-page', 'img-placeholder', 'dollar',
+  // Background
+  'bg-brand', 'bg-warning', 'bg-layer',
+  // Modifier classes used in templates
+  'yellow', 'blue', 'half', 'full', 'large', 'label', 'breakdown', 'author', 'grow', 'compact',
+  'slide-inner',
+]);
+
+const _BANNED_TAGS = ['table', 'thead', 'tbody', 'tr', 'td', 'th', 'b', 'i', 'strong', 'em'];
+
+function validateSlideHTML(html) {
+  const warnings = [];
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  // 1. Check for banned tags
+  for (const tag of _BANNED_TAGS) {
+    const found = tmp.getElementsByTagName(tag);
+    if (found.length) {
+      warnings.push(`Banned <${tag}> tag found (${found.length} occurrence${found.length > 1 ? 's' : ''}). Use DS classes instead.`);
+    }
+  }
+
+  // 2. Check all class names against allowlist
+  const allEls = tmp.querySelectorAll('[class]');
+  const unknownClasses = new Set();
+  for (const el of allEls) {
+    for (const cls of el.classList) {
+      if (!_ALLOWED_CLASSES.has(cls)) {
+        unknownClasses.add(cls);
+      }
+    }
+  }
+  if (unknownClasses.size) {
+    warnings.push(`Unknown CSS class${unknownClasses.size > 1 ? 'es' : ''}: ${[...unknownClasses].join(', ')}`);
+  }
+
+  // 3. Check that content-2col/content-3col contain feature-card wrappers (not raw elements)
+  const colContainers = tmp.querySelectorAll('.content-2col, .content-3col');
+  for (const container of colContainers) {
+    for (const child of container.children) {
+      if (!child.classList.contains('feature-card-noimg') && !child.classList.contains('feature-card')) {
+        warnings.push(`content-${container.classList.contains('content-2col') ? '2' : '3'}col has direct child <${child.tagName.toLowerCase()}> without feature-card-noimg/feature-card wrapper.`);
+        break;
+      }
+    }
+  }
+
+  return warnings;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1726,6 +1810,8 @@ function initChat(slug) {
     }
 
     function _chatReplaceSlide(slideIndex, bg, label, html) {
+      const vWarnings = validateSlideHTML(html);
+      if (vWarnings.length) vWarnings.forEach(w => addSystemMsg(`Validation: ${w}`));
       const slides = document.querySelectorAll('.slide');
       const slideEl = slides[slideIndex];
       if (!slideEl) { addSystemMsg('Slide not found'); return; }
@@ -1790,17 +1876,22 @@ function initChat(slug) {
       // For /p/ pages, create_presentation redirects to a new URL
       const { name, title, slides } = params;
       if (!slides?.length) { addSystemMsg('No slides provided'); return; }
+      slides.forEach((s, i) => {
+        const vw = validateSlideHTML(s.html);
+        if (vw.length) vw.forEach(w => addSystemMsg(`Slide ${i + 1} validation: ${w}`));
+      });
       const slidesHtml = slides.map((s, i) => `
 <div class="slide-label">#${i + 1} — <code>${s.label}</code></div>
 <div class="slide"><div class="slide-inner ${s.bg || 'bg-warning'}">
 ${s.html}
 </div></div>`).join('\n');
 
+      const safeTitle = escHtml(title);
       const fullHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${title}</title>
+<title>${safeTitle}</title>
 <link rel="stylesheet" href="/shared.css">
 <style>
   body { background: #1a1a1a; font-family: 'Geist', sans-serif; padding: 40px;
@@ -1810,7 +1901,7 @@ ${s.html}
 </style>
 </head>
 <body>
-<h1 class="page-title">${title}</h1>
+<h1 class="page-title">${safeTitle}</h1>
 <div class="toolbar">
   <span id="pinCount" style="font-size:13px; color:#666;"></span>
   <span style="flex:1"></span>
@@ -1848,6 +1939,10 @@ initChat('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
       if (!slides?.length) { addSystemMsg('No slides provided'); return; }
       const existingSlides = document.querySelectorAll('.slide');
       const startIndex = existingSlides.length;
+      slides.forEach((s, i) => {
+        const vw = validateSlideHTML(s.html);
+        if (vw.length) vw.forEach(w => addSystemMsg(`Slide ${startIndex + i + 1} validation: ${w}`));
+      });
       // Find insertion point — after the last slide (or last slide-wrapper)
       let insertBefore = null;
       const lastSlide = existingSlides[existingSlides.length - 1];

@@ -1,9 +1,16 @@
 import { createServer } from 'node:http';
 import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { join, extname } from 'node:path';
+import { SYSTEM_PROMPT } from './system-prompt.mjs';
 
 const PORT = parseInt(process.env.PORT, 10) || 3456;
 const DIR = new URL('.', import.meta.url).pathname;
+
+function safePath(base, rel) {
+  const resolved = join(base, rel);
+  if (!resolved.startsWith(base)) return null;
+  return resolved;
+}
 
 const MIME = {
   '.html': 'text/html',
@@ -111,7 +118,8 @@ const server = createServer(async (req, res) => {
     for await (const chunk of req) chunks.push(chunk);
     const { file, slideIndex, html } = JSON.parse(Buffer.concat(chunks).toString());
     try {
-      const filePath = join(DIR, file);
+      const filePath = safePath(DIR, file);
+      if (!filePath) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end('{"error":"Forbidden"}'); return; }
       let source = await readFile(filePath, 'utf-8');
 
       // Find the Nth <div class="slide-inner ..."> ... </div> block
@@ -179,7 +187,9 @@ const server = createServer(async (req, res) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     try {
       // Save HTML file
-      await writeFile(join(DIR, `${slug}.html`), html, 'utf-8');
+      const slugPath = safePath(DIR, `${slug}.html`);
+      if (!slugPath) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end('{"error":"Forbidden"}'); return; }
+      await writeFile(slugPath, html, 'utf-8');
       // Update index
       const indexPath = join(DIR, 'saved-presentations.json');
       let index = [];
@@ -212,7 +222,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // POST /api/chat — proxy to Claude API
+  // POST /api/chat — proxy to Claude API (streaming, matches api/chat.js)
   if (req.method === 'POST' && req.url === '/api/chat') {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
@@ -223,6 +233,16 @@ const server = createServer(async (req, res) => {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const body = JSON.parse(Buffer.concat(chunks).toString());
+    const systemContent = SYSTEM_PROMPT + (body.context ? `\n\nCurrent presentation context:\n${body.context}` : '');
+
+    // Strip image blocks from older messages to reduce payload
+    const trimmedMessages = (body.messages || []).map((m, i, arr) => {
+      if (i < arr.length - 1 && Array.isArray(m.content)) {
+        const textParts = m.content.filter(p => p.type === 'text');
+        return { role: m.role, content: textParts.length === 1 ? textParts[0].text : textParts };
+      }
+      return { role: m.role, content: m.content };
+    });
 
     try {
       const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -234,15 +254,35 @@ const server = createServer(async (req, res) => {
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: body.context ? `You are a slide presentation assistant.\n\n${body.context}` : 'You are a slide presentation assistant.',
-          messages: body.messages,
+          max_tokens: 16384,
+          stream: true,
+          system: systemContent,
+          messages: trimmedMessages,
         }),
       });
-      const data = await apiResp.json();
-      const text = data.content?.[0]?.text || '';
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ text }));
+
+      if (!apiResp.ok) {
+        const err = await apiResp.text();
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `Claude API ${apiResp.status}`, detail: err.slice(0, 500) }));
+        return;
+      }
+
+      // Pipe SSE stream through to the client
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      });
+      const reader = apiResp.body.getReader();
+      const pump = async () => {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) { res.end(); return; }
+          res.write(Buffer.from(value));
+        }
+      };
+      pump().catch(() => res.end());
     } catch (e) {
       res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message }));
@@ -287,8 +327,10 @@ const server = createServer(async (req, res) => {
   let path = req.url === '/' ? '/templates.html' : req.url.split('?')[0];
   const pMatch = path.match(/^\/p\/([a-z0-9-]+)$/);
   if (pMatch) path = `/${pMatch[1]}.html`;
+  const staticPath = safePath(DIR, path);
+  if (!staticPath) { res.writeHead(403); res.end('Forbidden'); return; }
   try {
-    const file = await readFile(join(DIR, path));
+    const file = await readFile(staticPath);
     const ext = extname(path);
     res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain', 'Cache-Control': 'no-cache' });
     res.end(file);

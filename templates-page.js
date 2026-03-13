@@ -19,6 +19,7 @@
 
     initPresentation('.slide');
     initInlineEdit({ storybook: true, shell });
+    initChat();
   }
 
   if (document.readyState === 'loading') {

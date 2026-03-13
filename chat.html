@@ -40,7 +40,7 @@
       flex-direction: column;
     }
     .chat-header {
-      padding: 16px 20px;
+      padding: 16px 20px 17px;
       border-bottom: 1px solid #2a2a2a;
       font-size: 14px;
       font-weight: 600;
@@ -49,6 +49,14 @@
       align-items: center;
       justify-content: space-between;
     }
+    .chat-mode-link {
+      font-size: 12px;
+      font-weight: 400;
+      color: #FFDD33;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .chat-mode-link:hover { color: #ffe566; }
     .chat-header-file {
       font-size: 11px;
       font-weight: 400;
@@ -133,7 +141,7 @@
     }
     .chat-link:hover { background: rgba(47, 145, 255, 0.2); }
     .chat-input-wrap {
-      padding: 12px 20px 16px;
+      padding: 21px 20px 16px;
       border-top: 1px solid #2a2a2a;
       display: flex;
       flex-direction: column;
@@ -364,9 +372,9 @@
       <div class="chat-panel">
         <div class="chat-header">
           <span>Chat</span>
-          <a class="chat-header-file" id="chatFileName" target="_blank" style="text-decoration:none; color:inherit;"></a>
+          <a class="chat-mode-link" id="chatFileName" target="_blank" style="display:none;">→ design mode</a>
         </div>
-        <div class="chat-file-select" id="chatFileSelect"></div>
+        <div class="chat-file-select" id="chatFileSelect" style="display:none"></div>
         <div class="chat-messages" id="chatMessages">
           <div class="chat-msg system">Select a presentation to review, annotate, or edit.</div>
         </div>
@@ -374,7 +382,7 @@
           <div class="chat-attachments" id="chatAttachments"></div>
           <div class="chat-input-row">
             <button class="chat-attach" id="chatAttachBtn" title="Attach file (PDF, text, image)">+</button>
-            <textarea class="chat-input" id="chatInput" placeholder="Describe a presentation, paste content, or drop files..." rows="1"></textarea>
+            <textarea class="chat-input" id="chatInput" placeholder="Drag & drop or paste your content" rows="1"></textarea>
             <button class="chat-send" id="chatSend">&#x2191;</button>
           </div>
           <input type="file" id="chatFileInput" hidden multiple accept=".pdf,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp,.svg">
@@ -384,16 +392,16 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script type="module" src="slide-renderer.mjs"></script>
   <script src="shared.js"></script>
   <script src="storybook-shell.js"></script>
   <script>
     (function () {
       // ── Page nav ──
       const PAGE_NAV = [
+        { label: 'New chat', href: '/chat.html' },
         { label: 'Templates', href: '/templates.html' },
         { label: 'Components', href: '/components.html' },
-        { label: 'Examples', href: '/examples.html' },
-        { label: 'Chat', href: '/chat.html' },
       ];
       const sidebar = document.getElementById('sidebarRoot');
       sidebar.innerHTML = `
@@ -421,7 +429,6 @@
           const item = e.target.closest('.sidebar-item[data-pres-path]');
           if (!item) return;
           e.preventDefault();
-          // Also update file select buttons
           fileSelect.querySelectorAll('.chat-file-btn').forEach(b => b.classList.remove('active'));
           container.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
           item.classList.add('active');
@@ -528,7 +535,7 @@
         pins = {};
         messages = [];
         msgContainer.innerHTML = '';
-        fileName.textContent = 'new presentation';
+        fileName.style.display = 'none';
         fileName.removeAttribute('href');
 
         preview.innerHTML = `
@@ -572,8 +579,8 @@
         currentMode = 'existing';
         currentFile = path;
         currentTitle = title;
-        fileName.textContent = path;
         fileName.href = path;
+        fileName.style.display = '';
         preview.innerHTML = '<div style="color:#555; font-size:13px; padding:40px 0;">Loading...</div>';
 
         try {
@@ -734,8 +741,36 @@
         });
       }
 
+      // ── Load renderer once ──
+      let _renderSlide = null;
+      const _rendererReady = import('./slide-renderer.mjs').then(mod => {
+        _renderSlide = mod.renderSlide;
+      }).catch(e => console.error('Failed to load slide-renderer:', e));
+
+      // ── Resolve slot-based slide to {html, bg, label} ──
+      function resolveSlide(s, pageNum) {
+        // Already has raw html — pass through
+        if (s.html) return { html: s.html, bg: s.bg || 'bg-warning', label: s.label || s.template || 'Slide' };
+        // Slot-based: use renderer
+        const render = _renderSlide || window.renderSlide;
+        if (s.template && s.slots && render) {
+          try {
+            const footer = { title: currentTitle || '', copy: '', page: pageNum != null ? String(pageNum) : '' };
+            const result = render(s.template, s.slots, footer);
+            return { html: result.html, bg: result.bg || 'bg-warning', label: s.label || s.template };
+          } catch (e) {
+            console.error('renderSlide error:', e);
+            return { html: `<div class="h3 c-primary" style="padding:64px;">Error rendering ${s.template}: ${e.message}</div>`, bg: 'bg-warning', label: s.template || 'Error' };
+          }
+        }
+        console.warn('resolveSlide: no renderer available for', s.template, 'renderSlide=', render);
+        // Fallback
+        return { html: s.html || '<div class="h3 c-primary" style="padding:64px;">Empty slide</div>', bg: s.bg || 'bg-warning', label: s.label || 'Slide' };
+      }
+
       // ── Render slides from create_presentation action ──
-      function renderSlidesFromData(slides) {
+      async function renderSlidesFromData(slides) {
+        await _rendererReady;
         slideData = [];
         preview.innerHTML = '';
         chatEditActive = false;
@@ -744,19 +779,20 @@
         addEditBar();
 
         slides.forEach((s, i) => {
-          slideData.push({ index: i, label: s.label, html: s.html, bg: s.bg || 'bg-warning' });
+          const resolved = resolveSlide(s, i + 1);
+          slideData.push({ index: i, label: resolved.label, html: resolved.html, bg: resolved.bg });
 
           const labelDiv = document.createElement('div');
           labelDiv.className = 'slide-label';
-          labelDiv.textContent = `#${i + 1} — ${s.label}`;
+          labelDiv.textContent = `#${i + 1} — ${resolved.label}`;
           preview.appendChild(labelDiv);
 
           const slideDiv = document.createElement('div');
           slideDiv.className = 'slide';
           slideDiv.dataset.chatSlide = i;
           const innerDiv = document.createElement('div');
-          innerDiv.className = `slide-inner ${s.bg || 'bg-warning'}`;
-          innerDiv.innerHTML = s.html;
+          innerDiv.className = `slide-inner ${resolved.bg}`;
+          innerDiv.innerHTML = resolved.html;
           slideDiv.appendChild(innerDiv);
           preview.appendChild(slideDiv);
         });
@@ -896,9 +932,13 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
           case 'create_presentation':
             createPresentation(params);
             break;
-          case 'replace_slide':
-            replaceSlide(params.slideIndex, params.bg, params.label, params.html);
+          case 'replace_slide': {
+            _rendererReady.then(() => {
+              const rs = resolveSlide(params, params.slideIndex + 1);
+              replaceSlide(params.slideIndex, rs.bg, rs.label, rs.html);
+            });
             break;
+          }
           case 'add_slides':
             addSlides(params);
             break;
@@ -944,13 +984,13 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
         const { name, title, slides } = params;
         if (!slides?.length) return updateActionStatus('No slides provided');
 
-        // Render in preview
-        renderSlidesFromData(slides);
+        // Render in preview (resolves slot-based slides)
+        await renderSlidesFromData(slides);
         currentMode = 'existing';
         currentTitle = title;
 
-        // Build full HTML
-        const fullHtml = buildPresHTML(title, slides);
+        // Build full HTML from resolved slideData
+        const fullHtml = buildPresHTML(title, slideData);
 
         // Save to server
         try {
@@ -962,8 +1002,8 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
           const result = await resp.json();
           if (result.ok) {
             currentFile = result.url;
-            fileName.textContent = result.url;
             fileName.href = result.url;
+            fileName.style.display = '';
 
             // Add link in chat
             const statusEls = msgContainer.querySelectorAll('.chat-action-status');
@@ -989,22 +1029,24 @@ initChat('${currentFile ? currentFile.replace(/^\/p\//, '') : title.toLowerCase(
       }
 
       async function addSlides(params) {
+        await _rendererReady;
         const { slides } = params;
         if (!slides?.length) return updateActionStatus('No slides provided');
         const startIndex = slideData.length;
         slides.forEach((s, i) => {
           const idx = startIndex + i;
-          slideData.push({ index: idx, label: s.label, html: s.html, bg: s.bg || 'bg-warning' });
+          const resolved = resolveSlide(s, idx + 1);
+          slideData.push({ index: idx, label: resolved.label, html: resolved.html, bg: resolved.bg });
           const labelDiv = document.createElement('div');
           labelDiv.className = 'slide-label';
-          labelDiv.textContent = `#${idx + 1} — ${s.label}`;
+          labelDiv.textContent = `#${idx + 1} — ${resolved.label}`;
           preview.appendChild(labelDiv);
           const slideDiv = document.createElement('div');
           slideDiv.className = 'slide';
           slideDiv.dataset.chatSlide = idx;
           const innerDiv = document.createElement('div');
-          innerDiv.className = `slide-inner ${s.bg || 'bg-warning'}`;
-          innerDiv.innerHTML = s.html;
+          innerDiv.className = `slide-inner ${resolved.bg}`;
+          innerDiv.innerHTML = resolved.html;
           slideDiv.appendChild(innerDiv);
           preview.appendChild(slideDiv);
         });

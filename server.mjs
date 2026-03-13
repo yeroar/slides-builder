@@ -298,7 +298,7 @@ const server = createServer(async (req, res) => {
       // Root-level presentation files
       const rootFiles = await readdir(DIR);
       for (const f of rootFiles) {
-        if (f.endsWith('.html') && !['templates.html', 'components.html', 'examples.html'].includes(f)) {
+        if (f.endsWith('.html') && !['templates.html', 'components.html', 'examples.html', 'chat.html'].includes(f)) {
           const content = await readFile(join(DIR, f), 'utf-8');
           const titleMatch = content.match(/<title>([^<]*)<\/title>/);
           examples.push({ file: f, path: `/${f}`, title: titleMatch?.[1] || f.replace('.html', '') });

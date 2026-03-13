@@ -379,7 +379,7 @@ function _annCreateDOM() {
   if (!document.getElementById('annFab')) {
     const fab = document.createElement('div');
     fab.className = 'ann-fab'; fab.id = 'annFab'; fab.title = 'Toggle annotation mode';
-    fab.innerHTML = '<span id="annFabIcon">\u{1F4CC}</span><span class="badge" id="annBadge"></span>';
+    fab.innerHTML = '<span id="annFabIcon">\u{1F4AC}</span><span class="badge" id="annBadge"></span>';
     document.body.appendChild(fab);
   }
   if (!document.getElementById('annCopyFab')) {
@@ -708,16 +708,68 @@ function _annRenderAll() {
       if (posParent) {
         const marker = document.createElement('div');
         marker.className = 'ann-pin';
+        marker.id = 'ann-pin-' + globalIndex;
         marker.textContent = globalIndex;
         marker.style.left = pin.x + '%';
         marker.style.top = pin.y + '%';
         marker.title = (pin.name || pin.selector || '') + (pin.note ? '\n' + pin.note : '');
+        const _gk = groupKey, _idx = index;
+        marker.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Remove any existing popup
+          document.querySelectorAll('.ann-pin-popup').forEach(p => p.remove());
+          // Create editable popup near pin
+          const popup = document.createElement('div');
+          popup.className = 'ann-pin-popup';
+          const header = document.createElement('div');
+          header.className = 'ann-pin-popup-header';
+          const label = document.createElement('div');
+          label.className = 'ann-pin-popup-label';
+          label.textContent = pin.name || pin.classes || pin.selector?.split(' > ').pop() || 'element';
+          const del = document.createElement('button');
+          del.className = 'ann-pin-popup-delete';
+          del.textContent = '\u00d7';
+          del.addEventListener('click', () => {
+            const d = _annLoad();
+            if (d[_gk]) { d[_gk].splice(_idx, 1); if (!d[_gk].length) delete d[_gk]; _annSave(d); _annRenderAll(); }
+          });
+          header.appendChild(label);
+          header.appendChild(del);
+          const inp = document.createElement('textarea');
+          inp.value = pin.note || pin.text || '';
+          inp.placeholder = 'What to change...';
+          inp.rows = Math.max(2, Math.ceil((pin.note || pin.text || '').length / 35));
+          inp.addEventListener('input', () => {
+            const d = _annLoad();
+            if (d[_gk] && d[_gk][_idx]) { d[_gk][_idx].note = inp.value; _annSave(d); }
+          });
+          popup.appendChild(header);
+          popup.appendChild(inp);
+          marker.style.position = 'absolute';
+          popup.style.left = pin.x + '%';
+          popup.style.top = pin.y + '%';
+          posParent.appendChild(popup);
+          inp.focus();
+          // Close on outside click
+          const close = (ev) => { if (!popup.contains(ev.target) && ev.target !== marker) { popup.remove(); document.removeEventListener('click', close, true); } };
+          setTimeout(() => document.addEventListener('click', close, true), 0);
+        });
         posParent.appendChild(marker);
       }
 
       // Note in panel
       const note = document.createElement('div');
       note.className = 'ann-note';
+      note.dataset.pinId = globalIndex;
+      note.style.cursor = 'pointer';
+      note.addEventListener('click', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+        const pin = document.getElementById('ann-pin-' + note.dataset.pinId);
+        if (pin) {
+          pin.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => pin.click(), 400);
+        }
+      });
 
       const num = document.createElement('div');
       num.className = 'ann-note-num';
@@ -1642,6 +1694,7 @@ function validateSlideHTML(html) {
 // ══════════════════════════════════════════════════════════════
 
 function initChat(slug) {
+  slug = slug || '';
   const setup = () => {
     // State
     let messages = [];
@@ -1675,13 +1728,14 @@ function initChat(slug) {
     panel.innerHTML = `
       <div class="chat-drawer-header">
         <span>Chat</span>
+        <a class="chat-mode-link" href="/chat.html">→ home</a>
       </div>
       <div class="chat-drawer-messages" id="chatDrawerMessages"></div>
       <div class="chat-drawer-input-wrap">
         <div class="chat-bar-attachments" id="chatBarAttachments"></div>
         <div class="chat-bar-input">
           <button class="chat-bar-attach" id="chatBarAttachBtn" title="Attach file">+</button>
-          <textarea class="chat-bar-textarea" id="chatBarInput" placeholder="Ask AI to review, edit, or create slides..." rows="1"></textarea>
+          <textarea class="chat-bar-textarea" id="chatBarInput" placeholder="Drag & drop or paste your content" rows="1"></textarea>
           <button class="chat-bar-send" id="chatBarSend">&#x2191;</button>
         </div>
         <input type="file" id="chatBarFileInput" hidden multiple accept=".pdf,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp,.svg">

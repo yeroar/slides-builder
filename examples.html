@@ -84,10 +84,10 @@
       // Render page nav in sidebar
       const sidebar = document.getElementById('sidebarRoot');
       const PAGE_NAV = [
+        { label: 'New chat', href: '/chat.html' },
         { label: 'Templates', href: '/templates.html' },
         { label: 'Components', href: '/components.html' },
         { label: 'Examples', href: '/examples.html' },
-        { label: 'Chat', href: '/chat.html' },
       ];
       const currentPath = location.pathname.replace(/\/$/, '') || '/templates.html';
       sidebar.innerHTML = `
@@ -131,6 +131,7 @@
       } catch (e) {
         grid.innerHTML = '<div class="examples-empty">Failed to load examples.</div>';
       }
+      initChat();
     })();
   </script>
 </body>

@@ -18,10 +18,9 @@
   }
 
   const PAGE_NAV = [
+    { label: 'New chat', href: '/chat.html' },
     { label: 'Templates', href: '/templates.html' },
     { label: 'Components', href: '/components.html' },
-    { label: 'Examples', href: '/examples.html' },
-    { label: 'Chat', href: '/chat.html' },
   ];
 
   function renderPageNav() {

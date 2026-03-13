@@ -1697,6 +1697,14 @@ function initChat(slug) {
       document.head.appendChild(script);
     }
 
+    // Load slide renderer module
+    if (!window.renderSlide) {
+      const rendererScript = document.createElement('script');
+      rendererScript.type = 'module';
+      rendererScript.src = '/slide-renderer.mjs';
+      document.head.appendChild(rendererScript);
+    }
+
     const drawerInner = document.getElementById('chatDrawerMessages');
     const inputEl = document.getElementById('chatBarInput');
     const sendBtn = document.getElementById('chatBarSend');
@@ -1773,6 +1781,27 @@ function initChat(slug) {
     // Actions
     const SAFE_EDIT_RE = /^\.(h[1-6]|p[1-5]|footer-title|footer-copy|footer-page|var-card-title|var-card-value|section-item|logo-chip|compare-chip|tl-vh-body)/;
 
+    // Resolve a slide object — slot-based or raw HTML
+    function _resolveSlide(slideObj, pageNum) {
+      // Slot-based: { template, slots }
+      if (slideObj.template && slideObj.slots && window.renderSlide) {
+        try {
+          const footer = { title: '', copy: '', page: String(pageNum || '') };
+          const result = window.renderSlide(slideObj.template, slideObj.slots, footer);
+          return { bg: result.bg, html: result.html, label: slideObj.template };
+        } catch (e) {
+          addSystemMsg(`Render error (${slideObj.template}): ${e.message}`);
+          return null;
+        }
+      }
+      // Raw HTML fallback: { bg, html, label }
+      if (slideObj.html) {
+        return { bg: slideObj.bg || 'bg-warning', html: slideObj.html, label: slideObj.label || 'slide' };
+      }
+      addSystemMsg('Slide missing both template+slots and html');
+      return null;
+    }
+
     function executeAction(action) {
       const { tool, params } = action;
       switch (tool) {
@@ -1780,7 +1809,11 @@ function initChat(slug) {
         case 'edit_text': _chatEditText(params.slideIndex, params.selector, params.text); break;
         case 'list_pins': addSystemMsg(JSON.stringify(chatPins, null, 2)); break;
         case 'clear_pins': _chatClearPins(params.slideIndex); break;
-        case 'replace_slide': _chatReplaceSlide(params.slideIndex, params.bg, params.label, params.html); break;
+        case 'replace_slide': {
+          const resolved = _resolveSlide(params, params.slideIndex + 1);
+          if (resolved) _chatReplaceSlide(params.slideIndex, resolved.bg, resolved.label, resolved.html);
+          break;
+        }
         case 'create_presentation': _chatCreatePresentation(params); break;
         case 'add_slides': _chatAddSlides(params); break;
       }
@@ -1876,11 +1909,16 @@ function initChat(slug) {
       // For /p/ pages, create_presentation redirects to a new URL
       const { name, title, slides } = params;
       if (!slides?.length) { addSystemMsg('No slides provided'); return; }
-      slides.forEach((s, i) => {
-        const vw = validateSlideHTML(s.html);
+      // Resolve slot-based slides to HTML
+      const resolved = slides.map((s, i) => {
+        const r = _resolveSlide(s, i + 1);
+        if (!r) return null;
+        const vw = validateSlideHTML(r.html);
         if (vw.length) vw.forEach(w => addSystemMsg(`Slide ${i + 1} validation: ${w}`));
-      });
-      const slidesHtml = slides.map((s, i) => `
+        return r;
+      }).filter(Boolean);
+      if (!resolved.length) { addSystemMsg('No valid slides'); return; }
+      const slidesHtml = resolved.map((s, i) => `
 <div class="slide-label">#${i + 1} — <code>${s.label}</code></div>
 <div class="slide"><div class="slide-inner ${s.bg || 'bg-warning'}">
 ${s.html}
@@ -1939,10 +1977,15 @@ initChat('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
       if (!slides?.length) { addSystemMsg('No slides provided'); return; }
       const existingSlides = document.querySelectorAll('.slide');
       const startIndex = existingSlides.length;
-      slides.forEach((s, i) => {
-        const vw = validateSlideHTML(s.html);
+      // Resolve slot-based slides to HTML
+      const resolvedSlides = slides.map((s, i) => {
+        const r = _resolveSlide(s, startIndex + i + 1);
+        if (!r) return null;
+        const vw = validateSlideHTML(r.html);
         if (vw.length) vw.forEach(w => addSystemMsg(`Slide ${startIndex + i + 1} validation: ${w}`));
-      });
+        return r;
+      }).filter(Boolean);
+      if (!resolvedSlides.length) { addSystemMsg('No valid slides'); return; }
       // Find insertion point — after the last slide (or last slide-wrapper)
       let insertBefore = null;
       const lastSlide = existingSlides[existingSlides.length - 1];
@@ -1951,7 +1994,7 @@ initChat('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
         const ref = wrapper || lastSlide;
         insertBefore = ref.nextSibling;
       }
-      slides.forEach((s, i) => {
+      resolvedSlides.forEach((s, i) => {
         const idx = startIndex + i;
         const labelDiv = document.createElement('div');
         labelDiv.className = 'slide-label';
@@ -1975,7 +2018,7 @@ initChat('${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}');
           }
         }
       });
-      addSystemMsg(`Added ${slides.length} slides (${startIndex + 1}–${startIndex + slides.length})`);
+      addSystemMsg(`Added ${resolvedSlides.length} slides (${startIndex + 1}–${startIndex + resolvedSlides.length})`);
       // Scroll to first new slide
       const allSlides = document.querySelectorAll('.slide');
       const firstNew = allSlides[startIndex];

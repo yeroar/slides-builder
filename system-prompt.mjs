@@ -242,12 +242,12 @@ Cards 3col (bg-warning):
 
 Cards 2col (bg-warning):
   <div class="content-frame"><div class="tl-stats" style="width:auto;">...</div></div>
-  <div class="content-2col" style="top:305px; height:711px;">
+  <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;">
     <div class="feature-card-noimg"><div class="tl-featurecol">
       <div class="h5">Card title</div>
       <div class="list"><div class="h5">Bullet 1</div></div>
     </div></div>
-    <!-- exactly 2 cards -->
+    <!-- exactly 2 cards, do NOT use .content-2col class (wrong gap) -->
   </div>
   <div class="footer">...</div>
 
@@ -322,7 +322,7 @@ Cards+Img 3col (bg-warning):
   <div class="footer">...</div>
 
 Cards 2col+Img (bg-warning):
-  Same header. Absolute positioned container with 2 feature-card children (H6 text).
+  Same header. Same container as Cards 2col: <div style="position:absolute; top:305px; left:64px; right:64px; bottom:64px; display:flex; gap:12px;"> with 2 feature-card children (H6 text). Do NOT use .content-2col class.
 
 Features (bg-warning):
   <div class="content-2col" style="align-items:stretch;">

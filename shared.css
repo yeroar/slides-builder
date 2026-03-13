@@ -105,6 +105,11 @@
   gap: 162px;
   align-items: stretch;
 }
+/* Cards inside content-2col need tight 12px gap, not the 162px text+image gap */
+.content-2col:has(> .feature-card-noimg),
+.content-2col:has(> .feature-card) {
+  gap: 12px;
+}
 
 .content-3col {
   position: absolute;
